@@ -436,8 +436,10 @@
         <h1>E-Commerce Platform</h1>
         <p>Welcome to your modern shopping experience</p>
         <div class="nav-links">
-            <a href="register.php" class="nav-link register">Create Account</a>
-            <a href="login.php" class="nav-link login">Sign In</a>
+            <a href="views\register.php" class="nav-link register">Create Account</a>
+            <a href="views\login.php" class="nav-link login">Sign In</a>
+
+
         </div>
     </div>
 
