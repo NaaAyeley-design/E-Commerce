@@ -1,8 +1,8 @@
 <?php
 /**
- * Forgot Password Action
+ * Process Login Action
  * 
- * Handles password reset requests with enhanced security
+ * Handles user login requests with enhanced security and validation
  */
 
 // Include core settings and user controller
@@ -19,37 +19,38 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Validate CSRF token
 validate_form_csrf();
 
-// Rate limiting for forgot password attempts
-check_action_rate_limit('forgot_password', 3, 600); // 3 attempts per 10 minutes
+// Rate limiting for login attempts
+check_action_rate_limit('login', 5, 300); // 5 attempts per 5 minutes
 
 try {
     // Get and sanitize input
     $email = sanitize_input($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']) && $_POST['remember'] === 'on';
     
     // Basic validation
-    if (empty($email)) {
-        echo 'Email address is required.';
+    if (empty($email) || empty($password)) {
+        echo 'Email and password are required.';
         exit;
     }
     
-    // Validate email format
+    // Additional validation
     if (!validate_email($email)) {
         echo 'Please enter a valid email address.';
         exit;
     }
     
-    // Process forgot password request
-    $result = forgot_password_ctr($email);
+    // Attempt login
+    $result = login_customer_ctr($email, $password, $remember);
     
     // Return result
     echo $result;
     
 } catch (Exception $e) {
     // Log error
-    error_log("Forgot password action error: " . $e->getMessage());
+    error_log("Login action error: " . $e->getMessage());
     
     // Return generic error message
-    echo 'An error occurred. Please try again.';
+    echo 'An error occurred during login. Please try again.';
 }
 ?>
-
