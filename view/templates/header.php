@@ -93,7 +93,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo BASE_URL; ?>/view/admin/category.php" class="nav-link">
+                                        <a href="<?php echo BASE_URL; ?>/view/admin/categories.php" class="nav-link">
                                             <i class="fas fa-tags"></i> Categories
                                         </a>
                                     </li>
