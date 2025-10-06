@@ -30,11 +30,11 @@ define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 // URL Configuration
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
-$base_path = '/ecommerce-authent';
+$base_path = '/ecommerce-authent/public';
 
 define('BASE_URL', $protocol . $host . $base_path);
-define('ASSETS_URL', BASE_URL . '/assets');
-define('PUBLIC_URL', BASE_URL . '/public');
+define('ASSETS_URL', $protocol . $host . '/ecommerce-authent/assets');
+define('PUBLIC_URL', $protocol . $host . '/ecommerce-authent/public');
 
 // Security Configuration
 define('HASH_ALGO', PASSWORD_BCRYPT);
@@ -71,6 +71,14 @@ define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
 // Auto-load core functions
 require_once FUNCTIONS_PATH . '/validation.php';
 require_once FUNCTIONS_PATH . '/utils.php';
+
+/**
+ * URL Helper Function
+ * Creates absolute URLs using BASE_URL
+ */
+function url($path) {
+    return BASE_URL . '/' . ltrim($path, '/');
+}
 
 // Auto-load core classes
 require_once CLASS_PATH . '/db_class.php';

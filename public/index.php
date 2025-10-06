@@ -30,17 +30,17 @@ include VIEW_PATH . '/templates/header.php';
                 </p>
                 <div class="hero-actions">
                     <?php if (is_logged_in()): ?>
-                        <a href="../view/user/dashboard.php" class="btn btn-primary btn-lg">
+                        <a href="<?php echo url('view/user/dashboard.php'); ?>" class="btn btn-primary btn-lg">
                             <i class="fas fa-tachometer-alt"></i> Go to Dashboard
                         </a>
-                        <a href="../view/product/product_list.php" class="btn btn-outline btn-lg">
+                        <a href="<?php echo url('view/product/product_list.php'); ?>" class="btn btn-outline btn-lg">
                             <i class="fas fa-shopping-bag"></i> Browse Products
                         </a>
                     <?php else: ?>
-                        <a href="../view/user/register.php" class="btn btn-primary btn-lg">
+                        <a href="<?php echo url('view/user/register.php'); ?>" class="btn btn-primary btn-lg">
                             <i class="fas fa-user-plus"></i> Create Account
                         </a>
-                        <a href="../view/user/login.php" class="btn btn-outline btn-lg">
+                        <a href="<?php echo url('view/user/login.php'); ?>" class="btn btn-outline btn-lg">
                             <i class="fas fa-sign-in-alt"></i> Sign In
                         </a>
                     <?php endif; ?>
@@ -136,7 +136,7 @@ include VIEW_PATH . '/templates/header.php';
             <h2>Ready to Start Shopping?</h2>
             <p>Join thousands of satisfied customers and discover amazing products today!</p>
             <div class="cta-actions">
-                <a href="../view/user/register.php" class="btn btn-primary btn-lg">
+                <a href="<?php echo url('view/user/register.php'); ?>" class="btn btn-primary btn-lg">
                     <i class="fas fa-rocket"></i> Get Started Now
                 </a>
             </div>
