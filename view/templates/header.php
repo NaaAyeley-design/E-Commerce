@@ -6,21 +6,21 @@
     <title><?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="<?php echo ASSETS_URL; ?>/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="../assets/images/favicon.ico">
     
     <!-- CSS Files -->
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css">
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css">
+    <link rel="stylesheet" href="../assets/css/sleep.css">
+    <link rel="stylesheet" href="../assets/css/header_footer.css">
     
     <!-- Additional CSS Files -->
     <?php if (isset($additional_css) && is_array($additional_css)): ?>
         <?php foreach ($additional_css as $css_file): ?>
-            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css_file; ?>?v=<?php echo time(); ?>">
+            <link rel="stylesheet" href="../assets/css/<?php echo $css_file; ?>?v=<?php echo time(); ?>">
         <?php endforeach; ?>
     <?php endif; ?>
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,13 +37,13 @@
     <meta property="og:description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo current_url(); ?>">
-    <meta property="og:image" content="<?php echo ASSETS_URL; ?>/images/og-image.jpg">
+    <meta property="og:image" content="../assets/images/og-image.jpg">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?>">
     <meta name="twitter:description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
-    <meta name="twitter:image" content="<?php echo ASSETS_URL; ?>/images/og-image.jpg">
+    <meta name="twitter:image" content="../assets/images/og-image.jpg">
     
     <!-- CSRF Token -->
     <meta name="csrf-token" content="<?php echo generate_csrf_token(); ?>">
@@ -75,8 +75,8 @@
                 <div class="header-content">
                     <!-- Logo -->
                     <div class="logo">
-                        <a href="<?php echo BASE_URL; ?>/public/index.php" class="logo-link">
-                            <img src="<?php echo ASSETS_URL; ?>/images/logo.png" alt="<?php echo APP_NAME; ?>" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                        <a href="../public/index.php" class="logo-link">
+                            <img src="../assets/images/logo.png" alt="<?php echo APP_NAME; ?>" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
                             <span class="logo-text"><?php echo APP_NAME; ?></span>
                         </a>
                     </div>
@@ -88,12 +88,12 @@
                                 <?php if (is_admin()): ?>
                                     <!-- Admin User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo BASE_URL; ?>/view/admin/dashboard.php" class="nav-link">
+                                        <a href="../view/admin/dashboard.php" class="nav-link">
                                             <i class="fas fa-tachometer-alt"></i> Dashboard
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo BASE_URL; ?>/view/admin/categories.php" class="nav-link">
+                                        <a href="../view/admin/categories.php" class="nav-link">
                                             <i class="fas fa-tags"></i> Categories
                                         </a>
                                     </li>
@@ -103,21 +103,21 @@
                                             <i class="fas fa-chevron-down"></i>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            <li><a href="<?php echo BASE_URL; ?>/view/admin/profile.php" class="dropdown-link">Admin Profile</a></li>
-                                            <li><a href="<?php echo BASE_URL; ?>/view/admin/settings.php" class="dropdown-link">Settings</a></li>
+                                            <li><a href="../view/admin/profile.php" class="dropdown-link">Admin Profile</a></li>
+                                            <li><a href="../view/admin/settings.php" class="dropdown-link">Settings</a></li>
                                             <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo BASE_URL; ?>/actions/logout_action.php" class="dropdown-link">Logout</a></li>
+                                            <li><a href="../actions/logout_action.php" class="dropdown-link">Logout</a></li>
                                         </ul>
                                     </li>
                                 <?php else: ?>
                                     <!-- Regular User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo BASE_URL; ?>/view/user/dashboard.php" class="nav-link">
+                                        <a href="../view/user/dashboard.php" class="nav-link">
                                             <i class="fas fa-tachometer-alt"></i> Dashboard
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo BASE_URL; ?>/view/product/product_list.php" class="nav-link">
+                                        <a href="../view/product/product_list.php" class="nav-link">
                                             <i class="fas fa-shopping-bag"></i> Products
                                         </a>
                                     </li>
@@ -127,23 +127,23 @@
                                             <i class="fas fa-chevron-down"></i>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            <li><a href="<?php echo BASE_URL; ?>/view/user/profile.php" class="dropdown-link">Profile</a></li>
-                                            <li><a href="<?php echo BASE_URL; ?>/view/order/order_history.php" class="dropdown-link">Order History</a></li>
-                                            <li><a href="<?php echo BASE_URL; ?>/view/user/settings.php" class="dropdown-link">Settings</a></li>
+                                            <li><a href="../view/user/profile.php" class="dropdown-link">Profile</a></li>
+                                            <li><a href="../view/order/order_history.php" class="dropdown-link">Order History</a></li>
+                                            <li><a href="../view/user/settings.php" class="dropdown-link">Settings</a></li>
                                             <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo BASE_URL; ?>/actions/logout_action.php" class="dropdown-link">Logout</a></li>
+                                            <li><a href="../actions/logout_action.php" class="dropdown-link">Logout</a></li>
                                         </ul>
                                     </li>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <!-- Guest User Menu -->
                                 <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/user/register.php" class="nav-link">
+                                    <a href="../view/user/register.php" class="nav-link">
                                         <i class="fas fa-user-plus"></i> Register
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/user/login.php" class="nav-link">
+                                    <a href="../view/user/login.php" class="nav-link">
                                         <i class="fas fa-sign-in-alt"></i> Login
                                     </a>
                                 </li>

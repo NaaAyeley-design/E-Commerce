@@ -21,7 +21,7 @@ include VIEW_PATH . '/templates/header.php';
 
 <div class="auth-container login-container">
     <!-- Back to Home Link -->
-    <a href="<?php echo BASE_URL; ?>/public/index.php" class="back-home">
+    <a href="../public/index.php" class="back-home">
         <i class="fas fa-arrow-left"></i> Back to Home
     </a>
     
@@ -33,7 +33,7 @@ include VIEW_PATH . '/templates/header.php';
 
     <div id="response" class="response"></div>
 
-    <form id="loginForm" class="ajax-form" method="post" action="<?php echo BASE_URL; ?>/actions/process_login.php">
+    <form id="loginForm" class="ajax-form" method="post" action="../actions/process_login.php">
         <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
         
         <div class="form-group email">

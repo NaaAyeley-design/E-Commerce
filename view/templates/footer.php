@@ -35,8 +35,8 @@
                             <div class="footer-section">
                                 <h4 class="footer-subtitle">Quick Links</h4>
                                 <ul class="footer-links">
-                                    <li><a href="<?php echo BASE_URL; ?>/public/index.php" class="footer-link">Home</a></li>
-                                    <li><a href="<?php echo BASE_URL; ?>/view/product/product_list.php" class="footer-link">Products</a></li>
+                                    <li><a href="../public/index.php" class="footer-link">Home</a></li>
+                                    <li><a href="../view/product/product_list.php" class="footer-link">Products</a></li>
                                     <li><a href="#" class="footer-link">About Us</a></li>
                                     <li><a href="#" class="footer-link">Contact</a></li>
                                     <li><a href="#" class="footer-link">FAQ</a></li>
@@ -48,11 +48,11 @@
                                 <h4 class="footer-subtitle">Customer Service</h4>
                                 <ul class="footer-links">
                                     <?php if (is_logged_in()): ?>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/user/dashboard.php" class="footer-link">My Account</a></li>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/order/order_history.php" class="footer-link">Order History</a></li>
+                                        <li><a href="../view/user/dashboard.php" class="footer-link">My Account</a></li>
+                                        <li><a href="../view/order/order_history.php" class="footer-link">Order History</a></li>
                                     <?php else: ?>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/user/login.php" class="footer-link">Login</a></li>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/user/register.php" class="footer-link">Register</a></li>
+                                        <li><a href="../view/user/login.php" class="footer-link">Login</a></li>
+                                        <li><a href="../view/user/register.php" class="footer-link">Register</a></li>
                                     <?php endif; ?>
                                     <li><a href="#" class="footer-link">Shipping Info</a></li>
                                     <li><a href="#" class="footer-link">Returns</a></li>
@@ -105,10 +105,10 @@
     </button>
     
     <!-- JavaScript Files -->
-    <script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
+    <script src="../assets/js/script.js"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>
-            <script src="<?php echo ASSETS_URL; ?>/js/<?php echo $js_file; ?>"></script>
+            <script src="../assets/js/<?php echo $js_file; ?>"></script>
         <?php endforeach; ?>
     <?php endif; ?>
     
