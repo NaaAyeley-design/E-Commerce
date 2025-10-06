@@ -7,10 +7,10 @@
  */
 
 // Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'shoppn');
+define('DB_HOST', '169.239.251.102');
+define('DB_USERNAME', 'naa.aryee');
+define('DB_PASSWORD', 'Araba2004!');
+define('DB_NAME', 'ecommerce_2025A_naa_aryee');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_COLLATE', 'utf8mb4_unicode_ci');
 
