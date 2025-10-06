@@ -69,7 +69,7 @@ try {
     }
     
     // Attempt registration
-    $result = register_customer_ctr($name, $email, $password, $country, $city, $contact);
+    $result = register_user_ctr($name, $email, $password, $country, $city, $contact);
     
     // Return result
     echo $result;

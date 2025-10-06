@@ -43,6 +43,20 @@ INSERT IGNORE INTO user_roles (role_id, role_name, role_description) VALUES
 (1, 'Admin', 'Administrator with full access'),
 (2, 'Customer', 'Regular customer account');
 
+-- Categories table
+CREATE TABLE IF NOT EXISTS categories (
+    cat_id INT(11) NOT NULL AUTO_INCREMENT,
+    cat_name VARCHAR(100) NOT NULL,
+    user_id INT(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (cat_id),
+    FOREIGN KEY (user_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_category (user_id, cat_name),
+    INDEX idx_user_id (user_id),
+    INDEX idx_cat_name (cat_name)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 -- Sessions table (optional, for session management)
 CREATE TABLE IF NOT EXISTS user_sessions (
     session_id VARCHAR(128) PRIMARY KEY,

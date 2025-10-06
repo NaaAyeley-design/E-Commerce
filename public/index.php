@@ -13,6 +13,7 @@ require_once __DIR__ . '/../settings/core.php';
 $page_title = 'Home';
 $page_description = 'Welcome to our modern e-commerce platform. Discover amazing products with secure shopping experience.';
 $body_class = 'home-page';
+$additional_css = ['homepage.css']; // Specific CSS for homepage
 
 // Include header
 include VIEW_PATH . '/templates/header.php';
@@ -148,8 +149,8 @@ include VIEW_PATH . '/templates/header.php';
 <style>
 .hero-section {
     padding: 80px 0;
-    background: var(--bg-gradient);
-    color: var(--white);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
     overflow: hidden;
     position: relative;
 }

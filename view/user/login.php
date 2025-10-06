@@ -13,6 +13,7 @@ $page_title = 'Login';
 $page_description = 'Sign in to your account to access your dashboard and manage your orders.';
 $standalone_page = true;
 $body_class = 'auth-page login-page';
+$additional_css = ['login.css']; // Custom login page styles
 
 // Include header
 include VIEW_PATH . '/templates/header.php';

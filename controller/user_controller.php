@@ -13,7 +13,7 @@ require_once __DIR__ . '/general_controller.php';
 /**
  * Register new customer
  */
-function register_customer_ctr($name, $email, $password, $country, $city, $contact) {
+function register_user_ctr($name, $email, $password, $country, $city, $contact) {
     try {
         // Rate limiting
         check_action_rate_limit('register', 3, 300); // 3 attempts per 5 minutes
@@ -72,7 +72,7 @@ function register_customer_ctr($name, $email, $password, $country, $city, $conta
 /**
  * Login customer
  */
-function login_customer_ctr($email, $password, $remember = false) {
+function login_user_ctr($email, $password, $remember = false) {
     try {
         // Rate limiting
         check_action_rate_limit('login', 5, 300); // 5 attempts per 5 minutes
@@ -95,13 +95,18 @@ function login_customer_ctr($email, $password, $remember = false) {
                 session_start();
             }
             
-            // Store customer data in session
+            // Store customer data in session (using consistent naming)
+            $_SESSION['user_id'] = $customer_data['customer_id'];
+            $_SESSION['user_name'] = $customer_data['customer_name'];
+            $_SESSION['user_email'] = $customer_data['customer_email'];
+            $_SESSION['user_role'] = $customer_data['user_role'];
+            $_SESSION['logged_in'] = true;
+            $_SESSION['last_activity'] = time();
+            
+            // Keep legacy session variables for backward compatibility
             $_SESSION['customer_id'] = $customer_data['customer_id'];
             $_SESSION['customer_name'] = $customer_data['customer_name'];
             $_SESSION['customer_email'] = $customer_data['customer_email'];
-            $_SESSION['user_role'] = $customer_data['user_role'];
-            $_SESSION['logged_in'] = true;
-            $_SESSION['login_time'] = time();
             
             // Set remember me cookie if requested
             if ($remember) {
@@ -128,7 +133,7 @@ function login_customer_ctr($email, $password, $remember = false) {
 /**
  * Logout customer
  */
-function logout_customer_ctr() {
+function logout_user_ctr() {
     try {
         $customer_id = $_SESSION['customer_id'] ?? null;
         
@@ -168,26 +173,6 @@ function logout_customer_ctr() {
     }
 }
 
-/**
- * Check if user is logged in
- */
-function is_logged_in() {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    // Check session validity
-    if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-        // Check session timeout
-        if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time']) > SESSION_LIFETIME) {
-            logout_customer_ctr();
-            return false;
-        }
-        return true;
-    }
-    
-    return false;
-}
 
 /**
  * Get current customer data
@@ -199,7 +184,7 @@ function get_current_customer() {
     
     try {
         $user = new user_class();
-        return $user->get_customer_by_id($_SESSION['customer_id']);
+        return $user->get_customer_by_id($_SESSION['user_id']);
     } catch (Exception $e) {
         error_log("Error getting current customer: " . $e->getMessage());
         return false;

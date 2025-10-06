@@ -100,7 +100,33 @@ function create_slug($text) {
  * Check if user is logged in
  */
 function is_logged_in() {
-    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Check session validity
+    if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+        // Check session timeout
+        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > SESSION_TIMEOUT) {
+            // Session expired, log out user
+            $_SESSION = array();
+            if (ini_get("session.use_cookies")) {
+                $params = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000,
+                    $params["path"], $params["domain"],
+                    $params["secure"], $params["httponly"]
+                );
+            }
+            session_destroy();
+            return false;
+        }
+        
+        // Update last activity time
+        $_SESSION['last_activity'] = time();
+        return true;
+    }
+    
+    return false;
 }
 
 /**
@@ -111,9 +137,9 @@ function is_admin() {
 }
 
 /**
- * Get current user data
+ * Get current customer data
  */
-function get_current_user() {
+function get_current_customer_data() {
     if (!is_logged_in()) {
         return false;
     }
@@ -256,7 +282,7 @@ function generate_pagination($current_page, $total_pages, $base_url, $params = [
 /**
  * Escape output for HTML
  */
-function escape($string) {
+function escape_html($string) {
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 }
 

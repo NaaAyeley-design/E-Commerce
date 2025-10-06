@@ -13,6 +13,7 @@ $page_title = 'Create Account';
 $page_description = 'Join our e-commerce platform and start shopping with exclusive deals and offers.';
 $standalone_page = true;
 $body_class = 'auth-page register-page';
+$additional_css = ['registercss.css']; // Custom registration page styles
 
 // Include header
 include VIEW_PATH . '/templates/header.php';

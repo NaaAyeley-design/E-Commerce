@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($page_title) ? escape($page_title) . ' - ' . APP_NAME : APP_NAME; ?></title>
+    <title><?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?></title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="<?php echo ASSETS_URL; ?>/images/favicon.ico">
     
     <!-- CSS Files -->
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/style.css">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css">
+    
+    <!-- Additional CSS Files -->
     <?php if (isset($additional_css) && is_array($additional_css)): ?>
         <?php foreach ($additional_css as $css_file): ?>
-            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css_file; ?>">
+            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css_file; ?>?v=<?php echo time(); ?>">
         <?php endforeach; ?>
     <?php endif; ?>
     
@@ -25,21 +28,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Meta Tags -->
-    <meta name="description" content="<?php echo isset($page_description) ? escape($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
-    <meta name="keywords" content="<?php echo isset($page_keywords) ? escape($page_keywords) : 'ecommerce, shopping, online store, authentication'; ?>">
+    <meta name="description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
+    <meta name="keywords" content="<?php echo isset($page_keywords) ? escape_html($page_keywords) : 'ecommerce, shopping, online store, authentication'; ?>">
     <meta name="author" content="<?php echo APP_NAME; ?>">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="<?php echo isset($page_title) ? escape($page_title) . ' - ' . APP_NAME : APP_NAME; ?>">
-    <meta property="og:description" content="<?php echo isset($page_description) ? escape($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
+    <meta property="og:title" content="<?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?>">
+    <meta property="og:description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo current_url(); ?>">
     <meta property="og:image" content="<?php echo ASSETS_URL; ?>/images/og-image.jpg">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="<?php echo isset($page_title) ? escape($page_title) . ' - ' . APP_NAME : APP_NAME; ?>">
-    <meta name="twitter:description" content="<?php echo isset($page_description) ? escape($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
+    <meta name="twitter:title" content="<?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?>">
+    <meta name="twitter:description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'Modern e-commerce platform with secure authentication'; ?>">
     <meta name="twitter:image" content="<?php echo ASSETS_URL; ?>/images/og-image.jpg">
     
     <!-- CSRF Token -->
@@ -50,18 +53,15 @@
         <?php echo $additional_head_content; ?>
     <?php endif; ?>
 </head>
-<body class="<?php echo isset($body_class) ? escape($body_class) : ''; ?>">
-    
-    <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+<body class="<?php echo isset($body_class) ? escape_html($body_class) : ''; ?>">
     
     <!-- Flash Messages -->
     <?php $flash_messages = get_flash_messages(); ?>
     <?php if (!empty($flash_messages)): ?>
         <div class="flash-messages">
             <?php foreach ($flash_messages as $message): ?>
-                <div class="flash-message flash-<?php echo escape($message['type']); ?>">
-                    <span class="message-text"><?php echo escape($message['message']); ?></span>
+                <div class="flash-message flash-<?php echo escape_html($message['type']); ?>">
+                    <span class="message-text"><?php echo escape_html($message['message']); ?></span>
                     <button class="close-flash" onclick="this.parentElement.remove();">&times;</button>
                 </div>
             <?php endforeach; ?>
@@ -85,45 +85,66 @@
                     <nav class="main-nav" role="navigation" aria-label="Main navigation">
                         <ul class="nav-menu">
                             <?php if (is_logged_in()): ?>
-                                <!-- Authenticated User Menu -->
-                                <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/user/dashboard.php" class="nav-link">
-                                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/product/product_list.php" class="nav-link">
-                                        <i class="fas fa-shopping-bag"></i> Products
-                                    </a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-user"></i> <?php echo escape($_SESSION['customer_name']); ?>
-                                        <i class="fas fa-chevron-down"></i>
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="<?php echo BASE_URL; ?>/view/user/profile.php" class="dropdown-link">Profile</a></li>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/order/order_history.php" class="dropdown-link">Order History</a></li>
-                                        <li><a href="<?php echo BASE_URL; ?>/view/user/settings.php" class="dropdown-link">Settings</a></li>
-                                        <li class="dropdown-divider"></li>
-                                        <li><a href="<?php echo BASE_URL; ?>/actions/logout_action.php" class="dropdown-link">Logout</a></li>
-                                    </ul>
-                                </li>
+                                <?php if (is_admin()): ?>
+                                    <!-- Admin User Menu -->
+                                    <li class="nav-item">
+                                        <a href="<?php echo BASE_URL; ?>/view/admin/dashboard.php" class="nav-link">
+                                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?php echo BASE_URL; ?>/view/admin/category.php" class="nav-link">
+                                            <i class="fas fa-tags"></i> Categories
+                                        </a>
+                                    </li>
+                                    <li class="nav-item dropdown">
+                                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fas fa-user-shield"></i> <?php echo escape_html($_SESSION['user_name'] ?? $_SESSION['customer_name']); ?>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="<?php echo BASE_URL; ?>/view/admin/profile.php" class="dropdown-link">Admin Profile</a></li>
+                                            <li><a href="<?php echo BASE_URL; ?>/view/admin/settings.php" class="dropdown-link">Settings</a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a href="<?php echo BASE_URL; ?>/actions/logout_action.php" class="dropdown-link">Logout</a></li>
+                                        </ul>
+                                    </li>
+                                <?php else: ?>
+                                    <!-- Regular User Menu -->
+                                    <li class="nav-item">
+                                        <a href="<?php echo BASE_URL; ?>/view/user/dashboard.php" class="nav-link">
+                                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?php echo BASE_URL; ?>/view/product/product_list.php" class="nav-link">
+                                            <i class="fas fa-shopping-bag"></i> Products
+                                        </a>
+                                    </li>
+                                    <li class="nav-item dropdown">
+                                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fas fa-user"></i> <?php echo escape_html($_SESSION['user_name'] ?? $_SESSION['customer_name']); ?>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="<?php echo BASE_URL; ?>/view/user/profile.php" class="dropdown-link">Profile</a></li>
+                                            <li><a href="<?php echo BASE_URL; ?>/view/order/order_history.php" class="dropdown-link">Order History</a></li>
+                                            <li><a href="<?php echo BASE_URL; ?>/view/user/settings.php" class="dropdown-link">Settings</a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a href="<?php echo BASE_URL; ?>/actions/logout_action.php" class="dropdown-link">Logout</a></li>
+                                        </ul>
+                                    </li>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <!-- Guest User Menu -->
                                 <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/product/product_list.php" class="nav-link">
-                                        <i class="fas fa-shopping-bag"></i> Products
+                                    <a href="<?php echo BASE_URL; ?>/view/user/register.php" class="nav-link">
+                                        <i class="fas fa-user-plus"></i> Register
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="<?php echo BASE_URL; ?>/view/user/login.php" class="nav-link">
                                         <i class="fas fa-sign-in-alt"></i> Login
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="<?php echo BASE_URL; ?>/view/user/register.php" class="nav-link btn-primary">
-                                        <i class="fas fa-user-plus"></i> Register
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -142,4 +163,4 @@
     <?php endif; ?>
     
     <!-- Main Content Area -->
-    <main id="main-content" role="main" class="<?php echo isset($main_class) ? escape($main_class) : 'main-content'; ?>">
+    <main id="main-content" role="main" class="<?php echo isset($main_class) ? escape_html($main_class) : 'main-content'; ?>">

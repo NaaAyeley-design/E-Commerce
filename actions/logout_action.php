@@ -11,7 +11,7 @@ require_once __DIR__ . '/../controller/user_controller.php';
 
 try {
     // Perform logout
-    $result = logout_customer_ctr();
+    $result = logout_user_ctr();
     
     if ($result === "success") {
         // Redirect to login page with success message

@@ -13,6 +13,7 @@ $page_title = 'Forgot Password';
 $page_description = 'Reset your password by entering your email address.';
 $standalone_page = true;
 $body_class = 'auth-page forgot-password-page';
+$additional_css = ['forgot_password.css']; // Custom forgot password page styles
 
 // Include header
 include VIEW_PATH . '/templates/header.php';

@@ -104,11 +104,6 @@
         <i class="fas fa-chevron-up"></i>
     </button>
     
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
-    
     <!-- JavaScript Files -->
     <script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
@@ -122,31 +117,6 @@
         <?php echo $additional_footer_content; ?>
     <?php endif; ?>
     
-    <!-- Development Tools (only in development environment) -->
-    <?php if (APP_ENV === 'development'): ?>
-        <div id="dev-tools" class="dev-tools">
-            <button class="dev-toggle" onclick="this.parentElement.classList.toggle('expanded')">
-                <i class="fas fa-cog"></i>
-            </button>
-            <div class="dev-content">
-                <h4>Development Tools</h4>
-                <div class="dev-info">
-                    <strong>Environment:</strong> <?php echo APP_ENV; ?><br>
-                    <strong>Version:</strong> <?php echo APP_VERSION; ?><br>
-                    <strong>Memory Usage:</strong> <?php echo number_format(memory_get_usage(true) / 1024 / 1024, 2); ?> MB<br>
-                    <strong>Execution Time:</strong> <span id="exec-time"></span>ms
-                </div>
-            </div>
-        </div>
-        
-        <script>
-            // Calculate execution time
-            window.addEventListener('load', function() {
-                const execTime = performance.now();
-                document.getElementById('exec-time').textContent = Math.round(execTime);
-            });
-        </script>
-    <?php endif; ?>
     
     <script>
         // Initialize application

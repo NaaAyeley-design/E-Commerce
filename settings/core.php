@@ -65,6 +65,9 @@ if (APP_ENV === 'development') {
 // Timezone
 date_default_timezone_set('UTC');
 
+// Session Configuration
+define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
+
 // Auto-load core functions
 require_once FUNCTIONS_PATH . '/validation.php';
 require_once FUNCTIONS_PATH . '/utils.php';
@@ -72,6 +75,7 @@ require_once FUNCTIONS_PATH . '/utils.php';
 // Auto-load core classes
 require_once CLASS_PATH . '/db_class.php';
 require_once CLASS_PATH . '/user_class.php';
+require_once CLASS_PATH . '/category_class.php';
 
 // Initialize error handler
 set_error_handler('custom_error_handler');
