@@ -3,8 +3,8 @@
  * Simple Category Management - No JavaScript, Just Works
  */
 
-require_once __DIR__ . '/../../settings/core.php';
-require_once __DIR__ . '/../../controller/category_controller.php';
+require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../../controller/category_controller.php';
 
 // Set page variables
 $page_title = 'Category Management';

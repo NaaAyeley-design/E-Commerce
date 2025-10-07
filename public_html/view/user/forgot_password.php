@@ -6,7 +6,7 @@
  */
 
 // Include core settings
-require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Forgot Password';
@@ -16,7 +16,7 @@ $body_class = 'auth-page forgot-password-page';
 $additional_css = ['forgot_password.css']; // Custom forgot password page styles
 
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="auth-container forgot-container">
@@ -56,5 +56,5 @@ include VIEW_PATH . '/templates/header.php';
 $additional_js = ['forgot-password.js'];
 
 // Include footer
-include VIEW_PATH . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>

@@ -10,7 +10,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 
 // Include core settings
-require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Admin Dashboard';
@@ -139,5 +139,5 @@ include VIEW_PATH . '/templates/header.php';
 
 <?php 
 // Include footer
-include VIEW_PATH . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>

@@ -7,7 +7,7 @@
  */
 
 // Include core settings
-require_once __DIR__ . '/settings/core.php';
+require_once __DIR__ . '/../settings/core.php';
 
 // Set page variables
 $page_title = 'Home';
@@ -16,7 +16,7 @@ $body_class = 'home-page';
 $additional_css = ['homepage.css']; // Specific CSS for homepage
 
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/view/templates/header.php';
 ?>
 
 <div class="hero-section">
@@ -447,5 +447,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php
 // Include footer
-include VIEW_PATH . '/templates/footer.php';
+include __DIR__ . '/view/templates/footer.php';
 ?>

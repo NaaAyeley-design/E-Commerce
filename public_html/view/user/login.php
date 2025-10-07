@@ -6,7 +6,7 @@
  */
 
 // Include core settings
-require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Login';
@@ -16,7 +16,7 @@ $body_class = 'auth-page login-page';
 $additional_css = ['login.css']; // Custom login page styles
 
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="auth-container login-container">
@@ -73,5 +73,5 @@ include VIEW_PATH . '/templates/header.php';
 $additional_js = ['login.js'];
 
 // Include footer
-include VIEW_PATH . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>

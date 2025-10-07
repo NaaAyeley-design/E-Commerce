@@ -6,7 +6,7 @@
  */
 
 // Include core settings
-require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Create Account';
@@ -16,7 +16,7 @@ $body_class = 'auth-page register-page';
 $additional_css = ['registercss.css']; // Custom registration page styles
 
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="auth-container register-container">
@@ -116,5 +116,5 @@ include VIEW_PATH . '/templates/header.php';
 $additional_js = ['register.js'];
 
 // Include footer
-include VIEW_PATH . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>

@@ -20,11 +20,11 @@ define('APP_ENV', 'development'); // development, staging, production
 
 // Path Configuration
 define('ROOT_PATH', dirname(__DIR__));
-define('PUBLIC_PATH', ROOT_PATH . '/public');
+define('PUBLIC_PATH', ROOT_PATH . '/public_html');
 define('CLASS_PATH', ROOT_PATH . '/class');
 define('CONTROLLER_PATH', ROOT_PATH . '/controller');
-define('VIEW_PATH', ROOT_PATH . '/view');
-define('ASSETS_PATH', ROOT_PATH . '/assets');
+define('VIEW_PATH', PUBLIC_PATH . '/view');
+define('ASSETS_PATH', PUBLIC_PATH . '/assets');
 define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 
 // URL Configuration
@@ -36,12 +36,12 @@ $is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.
 
 if ($is_localhost) {
     // Local development (XAMPP)
-    $base_path = '';
-    $assets_path = '/assets';
+    $base_path = '/ecommerce-authent/public_html';
+    $assets_path = '/ecommerce-authent/public_html/assets';
 } else {
     // Live server - shared hosting with ~username structure
-    $base_path = '/~naa.aryee';
-    $assets_path = '/~naa.aryee/assets';
+    $base_path = '/~naa.aryee/public_html';
+    $assets_path = '/~naa.aryee/public_html/assets';
 }
 
 define('BASE_URL', $protocol . $host . $base_path);
