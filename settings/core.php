@@ -29,10 +29,10 @@ define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 
 // URL Configuration
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'];
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
 // Detect if we're on localhost or live server
-$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || php_sapi_name() === 'cli');
 
 if ($is_localhost) {
     // Local development (XAMPP)
