@@ -21,7 +21,7 @@ include VIEW_PATH . '/templates/header.php';
 
 <div class="auth-container register-container">
     <!-- Back to Home Link -->
-    <a href="<?php echo url('public/index.php'); ?>" class="back-home">
+    <a href="<?php echo url('index.php'); ?>" class="back-home">
         <i class="fas fa-arrow-left"></i> Back to Home
     </a>
     

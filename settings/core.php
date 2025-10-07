@@ -30,11 +30,11 @@ define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 // URL Configuration
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
-$base_path = '/public';
+$base_path = '';
 
 define('BASE_URL', $protocol . $host . $base_path);
 define('ASSETS_URL', $protocol . $host . '/assets');
-define('PUBLIC_URL', $protocol . $host . '/public');
+define('PUBLIC_URL', $protocol . $host);
 
 // Security Configuration
 define('HASH_ALGO', PASSWORD_BCRYPT);

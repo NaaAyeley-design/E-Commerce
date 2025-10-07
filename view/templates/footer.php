@@ -35,7 +35,7 @@
                             <div class="footer-section">
                                 <h4 class="footer-subtitle">Quick Links</h4>
                                 <ul class="footer-links">
-                                    <li><a href="<?php echo url('public/index.php'); ?>" class="footer-link">Home</a></li>
+                                    <li><a href="<?php echo url('index.php'); ?>" class="footer-link">Home</a></li>
                                     <li><a href="<?php echo url('view/product/product_list.php'); ?>" class="footer-link">Products</a></li>
                                     <li><a href="#" class="footer-link">About Us</a></li>
                                     <li><a href="#" class="footer-link">Contact</a></li>
