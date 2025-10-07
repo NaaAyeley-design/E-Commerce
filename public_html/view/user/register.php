@@ -107,7 +107,7 @@ include __DIR__ . '/../templates/header.php';
     <div id="response" class="response"></div>
 
     <div class="auth-links">
-        <p>Already have an account? <a href="<?php echo BASE_URL; ?>/view/user/login.php">Sign in here</a></p>
+        <p>Already have an account? <a href="login.php">Sign in here</a></p>
     </div>
 </div>
 
