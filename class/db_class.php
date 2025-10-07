@@ -31,17 +31,24 @@ class db_class {
      */
     private function connect() {
         try {
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+            // Use direct connection parameters for localhost
+            $host = 'localhost';
+            $dbname = 'ecommerce_authent';
+            $username = 'root';
+            $password = '';
+            $charset = 'utf8mb4';
+            
+            $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
             
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::ATTR_PERSISTENT => DB_PERSISTENT,
-                PDO::ATTR_TIMEOUT => DB_TIMEOUT
+                PDO::ATTR_PERSISTENT => false,
+                PDO::ATTR_TIMEOUT => 30
             ];
             
-            $this->conn = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
+            $this->conn = new PDO($dsn, $username, $password, $options);
             
         } catch (PDOException $e) {
             $this->handleConnectionError($e);
