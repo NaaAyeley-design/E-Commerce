@@ -66,8 +66,11 @@ define('FROM_NAME', APP_NAME);
 // Error Reporting
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
+    // Only show errors if not already suppressed by individual files
+    if (!isset($suppress_errors) || !$suppress_errors) {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+    }
 } else {
     error_reporting(0);
     ini_set('display_errors', 0);

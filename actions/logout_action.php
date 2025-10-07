@@ -5,6 +5,12 @@
  * Handles user logout requests and session cleanup
  */
 
+// Suppress error reporting to prevent code from showing
+$suppress_errors = true;
+error_reporting(0);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+
 // Include core settings and controllers
 require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
