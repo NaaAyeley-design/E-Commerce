@@ -106,7 +106,7 @@
                                             <li><a href="<?php echo url('view/admin/profile.php'); ?>" class="dropdown-link">Admin Profile</a></li>
                                             <li><a href="<?php echo url('view/admin/settings.php'); ?>" class="dropdown-link">Settings</a></li>
                                             <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo url('actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
+                                            <li><a href="<?php echo url('../actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
                                         </ul>
                                     </li>
                                 <?php else: ?>
@@ -131,7 +131,7 @@
                                             <li><a href="<?php echo url('view/order/order_history.php'); ?>" class="dropdown-link">Order History</a></li>
                                             <li><a href="<?php echo url('view/user/settings.php'); ?>" class="dropdown-link">Settings</a></li>
                                             <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo url('actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
+                                            <li><a href="<?php echo url('../actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
                                         </ul>
                                     </li>
                                 <?php endif; ?>

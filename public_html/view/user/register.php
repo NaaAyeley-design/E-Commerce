@@ -37,7 +37,7 @@ include __DIR__ . '/../templates/header.php';
         <div class="step">3</div>
     </div>
 
-    <form id="registerForm" class="ajax-form" method="post" action="<?php echo url('actions/register_customer_action.php'); ?>">
+    <form id="registerForm" class="ajax-form" method="post" action="<?php echo url('../actions/register_customer_action.php'); ?>">
         <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
         
         <div class="form-grid">
