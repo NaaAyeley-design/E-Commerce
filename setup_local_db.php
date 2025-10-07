@@ -32,6 +32,9 @@ try {
         `customer_name` varchar(100) NOT NULL,
         `customer_email` varchar(100) NOT NULL UNIQUE,
         `customer_pass` varchar(255) NOT NULL,
+        `customer_country` varchar(100) DEFAULT NULL,
+        `customer_city` varchar(100) DEFAULT NULL,
+        `customer_contact` varchar(20) DEFAULT NULL,
         `user_role` tinyint(1) NOT NULL DEFAULT 0,
         `reg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`customer_id`)
