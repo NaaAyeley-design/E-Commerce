@@ -30,11 +30,23 @@ define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 // URL Configuration
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
-$base_path = '';
+
+// Detect if we're on localhost or live server
+$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+if ($is_localhost) {
+    // Local development (XAMPP)
+    $base_path = '';
+    $assets_path = '/assets';
+} else {
+    // Live server - shared hosting with ~username structure
+    $base_path = '/~naa.aryee';
+    $assets_path = '/~naa.aryee/assets';
+}
 
 define('BASE_URL', $protocol . $host . $base_path);
-define('ASSETS_URL', $protocol . $host . '/assets');
-define('PUBLIC_URL', $protocol . $host);
+define('ASSETS_URL', $protocol . $host . $assets_path);
+define('PUBLIC_URL', $protocol . $host . $base_path);
 
 // Security Configuration
 define('HASH_ALGO', PASSWORD_BCRYPT);
