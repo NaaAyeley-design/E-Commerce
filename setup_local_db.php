@@ -25,26 +25,25 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$database", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Create users table
+    // Create customer table (singular - matches your application)
     $sql = "
-    CREATE TABLE IF NOT EXISTS `customers` (
+    CREATE TABLE IF NOT EXISTS `customer` (
         `customer_id` int(11) NOT NULL AUTO_INCREMENT,
         `customer_name` varchar(100) NOT NULL,
         `customer_email` varchar(100) NOT NULL UNIQUE,
-        `customer_password` varchar(255) NOT NULL,
+        `customer_pass` varchar(255) NOT NULL,
         `user_role` tinyint(1) NOT NULL DEFAULT 0,
-        `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `reg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`customer_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ";
     
     $pdo->exec($sql);
-    echo "✅ Customers table created successfully!\n";
+    echo "✅ Customer table created successfully!\n";
     
     // Insert a test admin user
     $admin_password = password_hash('admin123', PASSWORD_DEFAULT);
-    $sql = "INSERT IGNORE INTO `customers` (`customer_name`, `customer_email`, `customer_password`, `user_role`) VALUES (?, ?, ?, ?)";
+    $sql = "INSERT IGNORE INTO `customer` (`customer_name`, `customer_email`, `customer_pass`, `user_role`) VALUES (?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['Admin User', 'admin@test.com', $admin_password, 1]);
     

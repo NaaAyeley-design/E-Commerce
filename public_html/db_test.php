@@ -22,13 +22,13 @@ try {
     echo "<p><strong>Database:</strong> " . DB_NAME . "</p>";
     echo "<p><strong>Username:</strong> " . DB_USERNAME . "</p>";
     
-    // Test if customers table exists
-    $stmt = $pdo->query("SELECT COUNT(*) as count FROM customers");
+    // Test if customer table exists
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM customer");
     $result = $stmt->fetch();
-    echo "<p style='color: green;'>✅ Customers table found with " . $result['count'] . " records</p>";
+    echo "<p style='color: green;'>✅ Customer table found with " . $result['count'] . " records</p>";
     
     // Show test users
-    $stmt = $pdo->query("SELECT customer_name, customer_email, user_role FROM customers");
+    $stmt = $pdo->query("SELECT customer_name, customer_email, user_role FROM customer");
     $users = $stmt->fetchAll();
     
     echo "<h3>Test Users:</h3>";
