@@ -12,38 +12,40 @@ $is_localhost = (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || s
 
 if ($is_localhost) {
     // Local development (XAMPP)
-    define('DB_HOST', 'localhost');
-    define('DB_USERNAME', 'root');
-    define('DB_PASSWORD', '');
-    define('DB_NAME', 'ecommerce_authent');
+    if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+    if (!defined('DB_USERNAME')) define('DB_USERNAME', 'root');
+    if (!defined('DB_PASSWORD')) define('DB_PASSWORD', '');
+    if (!defined('DB_NAME')) define('DB_NAME', 'ecommerce_authent');
 } else {
     // Live server
-    define('DB_HOST', '169.239.251.102');
-    define('DB_USERNAME', 'naa.aryee');
-    define('DB_PASSWORD', 'Araba2004!');
-    define('DB_NAME', 'ecommerce_2025A_naa_aryee');
+    if (!defined('DB_HOST')) define('DB_HOST', '169.239.251.102');
+    if (!defined('DB_USERNAME')) define('DB_USERNAME', 'naa.aryee');
+    if (!defined('DB_PASSWORD')) define('DB_PASSWORD', 'Araba2004!');
+    if (!defined('DB_NAME')) define('DB_NAME', 'ecommerce_2025A_naa_aryee');
 }
-define('DB_CHARSET', 'utf8mb4');
-define('DB_COLLATE', 'utf8mb4_unicode_ci');
+if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
+if (!defined('DB_COLLATE')) define('DB_COLLATE', 'utf8mb4_unicode_ci');
 
 // Database Connection Options
-define('DB_OPTIONS', [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-]);
+if (!defined('DB_OPTIONS')) {
+    define('DB_OPTIONS', [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+}
 
 // Connection timeout (seconds)
-define('DB_TIMEOUT', 30);
+if (!defined('DB_TIMEOUT')) define('DB_TIMEOUT', 30);
 
 // Enable/disable persistent connections
-define('DB_PERSISTENT', false);
+if (!defined('DB_PERSISTENT')) define('DB_PERSISTENT', false);
 
 // SSL Configuration (if needed)
-define('DB_SSL_KEY', '');
-define('DB_SSL_CERT', '');
-define('DB_SSL_CA', '');
-define('DB_SSL_CAPATH', '');
-define('DB_SSL_CIPHER', '');
+if (!defined('DB_SSL_KEY')) define('DB_SSL_KEY', '');
+if (!defined('DB_SSL_CERT')) define('DB_SSL_CERT', '');
+if (!defined('DB_SSL_CA')) define('DB_SSL_CA', '');
+if (!defined('DB_SSL_CAPATH')) define('DB_SSL_CAPATH', '');
+if (!defined('DB_SSL_CIPHER')) define('DB_SSL_CIPHER', '');
 
 ?>
