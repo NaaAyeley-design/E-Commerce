@@ -76,7 +76,7 @@
                     <!-- Logo -->
                     <div class="logo">
                         <a href="<?php echo url('index.php'); ?>" class="logo-link">
-                            <img src="<?php echo ASSETS_URL; ?>/images/logo.png" alt="<?php echo APP_NAME; ?>" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <img src="<?php echo ASSETS_URL; ?>/images/logo.svg" alt="<?php echo APP_NAME; ?>" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
                             <span class="logo-text"><?php echo APP_NAME; ?></span>
                         </a>
                     </div>
