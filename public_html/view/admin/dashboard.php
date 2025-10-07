@@ -38,14 +38,8 @@ if (!$admin) {
     exit;
 }
 
-// Set page variables
-$page_title = 'Admin Dashboard';
-$page_description = 'Manage your e-commerce platform.';
-$body_class = 'admin-dashboard-page';
-$additional_css = ['admin_dashboard.css'];
-
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="admin-dashboard-container">

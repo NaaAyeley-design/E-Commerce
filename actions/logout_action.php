@@ -5,9 +5,10 @@
  * Handles user logout requests and session cleanup
  */
 
-// Include core settings and user controller
+// Include core settings and controllers
 require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
+require_once __DIR__ . '/../controller/general_controller.php';
 
 try {
     // Perform logout

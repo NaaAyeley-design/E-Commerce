@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Redirect after short delay
                 setTimeout(() => {
-                    window.location.href = data.redirect || '/ecommerce-authent/view/user/dashboard.php';
+                    window.location.href = data.redirect || window.location.origin + window.location.pathname.replace('login.php', 'dashboard.php');
                 }, 1500);
             } else {
                 showError(data.message);

@@ -9,9 +9,9 @@
 const ECommerceApp = {
     // Configuration
     config: {
-        baseUrl: '/ecommerce-authent',
-        apiUrl: '/ecommerce-authent/actions',
-        assetsUrl: '/ecommerce-authent/assets'
+        baseUrl: window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, ''),
+        apiUrl: window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/../actions',
+        assetsUrl: window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/assets'
     },
 
     // Initialize the application

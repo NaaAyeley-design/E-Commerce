@@ -38,14 +38,8 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 1) {
     exit;
 }
 
-// Set page variables
-$page_title = 'User Dashboard';
-$page_description = 'Manage your account and view your orders.';
-$body_class = 'dashboard-page';
-$additional_css = ['dashboard.css'];
-
 // Include header
-include VIEW_PATH . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="dashboard-container">
