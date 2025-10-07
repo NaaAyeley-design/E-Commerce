@@ -30,11 +30,11 @@ define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 // URL Configuration
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
-$base_path = '/ecommerce-authent/public';
+$base_path = '/public';
 
 define('BASE_URL', $protocol . $host . $base_path);
-define('ASSETS_URL', $protocol . $host . '/ecommerce-authent/assets');
-define('PUBLIC_URL', $protocol . $host . '/ecommerce-authent/public');
+define('ASSETS_URL', $protocol . $host . '/assets');
+define('PUBLIC_URL', $protocol . $host . '/public');
 
 // Security Configuration
 define('HASH_ALGO', PASSWORD_BCRYPT);
