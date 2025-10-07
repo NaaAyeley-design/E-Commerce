@@ -15,8 +15,8 @@ require_once __DIR__ . '/general_controller.php';
  */
 function register_user_ctr($name, $email, $password, $country, $city, $contact) {
     try {
-        // Rate limiting
-        check_action_rate_limit('register', 3, 300); // 3 attempts per 5 minutes
+        // Rate limiting disabled for development
+        // check_action_rate_limit('register', 3, 300); // 3 attempts per 5 minutes
         
         // Validate input
         $validation_rules = [
@@ -74,8 +74,8 @@ function register_user_ctr($name, $email, $password, $country, $city, $contact) 
  */
 function login_user_ctr($email, $password, $remember = false) {
     try {
-        // Rate limiting
-        check_action_rate_limit('login', 5, 300); // 5 attempts per 5 minutes
+        // Rate limiting disabled for development
+        // check_action_rate_limit('login', 5, 300); // 5 attempts per 5 minutes
         
         // Validate input
         if (empty($email) || empty($password)) {
@@ -294,7 +294,7 @@ function change_password_ctr($customer_id, $current_password, $new_password) {
 function forgot_password_ctr($email) {
     try {
         // Rate limiting
-        check_action_rate_limit('forgot_password', 3, 600); // 3 attempts per 10 minutes
+        // check_action_rate_limit('forgot_password', 3, 600); // 3 attempts per 10 minutes
         
         // Validate email
         if (!validate_email($email)) {
