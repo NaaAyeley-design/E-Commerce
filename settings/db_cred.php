@@ -7,10 +7,22 @@
  */
 
 // Database Configuration
-define('DB_HOST', '169.239.251.102');
-define('DB_USERNAME', 'naa.aryee');
-define('DB_PASSWORD', 'Araba2004!');
-define('DB_NAME', 'ecommerce_2025A_naa_aryee');
+// Detect if we're on localhost or live server
+$is_localhost = (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false);
+
+if ($is_localhost) {
+    // Local development (XAMPP)
+    define('DB_HOST', 'localhost');
+    define('DB_USERNAME', 'root');
+    define('DB_PASSWORD', '');
+    define('DB_NAME', 'ecommerce_authent');
+} else {
+    // Live server
+    define('DB_HOST', '169.239.251.102');
+    define('DB_USERNAME', 'naa.aryee');
+    define('DB_PASSWORD', 'Araba2004!');
+    define('DB_NAME', 'ecommerce_2025A_naa_aryee');
+}
 define('DB_CHARSET', 'utf8mb4');
 define('DB_COLLATE', 'utf8mb4_unicode_ci');
 
