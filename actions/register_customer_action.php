@@ -9,10 +9,11 @@
 // require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 
+header('Content-Type: application/json');
 // Only process POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo "Method not allowed";
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit;
 }
 
@@ -34,42 +35,49 @@ try {
 
     // Validate required fields
     if (empty($name) || empty($email) || empty($password) || empty($country) || empty($city) || empty($contact)) {
-        echo "All fields are required.";
+        echo json_encode(['success' => false, 'message' => 'All fields are required.']);
         exit;
     }
 
     // Validate terms acceptance
     if (!$terms) {
-        echo "You must accept the terms and conditions.";
+        echo json_encode(['success' => false, 'message' => 'You must accept the terms and conditions.']);
         exit;
     }
 
     // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo "Please enter a valid email address.";
+        echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
         exit;
     }
 
     // Validate password strength
     if (strlen($password) < 6) {
-        echo "Password must be at least 6 characters long.";
+        echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters long.']);
         exit;
     }
 
     // Validate contact number (basic check)
     if (!preg_match('/^\d{10,}$/', $contact)) {
-        echo "Please enter a valid contact number (at least 10 digits).";
+        echo json_encode(['success' => false, 'message' => 'Please enter a valid contact number (at least 10 digits).']);
         exit;
     }
 
     // Attempt registration
     $result = register_user_ctr($name, $email, $password, $country, $city, $contact);
-    
-    // Return result
-    echo $result;
+
+    if ($result === 'success') {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Registration successful! Redirecting to login page...',
+            'redirect' => url('view/user/login.php')
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => $result]);
+    }
 
 } catch (Exception $e) {
     error_log("Registration error: " . $e->getMessage());
-    echo "An error occurred during registration. Please try again.";
+    echo json_encode(['success' => false, 'message' => 'An error occurred during registration. Please try again.']);
 }
 ?>

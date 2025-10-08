@@ -8,7 +8,7 @@
 header('Content-Type: application/json');
 
 // Include core settings and user controller
-require_once __DIR__ . '/../settings/core.php';
+// require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 
 // Only process POST requests
@@ -62,25 +62,18 @@ try {
         if (is_admin()) {
             $redirect_url = url('view/admin/dashboard.php');
         }
-        
-        if ($is_ajax) {
-            $response = [
-                'success' => true, 
-                'message' => 'Login successful! Redirecting...',
-                'redirect' => $redirect_url
-            ];
-            echo json_encode($response);
-        } else {
-            // Redirect to appropriate dashboard
-            header('Location: ' . $redirect_url);
-            exit;
-        }
+        // Always return JSON with redirect URL, even for non-AJAX
+        $response = [
+            'success' => true,
+            'message' => 'Login successful! Redirecting...',
+            'redirect' => $redirect_url
+        ];
+        echo json_encode($response);
+        exit;
     } else {
-        if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $result]);
-        } else {
-            echo $result;
-        }
+        // Always return JSON error
+        echo json_encode(['success' => false, 'message' => $result]);
+        exit;
     }
 
 } catch (Exception $e) {
