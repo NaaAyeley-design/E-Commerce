@@ -34,22 +34,14 @@ try {
     // Validate required fields
     if (empty($email) || empty($password)) {
         $message = "Email and password are required.";
-        if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $message]);
-        } else {
-            echo json_encode($message);
-        }
+        echo json_encode(['success' => false, 'message' => $message]);
         exit;
     }
 
     // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = "Please enter a valid email address.";
-        if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $message]);
-        } else {
-            echo json_encode($message);
-        }
+        echo json_encode(['success' => false, 'message' => $message]);
         exit;
     }
 
@@ -79,9 +71,5 @@ try {
 } catch (Exception $e) {
     error_log("Login error: " . $e->getMessage());
     $message = "An error occurred during login. Please try again.";
-    if ($is_ajax) {
-        echo json_encode(['success' => false, 'message' => $message]);
-    } else {
-        echo $message;
-    }
+    echo json_encode(['success' => false, 'message' => $message]);
 }
