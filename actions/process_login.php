@@ -37,7 +37,7 @@ try {
         if ($is_ajax) {
             echo json_encode(['success' => false, 'message' => $message]);
         } else {
-            echo $message;
+            echo json_encode($message);
         }
         exit;
     }
@@ -48,7 +48,7 @@ try {
         if ($is_ajax) {
             echo json_encode(['success' => false, 'message' => $message]);
         } else {
-            echo $message;
+            echo json_encode($message);
         }
         exit;
     }
@@ -85,4 +85,3 @@ try {
         echo $message;
     }
 }
-?>
