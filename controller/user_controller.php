@@ -262,4 +262,3 @@ function check_remember_me()
 // Auto-check remember me
 check_remember_me();
 ?>
-```
