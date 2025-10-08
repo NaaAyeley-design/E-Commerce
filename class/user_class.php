@@ -20,6 +20,7 @@ class user_class extends db_class {
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $params = [$name, $email, $hashed_pass, $country, $city, $contact, $role];
+        
         $stmt = $this->execute($sql, $params);
         
         return $stmt !== false;
@@ -57,7 +58,7 @@ class user_class extends db_class {
      */
     public function get_customer_by_id($customer_id) {
         $sql = "SELECT customer_id, customer_name, customer_email, customer_country, 
-                customer_city, customer_contact, customer_image, user_role 
+                customer_city, customer_contact, user_role 
                 FROM customer WHERE customer_id = ?";
         
         return $this->fetchRow($sql, [$customer_id]);

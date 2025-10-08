@@ -2,83 +2,72 @@
 /**
  * Process Login Action
  * 
- * Handles user login requests with enhanced security and validation
+ * Handles user login requests with comprehensive validation
  */
-
-// Suppress error reporting to prevent code from showing
-$suppress_errors = true;
-error_reporting(0);
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
 
 // Include core settings and user controller
 require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
-require_once __DIR__ . '/../controller/general_controller.php';
 
-// Only allow POST requests
+// Only process POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    if (isset($_POST['ajax'])) {
-        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    } else {
-        echo 'Method not allowed';
-    }
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit;
 }
 
-// Check if this is an AJAX request
-$is_ajax = isset($_POST['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+// Validate CSRF token
+validate_form_csrf();
+
+// Rate limiting for login attempts
+check_action_rate_limit('login', 5, 300); // 5 attempts per 5 minutes
 
 try {
-    // Validate CSRF token if available
-    if (isset($_POST['csrf_token'])) {
-        validate_csrf_token($_POST['csrf_token']);
-    }
-
     // Get and sanitize input
-    $email = trim($_POST['email'] ?? '');
+    $email = sanitize_input($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
-    
-    // Basic validation
+    $is_ajax = isset($_POST['ajax']);
+
+    // Validate required fields
     if (empty($email) || empty($password)) {
-        $error_msg = 'Email and password are required.';
+        $message = "Email and password are required.";
         if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $error_msg]);
+            echo json_encode(['success' => false, 'message' => $message]);
         } else {
-            echo $error_msg;
+            echo $message;
         }
         exit;
     }
-    
-    // Additional validation
+
+    // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error_msg = 'Please enter a valid email address.';
+        $message = "Please enter a valid email address.";
         if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $error_msg]);
+            echo json_encode(['success' => false, 'message' => $message]);
         } else {
-            echo $error_msg;
+            echo $message;
         }
         exit;
     }
-    
+
     // Attempt login
     $result = login_user_ctr($email, $password, $remember);
     
     if ($result === "success") {
         // Determine redirect URL based on user role
-        $redirect_url = BASE_URL . '/view/user/dashboard.php';
-        if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 1) {
-            $redirect_url = BASE_URL . '/view/admin/dashboard.php';
+        $redirect_url = url('view/user/dashboard.php');
+        if (is_admin()) {
+            $redirect_url = url('view/admin/dashboard.php');
         }
         
         if ($is_ajax) {
-            echo json_encode([
+            $response = [
                 'success' => true, 
                 'message' => 'Login successful! Redirecting...',
                 'redirect' => $redirect_url
-            ]);
+            ];
+            echo json_encode($response);
         } else {
             // Redirect to appropriate dashboard
             header('Location: ' . $redirect_url);
@@ -91,17 +80,14 @@ try {
             echo $result;
         }
     }
-    
+
 } catch (Exception $e) {
-    // Log error
-    error_log("Login action error: " . $e->getMessage());
-    
-    // Return generic error message
-    $error_msg = 'An error occurred during login. Please try again.';
+    error_log("Login error: " . $e->getMessage());
+    $message = "An error occurred during login. Please try again.";
     if ($is_ajax) {
-        echo json_encode(['success' => false, 'message' => $error_msg]);
+        echo json_encode(['success' => false, 'message' => $message]);
     } else {
-        echo $error_msg;
+        echo $message;
     }
 }
 ?>

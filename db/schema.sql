@@ -1,3 +1,4 @@
+
 -- E-Commerce Authentication System Database Schema
 -- This file contains the SQL statements for the existing shoppn database
 

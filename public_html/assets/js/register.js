@@ -7,7 +7,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
     const submitBtn = registerForm.querySelector('button[type="submit"]');
-    const responseDiv = document.getElementById('response');
+    const passwordInput = document.getElementById('password');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const strengthBar = passwordStrength.querySelector('.strength-bar');
+    const strengthText = passwordStrength.querySelector('.strength-text');
     
     // Form submission handler
     registerForm.addEventListener('submit', function(e) {
@@ -36,15 +39,16 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             setLoadingState(false);
             
-            if (data === 'success') {
-                showSuccess('Registration successful! Redirecting to login...');
+            // Check if response is success
+            if (data.trim() === 'success') {
+                showSuccess('Registration successful! Redirecting to login page...');
                 
                 // Redirect to login page after short delay
                 setTimeout(() => {
-                    window.location.href = 'login.php';
+                    window.location.href = window.location.origin + window.location.pathname.replace('register.php', 'login.php');
                 }, 2000);
             } else {
-                showError(data);
+                showError(data || 'Registration failed. Please try again.');
             }
         })
         .catch(error => {
@@ -54,41 +58,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Password strength indicator
+    passwordInput.addEventListener('input', function() {
+        updatePasswordStrength(this.value);
+    });
+    
+    // Real-time validation
+    const inputs = registerForm.querySelectorAll('input[required], select[required]');
+    inputs.forEach(input => {
+        input.addEventListener('blur', () => validateField(input));
+        input.addEventListener('input', () => clearFieldError(input));
+    });
+    
     /**
      * Validate the entire form
      */
     function validateForm() {
         let isValid = true;
         
-        // Check required fields
-        const requiredFields = registerForm.querySelectorAll('[required]');
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                showFieldError(field, 'This field is required');
+        inputs.forEach(input => {
+            if (!validateField(input)) {
                 isValid = false;
-            } else {
-                clearFieldError(field);
             }
         });
         
-        // Validate email
-        const emailField = document.getElementById('email');
-        if (emailField.value && !isValidEmail(emailField.value)) {
-            showFieldError(emailField, 'Please enter a valid email address');
-            isValid = false;
-        }
-        
-        // Validate password
-        const passwordField = document.getElementById('password');
-        if (passwordField.value && passwordField.value.length < 6) {
-            showFieldError(passwordField, 'Password must be at least 6 characters');
-            isValid = false;
-        }
-        
-        // Validate terms checkbox
-        const termsField = document.getElementById('terms');
-        if (!termsField.checked) {
-            showFieldError(termsField, 'You must accept the terms and conditions');
+        // Check terms acceptance
+        const termsCheckbox = document.getElementById('terms');
+        if (!termsCheckbox.checked) {
+            showFieldError(termsCheckbox, 'You must accept the Terms of Service and Privacy Policy');
             isValid = false;
         }
         
@@ -96,11 +93,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Validate email format
+     * Validate individual field
      */
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+    function validateField(field) {
+        const value = field.value.trim();
+        const fieldName = field.name;
+        
+        // Required field validation
+        if (field.hasAttribute('required') && !value) {
+            showFieldError(field, `${getFieldLabel(fieldName)} is required`);
+            return false;
+        }
+        
+        // Specific field validations
+        switch (fieldName) {
+            case 'email':
+                if (value && !isValidEmail(value)) {
+                    showFieldError(field, 'Please enter a valid email address');
+                    return false;
+                }
+                break;
+                
+            case 'name':
+                if (value && !isValidName(value)) {
+                    showFieldError(field, 'Please enter a valid name (letters, spaces, hyphens, and apostrophes only)');
+                    return false;
+                }
+                break;
+                
+            case 'password':
+                if (value && value.length < 6) {
+                    showFieldError(field, 'Password must be at least 6 characters long');
+                    return false;
+                }
+                break;
+                
+            case 'contact':
+                if (value && !isValidPhone(value)) {
+                    showFieldError(field, 'Please enter a valid phone number');
+                    return false;
+                }
+                break;
+        }
+        
+        clearFieldError(field);
+        return true;
+    }
+    
+    /**
+     * Update password strength indicator
+     */
+    function updatePasswordStrength(password) {
+        let strength = 0;
+        let strengthLabel = 'Weak';
+        
+        if (password.length >= 6) strength += 1;
+        if (password.match(/[a-z]/)) strength += 1;
+        if (password.match(/[A-Z]/)) strength += 1;
+        if (password.match(/[0-9]/)) strength += 1;
+        if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+        
+        // Update strength bar
+        strengthBar.style.width = (strength * 20) + '%';
+        
+        // Update strength text and color
+        switch (strength) {
+            case 0:
+            case 1:
+                strengthLabel = 'Very Weak';
+                strengthBar.style.backgroundColor = '#dc3545';
+                break;
+            case 2:
+                strengthLabel = 'Weak';
+                strengthBar.style.backgroundColor = '#fd7e14';
+                break;
+            case 3:
+                strengthLabel = 'Fair';
+                strengthBar.style.backgroundColor = '#ffc107';
+                break;
+            case 4:
+                strengthLabel = 'Good';
+                strengthBar.style.backgroundColor = '#20c997';
+                break;
+            case 5:
+                strengthLabel = 'Strong';
+                strengthBar.style.backgroundColor = '#28a745';
+                break;
+        }
+        
+        strengthText.textContent = strengthLabel;
     }
     
     /**
@@ -178,8 +259,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function showMessage(message, type) {
         hideMessage();
         
-        responseDiv.className = `response ${type} show`;
-        responseDiv.textContent = message;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `response ${type} show`;
+        messageDiv.textContent = message;
+        
+        registerForm.insertBefore(messageDiv, registerForm.firstChild);
         
         // Auto-hide error messages after 5 seconds
         if (type === 'error') {
@@ -193,8 +277,41 @@ document.addEventListener('DOMContentLoaded', function() {
      * Hide message
      */
     function hideMessage() {
-        responseDiv.className = 'response';
-        responseDiv.textContent = '';
+        const existingMessage = registerForm.querySelector('.response');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+    }
+    
+    /**
+     * Validation helper functions
+     */
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function isValidName(name) {
+        const nameRegex = /^[a-zA-Z\s\-']+$/;
+        return nameRegex.test(name) && name.length >= 2;
+    }
+    
+    function isValidPhone(phone) {
+        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+        return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
+    }
+    
+    function getFieldLabel(fieldName) {
+        const labels = {
+            'name': 'Full Name',
+            'email': 'Email Address',
+            'password': 'Password',
+            'country': 'Country',
+            'city': 'City',
+            'contact': 'Contact Number',
+            'terms': 'Terms and Conditions'
+        };
+        return labels[fieldName] || fieldName;
     }
     
     // Add CSS for field errors if not already present
@@ -214,10 +331,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
             }
             
-            .custom-checkbox.error + label {
-                color: #dc3545;
+            .password-strength {
+                margin-top: 8px;
+            }
+            
+            .strength-bar {
+                height: 4px;
+                background-color: #e9ecef;
+                border-radius: 2px;
+                transition: all 0.3s ease;
+                width: 0%;
+            }
+            
+            .strength-text {
+                font-size: 0.75rem;
+                color: #6c757d;
+                margin-top: 4px;
+                display: block;
             }
         `;
         document.head.appendChild(style);
     }
 });
+

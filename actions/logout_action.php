@@ -6,7 +6,6 @@
  */
 
 // Suppress error reporting to prevent code from showing
-$suppress_errors = true;
 error_reporting(0);
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);

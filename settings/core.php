@@ -18,6 +18,19 @@ define('APP_NAME', 'E-Commerce Platform');
 define('APP_VERSION', '1.0.0');
 define('APP_ENV', 'development'); // development, staging, production
 
+// Error reporting configuration
+if (APP_ENV === 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0); // Don't display errors on frontend
+    ini_set('display_startup_errors', 0);
+    ini_set('log_errors', 0); // Don't log errors to prevent output
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    ini_set('log_errors', 0);
+}
+
 // Path Configuration
 define('ROOT_PATH', dirname(__DIR__));
 define('PUBLIC_PATH', ROOT_PATH . '/public_html');
@@ -32,7 +45,7 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https:
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
 // Detect if we're on localhost or live server
-$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || php_sapi_name() === 'cli');
+$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
 if ($is_localhost) {
     // Local development (XAMPP)

@@ -5,6 +5,11 @@
  * User login form with modern design and AJAX functionality
  */
 
+// Suppress error reporting to prevent code from showing
+error_reporting(0);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+
 // Include core settings
 require_once __DIR__ . '/../../../settings/core.php';
 

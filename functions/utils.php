@@ -100,7 +100,7 @@ function create_slug($text) {
  * Check if user is logged in
  */
 function is_logged_in() {
-    if (session_status() == PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     
@@ -241,7 +241,11 @@ function log_activity($action, $description = '', $customer_id = null) {
     // For now, just log to PHP error log in development
     if (APP_ENV === 'development') {
         $log_message = "Activity: $action | User: $customer_id | IP: $ip_address | Description: $description";
+        // Only log to file, don't output to browser
+        $original_display_errors = ini_get('display_errors');
+        ini_set('display_errors', 0);
         error_log($log_message);
+        ini_set('display_errors', $original_display_errors);
     }
 }
 
