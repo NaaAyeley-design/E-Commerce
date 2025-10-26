@@ -259,8 +259,6 @@ function check_remember_me()
     return false;
 }
 
-}
-
 /**
  * Get all users (admin only)
  */

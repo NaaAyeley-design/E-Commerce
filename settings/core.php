@@ -145,20 +145,31 @@ function custom_error_handler($severity, $message, $file, $line) {
     $error_msg = "Error: [$severity] $message in $file on line $line";
     
     if (APP_ENV === 'development') {
-        // If the client expects JSON, return JSON error to avoid breaking API responses
+        // If the client expects JSON, return a minimal JSON error. Otherwise show a
+        // friendly error page. Never echo raw debug details to the frontend.
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $is_json = (strpos($accept, 'application/json') !== false) ||
                    (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
                    (isset($_POST['ajax']) || isset($_REQUEST['ajax']));
 
+        // Log the detailed error for developers
+        error_log($error_msg);
+
         if ($is_json) {
-            // Try to send JSON safely
             if (!headers_sent()) {
-                header('Content-Type: application/json');
+                header('Content-Type: application/json', true, 500);
             }
-            echo json_encode(['success' => false, 'error' => $error_msg]);
+            echo json_encode(['success' => false, 'message' => 'An internal server error occurred.']);
         } else {
-            echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
+            // For non-AJAX requests, show the generic 500 error page if available
+            if (!headers_sent()) {
+                http_response_code(500);
+                if (defined('VIEW_PATH') && file_exists(VIEW_PATH . '/error/500.php')) {
+                    include VIEW_PATH . '/error/500.php';
+                } else {
+                    echo "<h1>500 Internal Server Error</h1><p>An internal error occurred.</p>";
+                }
+            }
         }
     } else {
         error_log($error_msg);
@@ -176,6 +187,10 @@ function custom_exception_handler($exception) {
                  " on line " . $exception->getLine();
     
     if (APP_ENV === 'development') {
+        // Log exception details server-side
+        error_log($error_msg);
+        error_log($exception->getTraceAsString());
+
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $is_json = (strpos($accept, 'application/json') !== false) ||
                    (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
@@ -183,12 +198,18 @@ function custom_exception_handler($exception) {
 
         if ($is_json) {
             if (!headers_sent()) {
-                header('Content-Type: application/json');
+                header('Content-Type: application/json', true, 500);
             }
-            echo json_encode(['success' => false, 'exception' => $error_msg, 'trace' => $exception->getTraceAsString()]);
+            echo json_encode(['success' => false, 'message' => 'An internal server error occurred.']);
         } else {
-            echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
-            echo "<pre>" . $exception->getTraceAsString() . "</pre>";
+            if (!headers_sent()) {
+                http_response_code(500);
+                if (defined('VIEW_PATH') && file_exists(VIEW_PATH . '/error/500.php')) {
+                    include VIEW_PATH . '/error/500.php';
+                } else {
+                    echo "<h1>500 Internal Server Error</h1><p>An internal error occurred.</p>";
+                }
+            }
         }
     } else {
         error_log($error_msg);
