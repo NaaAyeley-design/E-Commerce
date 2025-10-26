@@ -3,8 +3,8 @@
  * User Management Page
  */
 
-require_once __DIR__ . '/../../settings/core.php';
-require_once __DIR__ . '/../../controller/user_controller.php';
+require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../../controller/user_controller.php';
 
 // Set page variables
 $page_title = 'User Management';
@@ -56,7 +56,7 @@ if (is_string($users)) {
 }
 
 // Include header
-include __DIR__ . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="container">
@@ -235,5 +235,5 @@ include __DIR__ . '/templates/header.php';
 
 <?php
 // Include footer
-include __DIR__ . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>

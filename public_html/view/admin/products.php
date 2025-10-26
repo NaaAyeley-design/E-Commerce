@@ -3,10 +3,10 @@
  * Product Management Page
  */
 
-require_once __DIR__ . '/../../settings/core.php';
-require_once __DIR__ . '/../../controller/product_controller.php';
-require_once __DIR__ . '/../../controller/category_controller.php';
-require_once __DIR__ . '/../../controller/brand_controller.php';
+require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../../controller/product_controller.php';
+require_once __DIR__ . '/../../../controller/category_controller.php';
+require_once __DIR__ . '/../../../controller/brand_controller.php';
 
 // Set page variables
 $page_title = 'Product Management';
@@ -71,7 +71,7 @@ if (!empty($categories)) {
 }
 
 // Include header
-include __DIR__ . '/templates/header.php';
+include __DIR__ . '/../templates/header.php';
 ?>
 
 <div class="container center-content">
@@ -303,5 +303,5 @@ include __DIR__ . '/templates/header.php';
 
 <?php
 // Include footer
-include __DIR__ . '/templates/footer.php';
+include __DIR__ . '/../templates/footer.php';
 ?>
