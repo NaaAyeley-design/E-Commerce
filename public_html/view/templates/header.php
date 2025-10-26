@@ -88,51 +88,31 @@
                                 <?php if (is_admin()): ?>
                                     <!-- Admin User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo url('view/admin/dashboard.php'); ?>" class="nav-link">
-                                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                                        <a href="<?php echo url('view/admin/categories.php'); ?>" class="nav-link">
+                                            <i class="fas fa-tags"></i> Category
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo url('view/admin/categories.php'); ?>" class="nav-link">
-                                            <i class="fas fa-tags"></i> Categories
+                                        <a href="<?php echo url('view/admin/brands.php'); ?>" class="nav-link">
+                                            <i class="fas fa-trademark"></i> Brand
                                         </a>
                                     </li>
-                                    <li class="nav-item dropdown">
-                                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                                            <i class="fas fa-user-shield"></i> <?php echo escape_html($_SESSION['user_name'] ?? $_SESSION['customer_name']); ?>
-                                            <i class="fas fa-chevron-down"></i>
+                                    <li class="nav-item">
+                                        <a href="<?php echo url('view/admin/products.php'); ?>" class="nav-link">
+                                            <i class="fas fa-plus-circle"></i> Add Product
                                         </a>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="<?php echo url('view/admin/profile.php'); ?>" class="dropdown-link">Admin Profile</a></li>
-                                            <li><a href="<?php echo url('view/admin/settings.php'); ?>" class="dropdown-link">Settings</a></li>
-                                            <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo url('../actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
-                                        </ul>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?php echo url('../actions/logout_action.php'); ?>" class="nav-link">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </a>
                                     </li>
                                 <?php else: ?>
                                     <!-- Regular User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo url('view/user/dashboard.php'); ?>" class="nav-link">
-                                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                                        <a href="<?php echo url('../actions/logout_action.php'); ?>" class="nav-link">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
                                         </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="<?php echo url('view/product/product_list.php'); ?>" class="nav-link">
-                                            <i class="fas fa-shopping-bag"></i> Products
-                                        </a>
-                                    </li>
-                                    <li class="nav-item dropdown">
-                                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                                            <i class="fas fa-user"></i> <?php echo escape_html($_SESSION['user_name'] ?? $_SESSION['customer_name']); ?>
-                                            <i class="fas fa-chevron-down"></i>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="<?php echo url('view/user/profile.php'); ?>" class="dropdown-link">Profile</a></li>
-                                            <li><a href="<?php echo url('view/order/order_history.php'); ?>" class="dropdown-link">Order History</a></li>
-                                            <li><a href="<?php echo url('view/user/settings.php'); ?>" class="dropdown-link">Settings</a></li>
-                                            <li class="dropdown-divider"></li>
-                                            <li><a href="<?php echo url('../actions/logout_action.php'); ?>" class="dropdown-link">Logout</a></li>
-                                        </ul>
                                     </li>
                                 <?php endif; ?>
                             <?php else: ?>

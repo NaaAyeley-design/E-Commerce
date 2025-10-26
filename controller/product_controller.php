@@ -2,529 +2,643 @@
 /**
  * Product Controller
  * 
- * Handles all product-related operations including product management,
- * categories, search, and inventory operations.
+ * Handles all product-related operations including CRUD functionality.
+ * Acts as an intermediary between the product class and the views/actions.
  */
 
-// Include core settings and general controller
+// Include core settings and product class
 require_once __DIR__ . '/../settings/core.php';
-require_once __DIR__ . '/general_controller.php';
+require_once __DIR__ . '/../class/product_class.php';
 
 /**
- * Get all products with pagination
+ * Add a new product.
+ *
+ * @param array $data Product data array containing:
+ *   - user_id (int): User ID who is creating the product
+ *   - cat_id (int): Category ID the product belongs to
+ *   - brand_id (int): Brand ID the product belongs to
+ *   - title (string): Product title/name
+ *   - price (float): Product price
+ *   - desc (string): Product description
+ *   - keyword (string): Product keywords for SEO
+ *   - image_path (string, optional): Main product image path
+ *   - sku (string, optional): Stock Keeping Unit
+ *   - compare_price (float, optional): Compare price
+ *   - cost_price (float, optional): Cost price
+ *   - stock_quantity (int, optional): Stock quantity
+ *   - weight (float, optional): Product weight
+ *   - dimensions (string, optional): Product dimensions
+ *   - meta_title (string, optional): SEO meta title
+ *   - meta_description (string, optional): SEO meta description
+ * @return string "success" or an error message.
  */
-function get_products_ctr($page = 1, $limit = 20, $category_id = null, $search = null) {
+function add_product_ctr($data) {
     try {
-        $product = new product_class();
-        
-        // Calculate pagination
-        $offset = ($page - 1) * $limit;
-        
-        if ($search) {
-            // Search products
-            $products = $product->search_products($search, $limit);
-            $total_products = count($products); // Simplified for now
-        } elseif ($category_id) {
-            // Get products by category
-            $products = $product->get_products_by_category($category_id, $limit, $offset);
-            $total_products = 100; // Placeholder - would need a count method
-        } else {
-            // Get all products
-            $products = $product->get_all_products($limit, $offset);
-            $total_products = 100; // Placeholder - would need a count method
-        }
-        
-        $pagination = get_paginated_results($total_products, $limit, $page);
-        
-        return [
-            'success' => true,
-            'products' => $products,
-            'pagination' => $pagination
-        ];
-        
-    } catch (Exception $e) {
-        error_log("Get products error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error retrieving products.'
-        ];
-    }
-}
-
-/**
- * Get single product by ID
- */
-function get_product_ctr($product_id) {
-    try {
-        if (!is_numeric($product_id) || $product_id <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid product ID.'
-            ];
-        }
-        
-        $product = new product_class();
-        $product_data = $product->get_product_by_id($product_id);
-        
-        if (!$product_data) {
-            return [
-                'success' => false,
-                'message' => 'Product not found.'
-            ];
-        }
-        
-        // Log product view
-        log_activity('product_viewed', "Product viewed: {$product_data['product_name']}", $_SESSION['customer_id'] ?? null);
-        
-        return [
-            'success' => true,
-            'product' => $product_data
-        ];
-        
-    } catch (Exception $e) {
-        error_log("Get product error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error retrieving product.'
-        ];
-    }
-}
-
-/**
- * Add new product (Admin only)
- */
-function add_product_ctr($name, $description, $price, $category_id, $image = null, $stock = 0) {
-    try {
-        // Check admin privileges
-        require_admin();
-        
-        // Validate input
-        $validation_rules = [
-            'name' => ['required' => true, 'max_length' => 200],
-            'description' => ['required' => true, 'max_length' => 1000],
-            'price' => ['required' => true],
-            'category_id' => ['required' => true],
-            'stock' => ['required' => true]
-        ];
-        
-        $data = compact('name', 'description', 'price', 'category_id', 'stock');
-        $errors = validate_form($data, $validation_rules);
-        
-        if (!empty($errors)) {
-            return [
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $errors
-            ];
-        }
-        
-        // Validate price and stock
-        $price_validation = validate_numeric($price, 0.01, null, 'Price');
-        if ($price_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $price_validation
-            ];
-        }
-        
-        $stock_validation = validate_numeric($stock, 0, null, 'Stock');
-        if ($stock_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $stock_validation
-            ];
-        }
-        
-        // Handle image upload if provided
-        $image_path = null;
-        if ($image && $image['size'] > 0) {
-            $upload_result = handle_file_upload($image, 'products/', ['jpg', 'jpeg', 'png']);
-            if (!$upload_result['success']) {
-                return [
-                    'success' => false,
-                    'message' => $upload_result['message']
-                ];
+        // Validate required fields
+        $required_fields = ['user_id', 'cat_id', 'brand_id', 'title', 'price', 'desc', 'keyword'];
+        foreach ($required_fields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                return ucfirst(str_replace('_', ' ', $field)) . " is required.";
             }
-            $image_path = $upload_result['filepath'];
+        }
+
+        // Validate user ID
+        if (!is_numeric($data['user_id'])) {
+            return "Invalid user ID.";
+        }
+
+        // Validate category ID
+        if (!is_numeric($data['cat_id'])) {
+            return "Invalid category ID.";
+        }
+
+        // Validate brand ID
+        if (!is_numeric($data['brand_id'])) {
+            return "Invalid brand ID.";
+        }
+
+        // Validate price
+        if (!is_numeric($data['price']) || $data['price'] < 0) {
+            return "Price must be a valid positive number.";
+        }
+
+        // Sanitize input
+        $data['title'] = trim($data['title']);
+        $data['desc'] = trim($data['desc']);
+        $data['keyword'] = trim($data['keyword']);
+        
+        // Validate product title length
+        if (strlen($data['title']) < 2) {
+            return "Product title must be at least 2 characters long.";
         }
         
+        if (strlen($data['title']) > 200) {
+            return "Product title must not exceed 200 characters.";
+        }
+
+        // Validate product title format (letters, numbers, spaces, hyphens, underscores, periods)
+        if (!preg_match('/^[a-zA-Z0-9\s\-_.]+$/', $data['title'])) {
+            return "Product title can only contain letters, numbers, spaces, hyphens, underscores, and periods.";
+        }
+
+        // Validate description length
+        if (strlen($data['desc']) < 10) {
+            return "Product description must be at least 10 characters long.";
+        }
+        
+        if (strlen($data['desc']) > 2000) {
+            return "Product description must not exceed 2000 characters.";
+        }
+
+        // Validate optional fields if provided
+        if (isset($data['compare_price']) && $data['compare_price'] !== '' && (!is_numeric($data['compare_price']) || $data['compare_price'] < 0)) {
+            return "Compare price must be a valid positive number.";
+        }
+
+        if (isset($data['cost_price']) && $data['cost_price'] !== '' && (!is_numeric($data['cost_price']) || $data['cost_price'] < 0)) {
+            return "Cost price must be a valid positive number.";
+        }
+
+        if (isset($data['stock_quantity']) && $data['stock_quantity'] !== '' && (!is_numeric($data['stock_quantity']) || $data['stock_quantity'] < 0)) {
+            return "Stock quantity must be a valid positive number.";
+        }
+
+        if (isset($data['weight']) && $data['weight'] !== '' && (!is_numeric($data['weight']) || $data['weight'] < 0)) {
+            return "Weight must be a valid positive number.";
+        }
+
+        // Validate meta fields if provided
+        if (isset($data['meta_title']) && strlen($data['meta_title']) > 200) {
+            return "Meta title must not exceed 200 characters.";
+        }
+
+        if (isset($data['meta_description']) && strlen($data['meta_description']) > 500) {
+            return "Meta description must not exceed 500 characters.";
+        }
+
         $product = new product_class();
-        $added = $product->add_product($name, $description, $price, $category_id, $image_path, $stock);
-        
-        if ($added) {
-            // Log product creation
-            log_activity('product_created', "Product created: $name", $_SESSION['customer_id']);
-            
-            return [
-                'success' => true,
-                'message' => 'Product added successfully.'
-            ];
-        } else {
-            // Delete uploaded image if product creation failed
-            if ($image_path) {
-                delete_file($image_path);
-            }
-            
-            return [
-                'success' => false,
-                'message' => 'Failed to add product.'
-            ];
-        }
-        
+
+        // Add the product
+        $result = $product->add_product(
+            $data['user_id'],
+            $data['cat_id'],
+            $data['brand_id'],
+            $data['title'],
+            $data['price'],
+            $data['desc'],
+            $data['keyword'],
+            $data['image_path'] ?? null,
+            $data['sku'] ?? null,
+            $data['compare_price'] ?? null,
+            $data['cost_price'] ?? null,
+            $data['stock_quantity'] ?? 0,
+            $data['weight'] ?? null,
+            $data['dimensions'] ?? null,
+            $data['meta_title'] ?? null,
+            $data['meta_description'] ?? null
+        );
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
         error_log("Add product error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error adding product.'
-        ];
+        return "An error occurred while adding the product.";
     }
 }
 
 /**
- * Update product (Admin only)
+ * Update a product.
+ *
+ * @param array $data Product data array containing:
+ *   - product_id (int): Product ID to update
+ *   - title (string): New product title
+ *   - price (float): New product price
+ *   - desc (string): New product description
+ *   - keyword (string): New product keywords
+ *   - image_path (string, optional): New main product image path
+ *   - user_id (int): User ID (for security)
+ *   - sku (string, optional): SKU
+ *   - compare_price (float, optional): Compare price
+ *   - cost_price (float, optional): Cost price
+ *   - stock_quantity (int, optional): Stock quantity
+ *   - weight (float, optional): Weight
+ *   - dimensions (string, optional): Dimensions
+ *   - meta_title (string, optional): Meta title
+ *   - meta_description (string, optional): Meta description
+ * @return string "success" or an error message.
  */
-function update_product_ctr($product_id, $name, $description, $price, $category_id, $stock) {
+function update_product_ctr($data) {
     try {
-        // Check admin privileges
-        require_admin();
+        // Validate required fields
+        $required_fields = ['product_id', 'title', 'price', 'desc', 'keyword', 'user_id'];
+        foreach ($required_fields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                return ucfirst(str_replace('_', ' ', $field)) . " is required.";
+            }
+        }
+
+        // Validate product ID
+        if (!is_numeric($data['product_id'])) {
+            return "Invalid product ID.";
+        }
+
+        // Validate user ID
+        if (!is_numeric($data['user_id'])) {
+            return "Invalid user ID.";
+        }
+
+        // Validate price
+        if (!is_numeric($data['price']) || $data['price'] < 0) {
+            return "Price must be a valid positive number.";
+        }
+
+        // Sanitize input
+        $data['title'] = trim($data['title']);
+        $data['desc'] = trim($data['desc']);
+        $data['keyword'] = trim($data['keyword']);
         
-        // Validate input
-        if (!is_numeric($product_id) || $product_id <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid product ID.'
-            ];
+        // Validate product title length
+        if (strlen($data['title']) < 2) {
+            return "Product title must be at least 2 characters long.";
         }
         
-        $validation_rules = [
-            'name' => ['required' => true, 'max_length' => 200],
-            'description' => ['required' => true, 'max_length' => 1000],
-            'price' => ['required' => true],
-            'category_id' => ['required' => true],
-            'stock' => ['required' => true]
-        ];
-        
-        $data = compact('name', 'description', 'price', 'category_id', 'stock');
-        $errors = validate_form($data, $validation_rules);
-        
-        if (!empty($errors)) {
-            return [
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $errors
-            ];
+        if (strlen($data['title']) > 200) {
+            return "Product title must not exceed 200 characters.";
+        }
+
+        // Validate product title format
+        if (!preg_match('/^[a-zA-Z0-9\s\-_.]+$/', $data['title'])) {
+            return "Product title can only contain letters, numbers, spaces, hyphens, underscores, and periods.";
+        }
+
+        // Validate description length
+        if (strlen($data['desc']) < 10) {
+            return "Product description must be at least 10 characters long.";
         }
         
-        // Validate price and stock
-        $price_validation = validate_numeric($price, 0.01, null, 'Price');
-        if ($price_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $price_validation
-            ];
+        if (strlen($data['desc']) > 2000) {
+            return "Product description must not exceed 2000 characters.";
         }
-        
-        $stock_validation = validate_numeric($stock, 0, null, 'Stock');
-        if ($stock_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $stock_validation
-            ];
+
+        // Validate optional fields if provided
+        if (isset($data['compare_price']) && $data['compare_price'] !== '' && (!is_numeric($data['compare_price']) || $data['compare_price'] < 0)) {
+            return "Compare price must be a valid positive number.";
         }
-        
+
+        if (isset($data['cost_price']) && $data['cost_price'] !== '' && (!is_numeric($data['cost_price']) || $data['cost_price'] < 0)) {
+            return "Cost price must be a valid positive number.";
+        }
+
+        if (isset($data['stock_quantity']) && $data['stock_quantity'] !== '' && (!is_numeric($data['stock_quantity']) || $data['stock_quantity'] < 0)) {
+            return "Stock quantity must be a valid positive number.";
+        }
+
+        if (isset($data['weight']) && $data['weight'] !== '' && (!is_numeric($data['weight']) || $data['weight'] < 0)) {
+            return "Weight must be a valid positive number.";
+        }
+
+        // Validate meta fields if provided
+        if (isset($data['meta_title']) && strlen($data['meta_title']) > 200) {
+            return "Meta title must not exceed 200 characters.";
+        }
+
+        if (isset($data['meta_description']) && strlen($data['meta_description']) > 500) {
+            return "Meta description must not exceed 500 characters.";
+        }
+
         $product = new product_class();
-        $updated = $product->update_product($product_id, $name, $description, $price, $category_id, $stock);
-        
-        if ($updated) {
-            // Log product update
-            log_activity('product_updated', "Product updated: $name", $_SESSION['customer_id']);
-            
-            return [
-                'success' => true,
-                'message' => 'Product updated successfully.'
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Failed to update product.'
-            ];
-        }
-        
+
+        // Update the product
+        $result = $product->update_product(
+            $data['product_id'],
+            $data['title'],
+            $data['price'],
+            $data['desc'],
+            $data['keyword'],
+            $data['image_path'] ?? null,
+            $data['user_id'],
+            $data['sku'] ?? null,
+            $data['compare_price'] ?? null,
+            $data['cost_price'] ?? null,
+            $data['stock_quantity'] ?? null,
+            $data['weight'] ?? null,
+            $data['dimensions'] ?? null,
+            $data['meta_title'] ?? null,
+            $data['meta_description'] ?? null
+        );
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
         error_log("Update product error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error updating product.'
-        ];
+        return "An error occurred while updating the product.";
     }
 }
 
 /**
- * Delete product (Admin only)
+ * Get all products for a specific user.
+ *
+ * @param int $user_id User ID.
+ * @param int $limit Optional limit for pagination.
+ * @param int $offset Optional offset for pagination.
+ * @return array|string Array of products on success, error message on failure.
  */
-function delete_product_ctr($product_id) {
+function fetch_products_ctr($user_id, $limit = 50, $offset = 0) {
     try {
-        // Check admin privileges
-        require_admin();
-        
-        if (!is_numeric($product_id) || $product_id <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid product ID.'
-            ];
+        // Validate input
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
         }
-        
+
         $product = new product_class();
-        
-        // Get product data before deletion (for logging)
-        $product_data = $product->get_product_by_id($product_id);
-        if (!$product_data) {
-            return [
-                'success' => false,
-                'message' => 'Product not found.'
-            ];
+        return $product->get_products_by_user($user_id, $limit, $offset);
+    } catch (Exception $e) {
+        error_log("Fetch products error: " . $e->getMessage());
+        return "An error occurred while fetching products.";
+    }
+}
+
+/**
+ * Get a single product by ID.
+ *
+ * @param int $product_id Product ID.
+ * @param int $user_id User ID (for security).
+ * @return array|string Product data on success, error message on failure.
+ */
+function get_product_ctr($product_id, $user_id) {
+    try {
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
         }
-        
-        $deleted = $product->delete_product($product_id);
-        
-        if ($deleted) {
-            // Delete product image if exists
-            if (!empty($product_data['product_image'])) {
-                delete_file($product_data['product_image']);
-            }
-            
-            // Log product deletion
-            log_activity('product_deleted', "Product deleted: {$product_data['product_name']}", $_SESSION['customer_id']);
-            
-            return [
-                'success' => true,
-                'message' => 'Product deleted successfully.'
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Failed to delete product.'
-            ];
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
         }
+
+        $product = new product_class();
+        $result = $product->get_product_by_id($product_id, $user_id);
         
+        return $result ? $result : "Product not found.";
+    } catch (Exception $e) {
+        error_log("Get product error: " . $e->getMessage());
+        return "An error occurred while fetching the product.";
+    }
+}
+
+/**
+ * Delete a product.
+ *
+ * @param int $product_id Product ID.
+ * @param int $user_id User ID (for security).
+ * @return string "success" or an error message.
+ */
+function delete_product_ctr($product_id, $user_id) {
+    try {
+        // Validate input
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
+        }
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
+        }
+
+        $product = new product_class();
+
+        // Delete the product
+        $result = $product->delete_product($product_id, $user_id);
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
         error_log("Delete product error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error deleting product.'
-        ];
+        return "An error occurred while deleting the product.";
     }
 }
 
 /**
- * Search products
+ * Get products by category for a specific user.
+ *
+ * @param int $user_id User ID.
+ * @param int $cat_id Category ID.
+ * @return array|string Array of products on success, error message on failure.
  */
-function search_products_ctr($search_term, $limit = 20) {
+function get_products_by_category_ctr($user_id, $cat_id) {
     try {
-        $search_result = handle_search($search_term, 'products');
-        if (!$search_result['success']) {
-            return $search_result;
+        // Validate input
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
         }
-        
+
+        if (empty($cat_id) || !is_numeric($cat_id)) {
+            return "Invalid category ID.";
+        }
+
         $product = new product_class();
-        $products = $product->search_products($search_term, $limit);
-        
-        return [
-            'success' => true,
-            'products' => $products,
-            'search_term' => $search_term,
-            'total_results' => count($products)
-        ];
-        
+        return $product->get_products_by_category($user_id, $cat_id);
+    } catch (Exception $e) {
+        error_log("Get products by category error: " . $e->getMessage());
+        return "An error occurred while fetching products for the category.";
+    }
+}
+
+/**
+ * Get products by brand for a specific user.
+ *
+ * @param int $user_id User ID.
+ * @param int $brand_id Brand ID.
+ * @return array|string Array of products on success, error message on failure.
+ */
+function get_products_by_brand_ctr($user_id, $brand_id) {
+    try {
+        // Validate input
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
+        }
+
+        if (empty($brand_id) || !is_numeric($brand_id)) {
+            return "Invalid brand ID.";
+        }
+
+        $product = new product_class();
+        return $product->get_products_by_brand($user_id, $brand_id);
+    } catch (Exception $e) {
+        error_log("Get products by brand error: " . $e->getMessage());
+        return "An error occurred while fetching products for the brand.";
+    }
+}
+
+/**
+ * Search products by name for a specific user.
+ *
+ * @param string $search_term Search term.
+ * @param int $user_id User ID.
+ * @param int $limit Optional limit for results.
+ * @return array|string Array of products on success, error message on failure.
+ */
+function search_products_ctr($search_term, $user_id, $limit = 20) {
+    try {
+        if (empty($search_term)) {
+            return fetch_products_ctr($user_id, $limit);
+        }
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
+        }
+
+        $product = new product_class();
+        return $product->search_products($search_term, $user_id, $limit);
     } catch (Exception $e) {
         error_log("Search products error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error searching products.'
-        ];
+        return "An error occurred while searching products.";
     }
 }
 
 /**
- * Check product availability
+ * Get product count for a user.
+ *
+ * @param int $user_id User ID.
+ * @return int|string Product count on success, error message on failure.
  */
-function check_product_availability_ctr($product_id, $quantity = 1) {
+function get_product_count_ctr($user_id) {
     try {
-        if (!is_numeric($product_id) || $product_id <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid product ID.'
-            ];
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
         }
-        
-        if (!is_numeric($quantity) || $quantity <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid quantity.'
-            ];
-        }
-        
+
         $product = new product_class();
-        $available = $product->is_available($product_id, $quantity);
-        
-        return [
-            'success' => true,
-            'available' => $available,
-            'product_id' => $product_id,
-            'requested_quantity' => $quantity
-        ];
-        
+        return $product->count_products_by_user($user_id);
     } catch (Exception $e) {
-        error_log("Check availability error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error checking product availability.'
-        ];
+        error_log("Get product count error: " . $e->getMessage());
+        return "An error occurred while counting products.";
     }
 }
 
 /**
- * Update product stock (Admin only)
+ * Toggle product active status.
+ *
+ * @param int $product_id Product ID.
+ * @param int $user_id User ID (for security).
+ * @param int $is_active 1 for active, 0 for inactive.
+ * @return string "success" or an error message.
  */
-function update_product_stock_ctr($product_id, $new_stock) {
+function toggle_product_status_ctr($product_id, $user_id, $is_active) {
     try {
-        // Check admin privileges
-        require_admin();
-        
-        if (!is_numeric($product_id) || $product_id <= 0) {
-            return [
-                'success' => false,
-                'message' => 'Invalid product ID.'
-            ];
+        // Validate input
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
         }
-        
-        $stock_validation = validate_numeric($new_stock, 0, null, 'Stock');
-        if ($stock_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $stock_validation
-            ];
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
         }
-        
+
+        if (!in_array($is_active, [0, 1])) {
+            return "Invalid status value. Must be 0 or 1.";
+        }
+
         $product = new product_class();
-        $updated = $product->update_stock($product_id, $new_stock);
-        
-        if ($updated) {
-            // Log stock update
-            log_activity('stock_updated', "Stock updated for product ID: $product_id to $new_stock", $_SESSION['customer_id']);
-            
-            return [
-                'success' => true,
-                'message' => 'Stock updated successfully.',
-                'new_stock' => $new_stock
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Failed to update stock.'
-            ];
-        }
-        
+
+        // Toggle product status
+        $result = $product->toggle_product_status($product_id, $user_id, $is_active);
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
-        error_log("Update stock error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error updating stock.'
-        ];
+        error_log("Toggle product status error: " . $e->getMessage());
+        return "An error occurred while updating product status.";
     }
 }
 
 /**
- * Get featured products
+ * Toggle product featured status.
+ *
+ * @param int $product_id Product ID.
+ * @param int $user_id User ID (for security).
+ * @param int $is_featured 1 for featured, 0 for not featured.
+ * @return string "success" or an error message.
  */
-function get_featured_products_ctr($limit = 8) {
+function toggle_product_featured_ctr($product_id, $user_id, $is_featured) {
     try {
+        // Validate input
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
+        }
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return "Invalid user ID.";
+        }
+
+        if (!in_array($is_featured, [0, 1])) {
+            return "Invalid featured value. Must be 0 or 1.";
+        }
+
         $product = new product_class();
-        
-        // For now, just get the latest products
-        // In the future, this could be based on a 'featured' flag in the database
-        $products = $product->get_all_products($limit, 0);
-        
-        return [
-            'success' => true,
-            'products' => $products
-        ];
-        
+
+        // Toggle product featured status
+        $result = $product->toggle_product_featured($product_id, $user_id, $is_featured);
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
-        error_log("Get featured products error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error retrieving featured products.'
-        ];
+        error_log("Toggle product featured error: " . $e->getMessage());
+        return "An error occurred while updating product featured status.";
     }
 }
 
 /**
- * Get product categories (placeholder for future implementation)
+ * Add a product image.
+ *
+ * @param int $product_id Product ID.
+ * @param string $file_path Image file path.
+ * @param bool $is_primary Whether this is the primary image.
+ * @param string $image_alt Optional alt text.
+ * @param string $image_title Optional title.
+ * @param int $sort_order Optional sort order.
+ * @return string "success" or an error message.
  */
-function get_product_categories_ctr() {
+function add_product_image_ctr($product_id, $file_path, $is_primary = false, $image_alt = null, $image_title = null, $sort_order = 0) {
     try {
-        // Placeholder categories - in the future, this would come from a categories table
-        $categories = [
-            ['id' => 1, 'name' => 'Electronics', 'description' => 'Electronic devices and gadgets'],
-            ['id' => 2, 'name' => 'Clothing', 'description' => 'Fashion and apparel'],
-            ['id' => 3, 'name' => 'Home & Garden', 'description' => 'Home improvement and garden supplies'],
-            ['id' => 4, 'name' => 'Books', 'description' => 'Books and educational materials'],
-            ['id' => 5, 'name' => 'Sports', 'description' => 'Sports equipment and accessories']
-        ];
-        
-        return [
-            'success' => true,
-            'categories' => $categories
-        ];
-        
+        // Validate input
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
+        }
+
+        if (empty($file_path)) {
+            return "File path is required.";
+        }
+
+        $product = new product_class();
+
+        // Add the product image
+        $result = $product->add_product_image($product_id, $file_path, $is_primary, $image_alt, $image_title, $sort_order);
+
+        return $result['success'] ? "success" : $result['message'];
+
     } catch (Exception $e) {
-        error_log("Get categories error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error retrieving categories.'
-        ];
+        error_log("Add product image error: " . $e->getMessage());
+        return "An error occurred while adding the product image.";
     }
 }
 
 /**
- * Get products by price range
+ * Get product images.
+ *
+ * @param int $product_id Product ID.
+ * @return array|string Array of images on success, error message on failure.
  */
-function get_products_by_price_range_ctr($min_price, $max_price, $limit = 20) {
+function get_product_images_ctr($product_id) {
     try {
-        $min_validation = validate_numeric($min_price, 0, null, 'Minimum price');
-        if ($min_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $min_validation
-            ];
+        if (empty($product_id) || !is_numeric($product_id)) {
+            return "Invalid product ID.";
         }
-        
-        $max_validation = validate_numeric($max_price, $min_price, null, 'Maximum price');
-        if ($max_validation !== true) {
-            return [
-                'success' => false,
-                'message' => $max_validation
-            ];
-        }
-        
-        // This would require a method in product_class to filter by price range
-        // For now, return a placeholder response
-        return [
-            'success' => true,
-            'products' => [],
-            'min_price' => $min_price,
-            'max_price' => $max_price,
-            'message' => 'Price range filtering not yet implemented.'
-        ];
-        
+
+        $product = new product_class();
+        return $product->get_product_images($product_id);
     } catch (Exception $e) {
-        error_log("Get products by price range error: " . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Error filtering products by price range.'
-        ];
+        error_log("Get product images error: " . $e->getMessage());
+        return "An error occurred while fetching product images.";
     }
+}
+
+/**
+ * Validate product data.
+ *
+ * @param array $data Product data array.
+ * @return array Array with 'valid' boolean and 'errors' array.
+ */
+function validate_product_data($data) {
+    $errors = [];
+    
+    // Check required fields
+    $required_fields = ['title', 'price', 'desc', 'keyword'];
+    foreach ($required_fields as $field) {
+        if (!isset($data[$field]) || empty($data[$field])) {
+            $errors[] = ucfirst(str_replace('_', ' ', $field)) . " is required.";
+        }
+    }
+    
+    // Validate title if provided
+    if (isset($data['title']) && !empty($data['title'])) {
+        $title = trim($data['title']);
+        
+        if (strlen($title) < 2) {
+            $errors[] = "Product title must be at least 2 characters long.";
+        }
+        
+        if (strlen($title) > 200) {
+            $errors[] = "Product title must not exceed 200 characters.";
+        }
+        
+        if (!preg_match('/^[a-zA-Z0-9\s\-_.]+$/', $title)) {
+            $errors[] = "Product title can only contain letters, numbers, spaces, hyphens, underscores, and periods.";
+        }
+    }
+    
+    // Validate description if provided
+    if (isset($data['desc']) && !empty($data['desc'])) {
+        $desc = trim($data['desc']);
+        
+        if (strlen($desc) < 10) {
+            $errors[] = "Product description must be at least 10 characters long.";
+        }
+        
+        if (strlen($desc) > 2000) {
+            $errors[] = "Product description must not exceed 2000 characters.";
+        }
+    }
+    
+    // Validate price if provided
+    if (isset($data['price']) && $data['price'] !== '') {
+        if (!is_numeric($data['price']) || $data['price'] < 0) {
+            $errors[] = "Price must be a valid positive number.";
+        }
+    }
+    
+    return [
+        'valid' => empty($errors),
+        'errors' => $errors
+    ];
 }
 
 ?>
