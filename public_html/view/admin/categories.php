@@ -3,8 +3,8 @@
  * Category Management Page
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/category_controller.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/category_controller.php';
 
 // Set page variables
 $page_title = 'Category Management';
@@ -85,7 +85,7 @@ if (is_string($categories)) {
 }
 
 // Include header
-include __DIR__ . '/../templates/header.php';
+include __DIR__ . '/../../view/templates/header.php';
 ?>
 
 <div class="container">
@@ -221,5 +221,5 @@ document.addEventListener('keypress', function(e) {
 
 <?php
 // Include footer
-include __DIR__ . '/../templates/footer.php';
+include __DIR__ . '/../../view/templates/footer.php';
 ?>
