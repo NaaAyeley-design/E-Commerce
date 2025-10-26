@@ -22,6 +22,14 @@ $additional_css = ['login.css']; // Custom login page styles
 
 // Include header
 include __DIR__ . '/../templates/header.php';
+// Development debug: show BASE_URL and ASSETS_URL when in development
+if (defined('APP_ENV') && APP_ENV === 'development') {
+    echo "<div style='background:#fff7c2;border:1px solid #f0e1a0;padding:8px;margin:8px 0;font-family:monospace;'>";
+    echo "<strong>DEBUG:</strong> BASE_URL=" . htmlspecialchars(BASE_URL) . "<br>";
+    echo "<strong>DEBUG:</strong> ASSETS_URL=" . htmlspecialchars(ASSETS_URL) . "<br>";
+    echo "<strong>CSS link (header_footer.css):</strong> " . htmlspecialchars(ASSETS_URL . '/css/header_footer.css') . "<br>";
+    echo "</div>";
+}
 ?>
 
 <div class="auth-container login-container">
