@@ -197,25 +197,25 @@ class user_class extends db_class {
         
         return $this->fetchAll($sql, [$search_term, $search_term, $limit]);
     }
-}
 
-/**
- * Update customer status (active/inactive)
- */
-public function update_customer_status($customer_id, $status) {
-    try {
-        $sql = "UPDATE customer SET is_active = ? WHERE customer_id = ?";
-        $stmt = $this->execute($sql, [$status, $customer_id]);
-        
-        if ($stmt && $stmt->rowCount() > 0) {
-            return true;
+    /**
+     * Update customer status (active/inactive)
+     */
+    public function update_customer_status($customer_id, $status) {
+        try {
+            $sql = "UPDATE customer SET is_active = ? WHERE customer_id = ?";
+            $stmt = $this->execute($sql, [$status, $customer_id]);
+            
+            if ($stmt && $stmt->rowCount() > 0) {
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception $e) {
+            error_log("Update customer status error: " . $e->getMessage());
+            return false;
         }
-        
-        return false;
-        
-    } catch (Exception $e) {
-        error_log("Update customer status error: " . $e->getMessage());
-        return false;
     }
 }
 
