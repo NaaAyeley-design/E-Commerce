@@ -199,4 +199,24 @@ class user_class extends db_class {
     }
 }
 
+/**
+ * Update customer status (active/inactive)
+ */
+public function update_customer_status($customer_id, $status) {
+    try {
+        $sql = "UPDATE customer SET is_active = ? WHERE customer_id = ?";
+        $stmt = $this->execute($sql, [$status, $customer_id]);
+        
+        if ($stmt && $stmt->rowCount() > 0) {
+            return true;
+        }
+        
+        return false;
+        
+    } catch (Exception $e) {
+        error_log("Update customer status error: " . $e->getMessage());
+        return false;
+    }
+}
+
 ?>

@@ -100,9 +100,21 @@ include __DIR__ . '/../templates/header.php';
                 </div>
                 <div class="action-title">Product Management</div>
                 <div class="action-description">Add, edit, and manage products in your inventory.</div>
-                <a href="#" class="action-button">
+                <a href="<?php echo BASE_URL; ?>/view/admin/products.php" class="action-button">
                     <i class="fas fa-arrow-right"></i>
                     Manage Products
+                </a>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-trademark"></i>
+                </div>
+                <div class="action-title">Brand Management</div>
+                <div class="action-description">Add, edit, and manage product brands for your store.</div>
+                <a href="<?php echo BASE_URL; ?>/view/admin/brands.php" class="action-button">
+                    <i class="fas fa-arrow-right"></i>
+                    Manage Brands
                 </a>
             </div>
             
@@ -112,21 +124,9 @@ include __DIR__ . '/../templates/header.php';
                 </div>
                 <div class="action-title">User Management</div>
                 <div class="action-description">View and manage user accounts and permissions.</div>
-                <a href="#" class="action-button">
+                <a href="<?php echo BASE_URL; ?>/view/admin/users.php" class="action-button">
                     <i class="fas fa-arrow-right"></i>
                     Manage Users
-                </a>
-            </div>
-            
-            <div class="action-card">
-                <div class="action-icon">
-                    <i class="fas fa-chart-bar"></i>
-                </div>
-                <div class="action-title">Analytics</div>
-                <div class="action-description">View sales reports and platform analytics.</div>
-                <a href="#" class="action-button">
-                    <i class="fas fa-arrow-right"></i>
-                    View Analytics
                 </a>
             </div>
         </div>

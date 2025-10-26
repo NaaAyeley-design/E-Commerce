@@ -259,6 +259,72 @@ function check_remember_me()
     return false;
 }
 
+}
+
+/**
+ * Get all users (admin only)
+ */
+function get_all_users_ctr($admin_user_id) {
+    try {
+        // Verify admin access
+        if (!is_admin()) {
+            return "Admin access required.";
+        }
+        
+        $user = new user_class();
+        $users = $user->get_all_customers();
+        
+        if ($users === false) {
+            return "Failed to retrieve users.";
+        }
+        
+        return $users;
+        
+    } catch (Exception $e) {
+        error_log("Get all users error: " . $e->getMessage());
+        return "An error occurred while retrieving users.";
+    }
+}
+
+/**
+ * Toggle user status (admin only)
+ */
+function toggle_user_status_ctr($target_user_id, $admin_user_id) {
+    try {
+        // Verify admin access
+        if (!is_admin()) {
+            return "Admin access required.";
+        }
+        
+        // Prevent self-modification
+        if ($target_user_id == $admin_user_id) {
+            return "Cannot modify your own account.";
+        }
+        
+        $user = new user_class();
+        
+        // Get current user status
+        $current_user = $user->get_customer_by_id($target_user_id);
+        if (!$current_user) {
+            return "User not found.";
+        }
+        
+        // Toggle status
+        $new_status = $current_user['is_active'] ? 0 : 1;
+        $result = $user->update_customer_status($target_user_id, $new_status);
+        
+        if ($result) {
+            return "success";
+        } else {
+            return "Failed to update user status.";
+        }
+        
+    } catch (Exception $e) {
+        error_log("Toggle user status error: " . $e->getMessage());
+        return "An error occurred while updating user status.";
+    }
+}
+
 // Auto-check remember me
 check_remember_me();
 ?>
