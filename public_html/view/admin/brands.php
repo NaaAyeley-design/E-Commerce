@@ -48,34 +48,12 @@ if (!empty($categories)) {
         }
     }
 }
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css">
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/brands.css">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <a href="<?php echo BASE_URL; ?>/public/index.php" class="navbar-brand">
-                E-Commerce Platform
-            </a>
-            
-            <ul class="nav-menu">
-                <li><a href="<?php echo BASE_URL; ?>/view/admin/dashboard.php" class="nav-link">Dashboard</a></li>
-                <li><a href="<?php echo BASE_URL; ?>/view/admin/categories.php" class="nav-link">Categories</a></li>
-                <li><a href="<?php echo BASE_URL; ?>/view/admin/brands.php" class="nav-link active">Brands</a></li>
-                <li><a href="<?php echo BASE_URL; ?>/../actions/logout_action.php" class="nav-link">Logout (<?php echo escape_html($_SESSION['user_name'] ?? $_SESSION['customer_name']); ?>)</a></li>
-            </ul>
-        </div>
-    </nav>
 
-    <div class="container center-content">
+// Include header
+include __DIR__ . '/templates/header.php';
+?>
+
+<div class="container center-content">
         <h1>Brand Management</h1>
         
         <!-- Messages -->
@@ -216,5 +194,8 @@ if (!empty($categories)) {
 
     <!-- JavaScript -->
     <script src="<?php echo ASSETS_URL; ?>/js/brands.js"></script>
-</body>
-</html>
+
+<?php
+// Include footer
+include __DIR__ . '/templates/footer.php';
+?>
