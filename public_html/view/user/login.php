@@ -22,15 +22,7 @@ $additional_css = ['login.css']; // Custom login page styles
 
 // Include header
 include __DIR__ . '/../templates/header.php';
-// Development debug: show BASE_URL and ASSETS_URL when in development
-if (defined('APP_ENV') && APP_ENV === 'development') {
-    // Fixed-position debug box so it doesn't affect flex centering layout
-    echo "<div style='position:fixed;top:10px;left:10px;right:10px;z-index:2000;background:#fff7c2;border:1px solid #f0e1a0;padding:8px;font-family:monospace;border-radius:6px;'>";
-    echo "<strong>DEBUG:</strong> BASE_URL=" . htmlspecialchars(BASE_URL) . " &nbsp; ";
-    echo "<strong>ASSETS_URL:</strong> " . htmlspecialchars(ASSETS_URL) . "<br>";
-    echo "CSS link (header_footer.css): " . htmlspecialchars(ASSETS_URL . '/css/header_footer.css') . "";
-    echo "</div>";
-}
+// Debug banner removed — keep page clean for production/development UI
 ?>
 
 <div class="auth-container login-container">

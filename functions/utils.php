@@ -220,6 +220,14 @@ function delete_file($filepath) {
  * Send JSON response
  */
 function json_response($data, $status_code = 200) {
+    // Clean up any accidental output that may have been sent earlier
+    if (ob_get_length() !== false && ob_get_length() > 0) {
+        // Capture and log a truncated version of the unexpected output for debugging
+        $prev = ob_get_clean();
+        // Keep logging minimal to avoid exposing sensitive data
+        error_log("Discarded unexpected output before JSON response: " . substr($prev, 0, 1000));
+    }
+
     http_response_code($status_code);
     header('Content-Type: application/json');
     echo json_encode($data);

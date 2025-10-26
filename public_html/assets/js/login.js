@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Submit form via AJAX
         fetch(loginForm.action, {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Ensure credentials (cookies) are sent and accepted for same-origin
+            credentials: 'same-origin'
         })
         .then(response => response.text())
         .then(text => {
