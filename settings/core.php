@@ -56,10 +56,20 @@ if ($doc_root && $public_path_norm && strpos($public_path_norm, $doc_root) === 0
 }
 
 // Fallback: if we couldn't compute via document root, try a sensible default
+// Fallback: if we couldn't compute via document root, try to infer PUBLIC_PATH from the
+// current script path (useful on shared hosts with ~username in the URL).
 if (empty($web_path) || $web_path === '/') {
-    // Try to infer from script name
-    $script_dir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/\\');
-    $web_path = $script_dir ?: '/';
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
+    // Prefer to extract up to /public_html if present in the script path
+    $needle = '/public_html';
+    $pos = strpos($script_name, $needle);
+    if ($pos !== false) {
+        $web_path = substr($script_name, 0, $pos + strlen($needle));
+    } else {
+        // Fallback to the script directory
+        $script_dir = rtrim(dirname($script_name), '/\\');
+        $web_path = $script_dir ?: '/';
+    }
 }
 
 // (Keep web_path as-is. Do not strip /public_html — public path should reflect the actual document root location.)
