@@ -6,7 +6,7 @@
  */
 
 // Include core settings and user controller
-// require_once __DIR__ . '/../settings/core.php';
+require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 
 header('Content-Type: application/json');
@@ -63,7 +63,7 @@ try {
         exit;
     }
 
-    // Attempt registration
+    // Attempt registration (do NOT log or echo passwords)
     $result = register_user_ctr($name, $email, $password, $country, $city, $contact);
 
     if ($result === 'success') {
@@ -73,11 +73,15 @@ try {
             'redirect' => url('view/user/login.php')
         ]);
     } else {
+        // Log the failure reason for debugging (non-sensitive)
+        error_log("Registration failed for {$email}: " . $result);
         echo json_encode(['success' => false, 'message' => $result]);
     }
 
 } catch (Exception $e) {
-    error_log("Registration error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'An error occurred during registration. Please try again.']);
+    // Log detailed exception for server-side debugging (stack trace only in logs)
+    error_log("Registration exception for {$email}: " . $e->getMessage());
+    error_log($e->getTraceAsString());
+    echo json_encode(['success' => false, 'message' => 'An internal error occurred during registration. Please try again later.']);
 }
 ?>

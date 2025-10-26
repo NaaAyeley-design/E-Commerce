@@ -47,7 +47,7 @@ try {
 
     // Attempt login
     $result = login_user_ctr($email, $password, $remember);
-    
+
     if ($result === "success") {
         // Determine redirect URL based on user role
         $redirect_url = url('view/user/dashboard.php');
@@ -63,13 +63,17 @@ try {
         echo json_encode($response);
         exit;
     } else {
+        // Log failed attempt for debugging (do not include password)
+        error_log("Login failed for {$email}: " . $result);
         // Always return JSON error
         echo json_encode(['success' => false, 'message' => $result]);
         exit;
     }
 
 } catch (Exception $e) {
-    error_log("Login error: " . $e->getMessage());
-    $message = "An error occurred during login. Please try again.";
+    // Log exception details for server-side debugging
+    error_log("Login exception for {$email}: " . $e->getMessage());
+    error_log($e->getTraceAsString());
+    $message = "An internal error occurred during login. Please try again later.";
     echo json_encode(['success' => false, 'message' => $message]);
 }
