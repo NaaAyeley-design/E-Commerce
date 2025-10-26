@@ -206,7 +206,7 @@ function handleAddBrand(e) {
     
     showLoading();
     
-    fetch('../../actions/add_brand_action.php', {
+    fetch('actions/add_brand_action.php', {
         method: 'POST',
         body: formData
     })
@@ -290,7 +290,7 @@ function handleUpdateBrand(e) {
     
     showLoading();
     
-    fetch('../../actions/update_brand_action.php', {
+    fetch('actions/update_brand_action.php', {
         method: 'POST',
         body: formData
     })
@@ -333,7 +333,7 @@ function handleDeleteBrand(e) {
             
             showLoading();
             
-            fetch('../../actions/delete_brand_action.php', {
+            fetch('actions/delete_brand_action.php', {
                 method: 'POST',
                 body: formData
             })
@@ -367,7 +367,7 @@ function handleDeleteBrand(e) {
 function loadBrandsData() {
     showLoading();
     
-    fetch('../../actions/fetch_brand_action.php?ajax=1')
+    fetch('actions/fetch_brand_action.php?ajax=1')
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

@@ -344,7 +344,7 @@ function uploadProductImages(imageFiles, isEdit) {
         
         showLoading();
         
-        fetch('../../actions/upload_product_image_action.php', {
+        fetch('actions/upload_product_image_action.php', {
             method: 'POST',
             body: formData
         })
@@ -403,7 +403,7 @@ function uploadProductImage(imageFile, isEdit) {
         
         showLoading();
         
-        fetch('../../actions/upload_product_image_action.php', {
+        fetch('actions/upload_product_image_action.php', {
             method: 'POST',
             body: formData
         })
@@ -449,7 +449,7 @@ function validateImageFile(file) {
 }
 
 function submitProductForm(formData, isEdit) {
-    const actionUrl = isEdit ? '../../actions/update_product_action.php' : '../../actions/add_product_action.php';
+    const actionUrl = isEdit ? 'actions/update_product_action.php' : 'actions/add_product_action.php';
     
     showLoading();
     
@@ -508,7 +508,7 @@ function handleEditProduct(e) {
 }
 
 function fetchProductData(productId) {
-    return fetch(`../../actions/get_product_action.php?product_id=${productId}&ajax=1`)
+    return fetch(`actions/get_product_action.php?product_id=${productId}&ajax=1`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -592,7 +592,7 @@ function handleDeleteProduct(e) {
             
             showLoading();
             
-            fetch('../../actions/delete_product_action.php', {
+            fetch('actions/delete_product_action.php', {
                 method: 'POST',
                 body: formData
             })
@@ -764,7 +764,7 @@ function handleCategoryChange(e) {
 function loadProductsData() {
     showLoading();
     
-    fetch('../../actions/fetch_products_action.php?ajax=1')
+    fetch('actions/fetch_products_action.php?ajax=1')
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

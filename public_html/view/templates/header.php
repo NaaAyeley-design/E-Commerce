@@ -103,14 +103,14 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo url('../actions/logout_action.php'); ?>" class="nav-link">
+                                        <a href="<?php echo url('actions/logout_action.php'); ?>" class="nav-link">
                                             <i class="fas fa-sign-out-alt"></i> Logout
                                         </a>
                                     </li>
                                 <?php else: ?>
                                     <!-- Regular User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo url('../actions/logout_action.php'); ?>" class="nav-link">
+                                        <a href="<?php echo url('actions/logout_action.php'); ?>" class="nav-link">
                                             <i class="fas fa-sign-out-alt"></i> Logout
                                         </a>
                                     </li>
