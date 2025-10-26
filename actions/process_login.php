@@ -8,7 +8,7 @@
 header('Content-Type: application/json');
 
 // Include core settings and user controller
-// require_once __DIR__ . '/../settings/core.php';
+require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 
 // Only process POST requests
