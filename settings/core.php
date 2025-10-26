@@ -41,25 +41,32 @@ define('ASSETS_PATH', PUBLIC_PATH . '/assets');
 define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 
 // URL Configuration
+// Build BASE_URL and ASSETS_URL reliably from the public path and server document root.
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-// Detect if we're on localhost or live server
-$is_localhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+// Normalize paths to forward slashes
+$doc_root = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
+$public_path_norm = str_replace('\\', '/', realpath(PUBLIC_PATH));
 
-if ($is_localhost) {
-    // Local development (XAMPP)
-    $base_path = '/ecommerce-authent/public_html';
-    $assets_path = '/ecommerce-authent/public_html/assets';
-} else {
-    // Live server - shared hosting with ~username structure
-    $base_path = '/~naa.aryee/public_html/ecommerce-authent';
-    $assets_path = '/~naa.aryee/public_html/ecommerce-authent/assets';
+// Compute the web-accessible path to PUBLIC_PATH by removing the document root
+$web_path = '/';
+if ($doc_root && $public_path_norm && strpos($public_path_norm, $doc_root) === 0) {
+    $web_path = '/' . ltrim(substr($public_path_norm, strlen($doc_root)), '/');
 }
 
-define('BASE_URL', $protocol . $host . $base_path);
-define('ASSETS_URL', $protocol . $host . $assets_path);
-define('PUBLIC_URL', $protocol . $host . $base_path);
+// Fallback: if we couldn't compute via document root, try a sensible default
+if (empty($web_path) || $web_path === '/') {
+    // Try to infer from script name
+    $script_dir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/\\');
+    $web_path = $script_dir ?: '/';
+}
+
+// (Keep web_path as-is. Do not strip /public_html — public path should reflect the actual document root location.)
+
+define('BASE_URL', rtrim($protocol . $host . $web_path, '/'));
+define('ASSETS_URL', BASE_URL . '/assets');
+define('PUBLIC_URL', BASE_URL);
 
 // Security Configuration
 define('HASH_ALGO', PASSWORD_BCRYPT);
@@ -128,7 +135,21 @@ function custom_error_handler($severity, $message, $file, $line) {
     $error_msg = "Error: [$severity] $message in $file on line $line";
     
     if (APP_ENV === 'development') {
-        echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
+        // If the client expects JSON, return JSON error to avoid breaking API responses
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        $is_json = (strpos($accept, 'application/json') !== false) ||
+                   (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+                   (isset($_POST['ajax']) || isset($_REQUEST['ajax']));
+
+        if ($is_json) {
+            // Try to send JSON safely
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            echo json_encode(['success' => false, 'error' => $error_msg]);
+        } else {
+            echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
+        }
     } else {
         error_log($error_msg);
     }
@@ -145,8 +166,20 @@ function custom_exception_handler($exception) {
                  " on line " . $exception->getLine();
     
     if (APP_ENV === 'development') {
-        echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
-        echo "<pre>" . $exception->getTraceAsString() . "</pre>";
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        $is_json = (strpos($accept, 'application/json') !== false) ||
+                   (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+                   (isset($_POST['ajax']) || isset($_REQUEST['ajax']));
+
+        if ($is_json) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            echo json_encode(['success' => false, 'exception' => $error_msg, 'trace' => $exception->getTraceAsString()]);
+        } else {
+            echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
+            echo "<pre>" . $exception->getTraceAsString() . "</pre>";
+        }
     } else {
         error_log($error_msg);
         // Redirect to error page in production
@@ -165,4 +198,4 @@ spl_autoload_register(function ($class_name) {
     }
 });
 
-?>
+// No closing PHP tag to avoid accidental output

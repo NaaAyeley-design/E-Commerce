@@ -1,4 +1,4 @@
-    </main>
+﻿    </main>
     
     <!-- Footer (if not a standalone page) -->
     <?php if (!isset($standalone_page) || !$standalone_page): ?>
