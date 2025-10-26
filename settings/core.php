@@ -53,8 +53,8 @@ if ($is_localhost) {
     $assets_path = '/ecommerce-authent/public_html/assets';
 } else {
     // Live server - shared hosting with ~username structure
-    $base_path = '/~naa.aryee/public_html';
-    $assets_path = '/~naa.aryee/public_html/assets';
+    $base_path = '/~naa.aryee/public_html/ecommerce-authent';
+    $assets_path = '/~naa.aryee/public_html/ecommerce-authent/assets';
 }
 
 define('BASE_URL', $protocol . $host . $base_path);
