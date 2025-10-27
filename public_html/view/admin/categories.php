@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get categories - for admin users, show ALL categories
 try {
     $category = new category_class();
-    $categories = $category->get_all_categories();
+    $categories = $category->get_all_categories(1000, 0); // Get up to 1000 categories
     
     if ($categories === false) {
         $categories = [];
