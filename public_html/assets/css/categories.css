@@ -285,38 +285,7 @@ body.categories-page .container {
     color: #374151;
 }
 
-/* Animated Particle Background */
-body.categories-page::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    background-image: 
-        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 20%),
-        radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.03) 0%, transparent 25%),
-        radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.04) 0%, transparent 20%),
-        radial-gradient(circle at 20% 90%, rgba(139, 92, 246, 0.04) 0%, transparent 20%);
-    animation: particleFloat 20s ease-in-out infinite;
-}
-
-@keyframes particleFloat {
-    0%, 100% {
-        transform: translate(0, 0) scale(1);
-        opacity: 1;
-    }
-    33% {
-        transform: translate(30px, -30px) scale(1.1);
-        opacity: 0.8;
-    }
-    66% {
-        transform: translate(-20px, 20px) scale(0.9);
-        opacity: 0.9;
-    }
-}
+/* Animated Particle Background - Removed to prevent overlay issues */
 
 /* Back to Home Link - Fixed at Top Left */
 .back-home {
