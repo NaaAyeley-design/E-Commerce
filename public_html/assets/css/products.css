@@ -4,6 +4,16 @@
     background-color: #f8f9fa;
 }
 
+body.products-page,
+body.products-page #main-content {
+    background-color: #ffffff !important;
+    background-image: none !important;
+}
+
+.products-page .container {
+    background-color: #ffffff;
+}
+
 .category-section {
     margin-bottom: 2rem;
     padding: 1rem;
