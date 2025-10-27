@@ -78,10 +78,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Get search term and show_all flag
+$search_term = $_GET['search'] ?? '';
+$show_all = isset($_GET['show_all']) && $_GET['show_all'] == '1';
+
 // Get categories - for admin users, show ALL categories
 try {
     $category = new category_class();
-    $categories = $category->get_all_categories(1000, 0); // Get up to 1000 categories
+    
+    if ($show_all) {
+        // Show ALL categories from database (no limit)
+        $categories = $category->get_all_categories(999999, 0); // Very large limit to get all
+    } elseif (!empty($search_term)) {
+        // Search all categories
+        $categories = $category->search_all_categories($search_term);
+    } else {
+        // Get all categories with reasonable limit
+        $categories = $category->get_all_categories(1000, 0);
+    }
     
     if ($categories === false) {
         $categories = [];
@@ -133,18 +147,54 @@ include __DIR__ . '/../templates/header.php';
         </div>
     </div>
 
+    <!-- Search Categories -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Search Categories</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
+                    <input type="text" name="search" placeholder="Search categories..." value="<?php echo escape_html($search_term); ?>" class="form-input">
+                </div>
+                <button type="submit" class="btn btn-outline">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <?php if (!empty($search_term) || $show_all): ?>
+                    <a href="<?php echo BASE_URL; ?>/view/admin/categories.php" class="btn btn-outline">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                <?php endif; ?>
+            </form>
+        </div>
+    </div>
+
     <!-- Categories List -->
     <div class="card">
         <div class="card-header">
-            <h3>Your Categories</h3>
-            <p class="text-muted">Total: <?php echo count($categories); ?> categories</p>
+            <h3>All Categories</h3>
+            <p class="text-muted">
+                <?php if ($show_all): ?>
+                    Showing ALL <?php echo count($categories); ?> categories from database
+                <?php elseif (isset($_GET['search']) && !empty($_GET['search'])): ?>
+                    Showing <?php echo count($categories); ?> result(s) for "<?php echo escape_html($search_term); ?>"
+                <?php else: ?>
+                    Total: <?php echo count($categories); ?> categories
+                <?php endif; ?>
+            </p>
         </div>
         <div class="card-body">
             <?php if (empty($categories)): ?>
                 <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <h4>No Categories Found</h4>
-                    <p>Add your first category above to get started.</p>
+                    <?php if (isset($_GET['search']) && !empty($_GET['search'])): ?>
+                        <i class="fas fa-search"></i>
+                        <h4>No Categories Found</h4>
+                        <p>No categories match "<?php echo escape_html($search_term); ?>". Try a different search term.</p>
+                    <?php else: ?>
+                        <i class="fas fa-folder-open"></i>
+                        <h4>No Categories Found</h4>
+                        <p>Add your first category above to get started.</p>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="table-responsive">

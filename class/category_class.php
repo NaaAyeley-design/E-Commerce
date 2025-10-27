@@ -140,6 +140,24 @@ class category_class extends db_class {
     }
 
     /**
+     * Search all categories by name (admin function).
+     *
+     * @param string $search_term The search term.
+     * @param int $limit Optional limit for results.
+     * @return array Array of matching categories.
+     */
+    public function search_all_categories($search_term, $limit = 100) {
+        $sql = "SELECT cat_id, cat_name, user_id, created_at, updated_at 
+                FROM categories 
+                WHERE cat_name LIKE ? 
+                ORDER BY cat_name ASC 
+                LIMIT ?";
+        
+        $search_param = '%' . $search_term . '%';
+        return $this->fetchAll($sql, [$search_param, $limit]);
+    }
+
+    /**
      * Get all categories (for public display - no user restriction).
      *
      * @param int $limit Optional limit for results.
