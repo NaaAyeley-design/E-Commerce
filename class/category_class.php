@@ -187,5 +187,18 @@ class category_class extends db_class {
         
         return $this->fetchAll($sql, [$user_id]);
     }
+
+    /**
+     * Get all categories from the database (admin function).
+     *
+     * @return array|false Array of all categories on success, false on failure.
+     */
+    public function get_all_categories() {
+        $sql = "SELECT cat_id, cat_name, user_id, created_at, updated_at 
+                FROM categories 
+                ORDER BY cat_name ASC";
+        
+        return $this->fetchAll($sql, []);
+    }
 }
 ?>

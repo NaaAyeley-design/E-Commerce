@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../../../settings/core.php';
 require_once __DIR__ . '/../../../controller/category_controller.php';
+require_once __DIR__ . '/../../../class/category_class.php';
 
 // Set page variables
 $page_title = 'Category Management';
@@ -23,7 +24,7 @@ if (!is_admin()) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
 $message = '';
 $error = '';
 
@@ -77,10 +78,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get categories
-$categories = get_categories_ctr($user_id);
-if (is_string($categories)) {
-    $error = $categories;
+// Get categories - for admin users, show ALL categories
+try {
+    $category = new category_class();
+    $categories = $category->get_all_categories();
+    
+    if ($categories === false) {
+        $categories = [];
+    }
+} catch (Exception $e) {
+    error_log("Get categories error: " . $e->getMessage());
     $categories = [];
 }
 
