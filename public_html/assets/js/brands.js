@@ -627,17 +627,11 @@ function showMessage(message, type) {
 }
 
 function showLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.style.display = 'flex';
-    }
+    // Loading overlay removed - no action needed
 }
 
 function hideLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.style.display = 'none';
-    }
+    // Loading overlay removed - no action needed
 }
 
 // Utility function to escape HTML

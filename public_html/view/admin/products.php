@@ -293,11 +293,6 @@ include __DIR__ . '/../templates/header.php';
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-    </div>
-
     <!-- JavaScript -->
     <script src="<?php echo ASSETS_URL; ?>/js/products.js"></script>
 
