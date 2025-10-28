@@ -23,10 +23,10 @@ if ($is_localhost) {
     define('DB_NAME', 'shoppn');
 } else {
     // Live server - configure these for your production environment
-    define('DB_HOST', 'your_production_host');
-    define('DB_USERNAME', 'your_production_username');
-    define('DB_PASSWORD', 'your_production_password');
-    define('DB_NAME', 'your_production_database');
+    define('DB_HOST', 'localhost');
+    define('DB_USERNAME', 'naa.aryee');
+    define('DB_PASSWORD', 'Araba2004!');
+    define('DB_NAME', 'ecommerce_2025A_naa_aryee');
 }
 define('DB_CHARSET', 'utf8mb4');
 define('DB_COLLATE', 'utf8mb4_unicode_ci');
