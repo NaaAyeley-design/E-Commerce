@@ -147,14 +147,42 @@ class category_class extends db_class {
      * @return array Array of matching categories.
      */
     public function search_all_categories($search_term, $limit = 100) {
-        $sql = "SELECT cat_id, cat_name, user_id, created_at, updated_at 
-                FROM categories 
-                WHERE cat_name LIKE ? 
-                ORDER BY cat_name ASC 
-                LIMIT ?";
-        
-        $search_param = '%' . $search_term . '%';
-        return $this->fetchAll($sql, [$search_param, $limit]);
+        try {
+            $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
+                           u.customer_name as creator_name
+                    FROM categories c
+                    LEFT JOIN customer u ON c.user_id = u.customer_id
+                    WHERE c.cat_name LIKE ? 
+                    ORDER BY c.cat_name ASC 
+                    LIMIT ?";
+            
+            $search_param = '%' . $search_term . '%';
+            $result = $this->fetchAll($sql, [$search_param, $limit]);
+            
+            // If no categories found and we're in development, filter sample data
+            if (empty($result) && APP_ENV === 'development') {
+                $sample_categories = $this->get_sample_categories();
+                $filtered = array_filter($sample_categories, function($cat) use ($search_term) {
+                    return stripos($cat['cat_name'], $search_term) !== false;
+                });
+                return array_values($filtered);
+            }
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("search_all_categories error: " . $e->getMessage());
+            
+            // Return filtered sample data in development when database is not available
+            if (APP_ENV === 'development') {
+                $sample_categories = $this->get_sample_categories();
+                $filtered = array_filter($sample_categories, function($cat) use ($search_term) {
+                    return stripos($cat['cat_name'], $search_term) !== false;
+                });
+                return array_values($filtered);
+            }
+            
+            return [];
+        }
     }
 
     /**
@@ -165,14 +193,77 @@ class category_class extends db_class {
      * @return array Array of all categories.
      */
     public function get_all_categories($limit = 100, $offset = 0) {
-        $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
-                       u.customer_name as creator_name
-                FROM categories c
-                LEFT JOIN customer u ON c.user_id = u.customer_id
-                ORDER BY c.cat_name ASC 
-                LIMIT ? OFFSET ?";
-        
-        return $this->fetchAll($sql, [$limit, $offset]);
+        try {
+            $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
+                           u.customer_name as creator_name
+                    FROM categories c
+                    LEFT JOIN customer u ON c.user_id = u.customer_id
+                    ORDER BY c.cat_name ASC 
+                    LIMIT ? OFFSET ?";
+            
+            $result = $this->fetchAll($sql, [$limit, $offset]);
+            
+            // If no categories found and we're in development, return sample data
+            if (empty($result) && APP_ENV === 'development') {
+                return $this->get_sample_categories();
+            }
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("get_all_categories error: " . $e->getMessage());
+            
+            // Return sample data in development when database is not available
+            if (APP_ENV === 'development') {
+                return $this->get_sample_categories();
+            }
+            
+            return [];
+        }
+    }
+    
+    /**
+     * Get sample categories for development/testing
+     *
+     * @return array Array of sample categories
+     */
+    private function get_sample_categories() {
+        return [
+            [
+                'cat_id' => 1,
+                'cat_name' => 'Electronics',
+                'created_at' => '2024-01-15 10:30:00',
+                'updated_at' => '2024-01-15 10:30:00',
+                'creator_name' => 'Admin User'
+            ],
+            [
+                'cat_id' => 2,
+                'cat_name' => 'Clothing',
+                'created_at' => '2024-01-16 14:20:00',
+                'updated_at' => '2024-01-16 14:20:00',
+                'creator_name' => 'Admin User'
+            ],
+            [
+                'cat_id' => 3,
+                'cat_name' => 'Books',
+                'created_at' => '2024-01-17 09:15:00',
+                'updated_at' => '2024-01-17 09:15:00',
+                'creator_name' => 'Admin User'
+            ],
+            [
+                'cat_id' => 4,
+                'cat_name' => 'Home & Garden',
+                'created_at' => '2024-01-18 16:45:00',
+                'updated_at' => '2024-01-18 16:45:00',
+                'creator_name' => 'Admin User'
+            ],
+            [
+                'cat_id' => 5,
+                'cat_name' => 'Sports & Outdoors',
+                'created_at' => '2024-01-19 11:30:00',
+                'updated_at' => '2024-01-19 11:30:00',
+                'creator_name' => 'Admin User'
+            ]
+        ];
     }
 
     /**
