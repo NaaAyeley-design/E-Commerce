@@ -20,7 +20,7 @@ if ($is_localhost) {
     define('DB_HOST', 'localhost');
     define('DB_USERNAME', 'root');
     define('DB_PASSWORD', '');
-    define('DB_NAME', 'ecommerce_authent');
+    define('DB_NAME', 'shoppn');
 } else {
     // Live server - configure these for your production environment
     define('DB_HOST', 'your_production_host');

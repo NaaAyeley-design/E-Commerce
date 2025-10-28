@@ -26,6 +26,25 @@ class category_class extends db_class {
     }
     
     /**
+     * Try to establish database connection
+     */
+    private function connect() {
+        try {
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+            
+            $options = array_merge(DB_OPTIONS, [
+                PDO::ATTR_PERSISTENT => DB_PERSISTENT,
+                PDO::ATTR_TIMEOUT => DB_TIMEOUT
+            ]);
+            
+            $this->conn = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
+            
+        } catch (PDOException $e) {
+            throw new Exception("Database connection failed: " . $e->getMessage());
+        }
+    }
+    
+    /**
      * Add a new category to the database.
      *
      * @param string $cat_name Category name.
@@ -218,7 +237,12 @@ class category_class extends db_class {
         try {
             // Check if database connection is available
             if (!isset($this->conn) || $this->conn === null) {
-                throw new Exception("Database connection not available");
+                // Try to reconnect
+                try {
+                    $this->connect();
+                } catch (Exception $e) {
+                    throw new Exception("Database connection not available");
+                }
             }
             
             $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
