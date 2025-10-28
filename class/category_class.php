@@ -254,19 +254,19 @@ class category_class extends db_class {
             
             $result = $this->fetchAll($sql, [$limit, $offset]);
             
-            // If no categories found and we're in development, return sample data
-            if (empty($result) && APP_ENV === 'development') {
-                return $this->get_sample_categories();
+            // Return empty array if no categories found - NO SAMPLE DATA
+            if (empty($result)) {
+                error_log("No categories found in database");
+                return [];
             }
             
             return $result;
         } catch (Exception $e) {
             error_log("get_all_categories error: " . $e->getMessage());
             
-            // Return sample data in development when database is not available
-            if (APP_ENV === 'development') {
-                return $this->get_sample_categories();
-            }
+            // Return empty array on database error - NO SAMPLE DATA
+            error_log("Database connection failed - returning empty array");
+            return [];
             
             return [];
         }

@@ -128,19 +128,28 @@ function logout_user_ctr()
             session_start();
         }
 
-        $customer_id = $_SESSION['customer_id'] ?? null;
+        $customer_id = $_SESSION['customer_id'] ?? $_SESSION['user_id'] ?? null;
 
         if ($customer_id) {
             log_activity('user_logout', "User logged out", $customer_id);
         }
 
-        $_SESSION = [];
+        // Clear all session variables
+        $_SESSION = array();
+        
+        // Destroy the session cookie
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"]);
+            setcookie(session_name(), '', time() - 42000, 
+                $params["path"], $params["domain"], 
+                $params["secure"], $params["httponly"]
+            );
         }
-
+        
+        // Clear remember token cookie
         setcookie('remember_token', '', time() - 3600, '/');
+        
+        // Destroy the session
         session_destroy();
 
         return "success";
