@@ -51,7 +51,9 @@ class db_class {
      */
     private function handleConnectionError($exception) {
         if (APP_ENV === 'development') {
-            die("Database connection failed: " . $exception->getMessage());
+            error_log("Database connection failed: " . $exception->getMessage());
+            // In development, don't die, just set conn to null
+            $this->conn = null;
         } else {
             error_log("Database connection failed: " . $exception->getMessage());
             die("Database connection failed. Please try again later.");

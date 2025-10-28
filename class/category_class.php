@@ -9,6 +9,23 @@
 class category_class extends db_class {
     
     /**
+     * Constructor - Initialize database connection with error handling
+     */
+    public function __construct() {
+        try {
+            parent::__construct();
+        } catch (Exception $e) {
+            // In development mode, we'll handle database connection failures gracefully
+            if (defined('APP_ENV') && APP_ENV === 'development') {
+                error_log("Database connection failed in category_class: " . $e->getMessage());
+                // Don't throw the exception, just log it
+            } else {
+                throw $e;
+            }
+        }
+    }
+    
+    /**
      * Add a new category to the database.
      *
      * @param string $cat_name Category name.
@@ -148,6 +165,11 @@ class category_class extends db_class {
      */
     public function search_all_categories($search_term, $limit = 100) {
         try {
+            // Check if database connection is available
+            if (!isset($this->conn) || $this->conn === null) {
+                throw new Exception("Database connection not available");
+            }
+            
             $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
                            u.customer_name as creator_name
                     FROM categories c
@@ -194,6 +216,11 @@ class category_class extends db_class {
      */
     public function get_all_categories($limit = 100, $offset = 0) {
         try {
+            // Check if database connection is available
+            if (!isset($this->conn) || $this->conn === null) {
+                throw new Exception("Database connection not available");
+            }
+            
             $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
                            u.customer_name as creator_name
                     FROM categories c
