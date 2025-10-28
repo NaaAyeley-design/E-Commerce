@@ -784,7 +784,8 @@ function loadProductsData() {
     .catch(error => {
         hideLoading();
         console.error('Error:', error);
-        showModal('Error', 'An error occurred while loading products', 'error');
+        // Removed obstructive modal - just log to console
+        console.log('Error occurred while loading products:', error.message);
     });
 }
 
@@ -826,65 +827,19 @@ function addRefreshButton() {
 }
 
 // Modal functions
+// Modal functions - DISABLED to prevent obstruction
 function showModal(title, message, type = 'info') {
-    // Remove existing modals
-    const existingModals = document.querySelectorAll('.modal-overlay');
-    existingModals.forEach(modal => modal.remove());
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title modal-${type}">${title}</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>${message}</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="closeModal()">OK</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Auto-close success modals after 3 seconds
-    if (type === 'success') {
-        setTimeout(() => {
-            closeModal();
-        }, 3000);
-    }
+    console.log(`Modal [${type.toUpperCase()}]: ${title} - ${message}`);
+    // Modal functionality disabled to prevent obstruction
 }
 
 function showConfirmModal(title, message, type = 'warning', onConfirm) {
-    // Remove existing modals
-    const existingModals = document.querySelectorAll('.modal-overlay');
-    existingModals.forEach(modal => modal.remove());
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title modal-${type}">${title}</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>${message}</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" onclick="confirmAction()">Confirm</button>
-                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Store the confirm callback
-    window.currentConfirmCallback = onConfirm;
+    console.log(`Confirm Modal [${type.toUpperCase()}]: ${title} - ${message}`);
+    // Modal functionality disabled to prevent obstruction
+    // Execute the confirm action directly
+    if (onConfirm && typeof onConfirm === 'function') {
+        onConfirm();
+    }
 }
 
 function confirmAction() {

@@ -29,17 +29,29 @@ $user_id = $_SESSION['user_id'];
 $message = '';
 $error = '';
 
-// Get categories for dropdown
-$categories = get_categories_ctr($user_id);
-if (is_string($categories)) {
-    $error = "Error loading categories: " . $categories;
+// Get categories for dropdown - for admin users, show ALL categories
+try {
+    $category = new category_class();
+    $categories = $category->get_all_categories(1000, 0);
+    
+    if ($categories === false) {
+        $categories = [];
+    }
+} catch (Exception $e) {
+    error_log("Get categories error: " . $e->getMessage());
     $categories = [];
 }
 
-// Get brands for dropdown
-$brands = fetch_brands_ctr($user_id);
-if (is_string($brands)) {
-    $error = "Error loading brands: " . $brands;
+// Get brands for dropdown - for admin users, show ALL brands
+try {
+    $brand = new brand_class();
+    $brands = $brand->get_all_brands(1000, 0);
+    
+    if ($brands === false) {
+        $brands = [];
+    }
+} catch (Exception $e) {
+    error_log("Get brands error: " . $e->getMessage());
     $brands = [];
 }
 
@@ -86,6 +98,17 @@ include __DIR__ . '/../templates/header.php';
             <?php if ($error): ?>
                 <div class="message message-error" id="error-message"><?php echo escape_html($error); ?></div>
             <?php endif; ?>
+            
+            <!-- Debug info -->
+            <div class="message message-info" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                <strong>Debug Info:</strong> Loaded <?php echo count($categories); ?> categories and <?php echo count($brands); ?> brands for dropdowns
+                <?php if (empty($categories)): ?>
+                    <br><em>No categories found. Make sure categories exist in the database.</em>
+                <?php endif; ?>
+                <?php if (empty($brands)): ?>
+                    <br><em>No brands found. Make sure brands exist in the database.</em>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Add/Edit Product Form -->
