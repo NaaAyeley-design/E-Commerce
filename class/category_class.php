@@ -157,6 +157,29 @@ class category_class extends db_class {
     }
 
     /**
+     * Count all categories (for admin dashboard).
+     *
+     * @return int Total number of categories.
+     */
+    public function count_all_categories() {
+        try {
+            if (!isset($this->conn) || $this->conn === null) {
+                try {
+                    $this->connect();
+                } catch (Exception $e) {
+                    return 0;
+                }
+            }
+            $sql = "SELECT COUNT(*) as total FROM categories";
+            $result = $this->fetchRow($sql);
+            return $result ? (int)$result['total'] : 0;
+        } catch (Exception $e) {
+            error_log("count_all_categories error: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
      * Search categories by name for a specific user.
      *
      * @param string $search_term The search term.
@@ -263,10 +286,25 @@ class category_class extends db_class {
             return $result;
         } catch (Exception $e) {
             error_log("get_all_categories error: " . $e->getMessage());
+            error_log("get_all_categories error trace: " . $e->getTraceAsString());
             
-            // Return empty array on database error - NO SAMPLE DATA
-            error_log("Database connection failed - returning empty array");
-            return [];
+            // Try one more time with parent constructor if connection failed
+            if (strpos($e->getMessage(), "connection") !== false || strpos($e->getMessage(), "Connection") !== false) {
+                try {
+                    parent::__construct();
+                    // Try query again
+                    $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
+                                   u.customer_name as creator_name
+                            FROM categories c
+                            LEFT JOIN customer u ON c.user_id = u.customer_id
+                            ORDER BY c.cat_name ASC 
+                            LIMIT ? OFFSET ?";
+                    $result = $this->fetchAll($sql, [$limit, $offset]);
+                    return $result ?: [];
+                } catch (Exception $e2) {
+                    error_log("get_all_categories - Retry also failed: " . $e2->getMessage());
+                }
+            }
             
             return [];
         }

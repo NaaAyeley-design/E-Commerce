@@ -151,6 +151,25 @@ class order_class extends db_class {
         $result = $this->fetchRow($sql, [$customer_id]);
         return $result ? $result['total'] : 0;
     }
+    
+    /**
+     * Count all orders (for admin dashboard).
+     *
+     * @return int Total number of orders.
+     */
+    public function count_all_orders() {
+        try {
+            if (!isset($this->conn) || $this->conn === null) {
+                return 0;
+            }
+            $sql = "SELECT COUNT(*) as total FROM orders";
+            $result = $this->fetchRow($sql);
+            return $result ? (int)$result['total'] : 0;
+        } catch (Exception $e) {
+            error_log("count_all_orders error: " . $e->getMessage());
+            return 0;
+        }
+    }
 }
 
 ?>

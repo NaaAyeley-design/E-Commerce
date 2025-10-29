@@ -86,6 +86,17 @@ $show_all = isset($_GET['show_all']) && $_GET['show_all'] == '1';
 try {
     $category = new category_class();
     
+    // Verify database connection
+    if (!isset($category->conn) || $category->conn === null) {
+        error_log("Category class connection is null - attempting to reconnect");
+        // Force reconnection by creating new instance
+        try {
+            $category = new category_class();
+        } catch (Exception $e2) {
+            error_log("Reconnection failed: " . $e2->getMessage());
+        }
+    }
+    
     if ($show_all) {
         // Show ALL categories from database (no limit)
         $categories = $category->get_all_categories(999999, 0); // Very large limit to get all
@@ -100,8 +111,15 @@ try {
     if ($categories === false) {
         $categories = [];
     }
+    
+    // Debug logging
+    error_log("Categories retrieved: " . count($categories));
+    if (count($categories) > 0) {
+        error_log("Sample category: " . $categories[0]['cat_name']);
+    }
 } catch (Exception $e) {
     error_log("Get categories error: " . $e->getMessage());
+    error_log("Get categories error trace: " . $e->getTraceAsString());
     $categories = [];
 }
 
@@ -126,6 +144,20 @@ include __DIR__ . '/../templates/header.php';
         <div class="alert alert-error">
             <i class="fas fa-exclamation-circle"></i>
             <?php echo escape_html($error); ?>
+        </div>
+    <?php endif; ?>
+    
+    <!-- Debug Info (Development Only) -->
+    <?php if (defined('APP_ENV') && APP_ENV === 'development'): ?>
+        <div class="alert" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0;">
+            <strong>Debug Info:</strong> 
+            Database: <?php echo DB_NAME; ?> | 
+            Categories Retrieved: <?php echo count($categories); ?>
+            <?php if (empty($categories)): ?>
+                <br><em>⚠️ No categories found. <a href="<?php echo BASE_URL; ?>/test_categories_simple.php">Test database connection</a></em>
+            <?php else: ?>
+                <br><em>✅ Successfully loaded <?php echo count($categories); ?> categories from database!</em>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

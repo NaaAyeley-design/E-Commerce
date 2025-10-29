@@ -467,6 +467,25 @@ class product_class extends db_class {
     }
 
     /**
+     * Count all products (for admin dashboard).
+     *
+     * @return int Total number of products.
+     */
+    public function count_all_products() {
+        try {
+            if (!isset($this->conn) || $this->conn === null) {
+                return 0;
+            }
+            $sql = "SELECT COUNT(*) as total FROM products";
+            $result = $this->fetchRow($sql);
+            return $result ? (int)$result['total'] : 0;
+        } catch (Exception $e) {
+            error_log("count_all_products error: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
      * Search products by name for a specific user.
      *
      * @param string $search_term The search term.

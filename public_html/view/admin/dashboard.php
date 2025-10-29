@@ -40,6 +40,35 @@ if (!$admin) {
     exit;
 }
 
+// Get dashboard statistics
+require_once __DIR__ . '/../../../class/category_class.php';
+require_once __DIR__ . '/../../../class/product_class.php';
+require_once __DIR__ . '/../../../class/order_class.php';
+
+try {
+    // Count total users
+    $total_users = $user->count_customers();
+    
+    // Count total categories
+    $category = new category_class();
+    $total_categories = $category->count_all_categories();
+    
+    // Count total products
+    $product = new product_class();
+    $total_products = $product->count_all_products();
+    
+    // Count total orders
+    $order = new order_class();
+    $total_orders = $order->count_all_orders();
+} catch (Exception $e) {
+    error_log("Dashboard stats error: " . $e->getMessage());
+    // Set defaults if error occurs
+    $total_users = 0;
+    $total_categories = 0;
+    $total_products = 0;
+    $total_orders = 0;
+}
+
 // Include header
 include __DIR__ . '/../templates/header.php';
 ?>
@@ -60,19 +89,19 @@ include __DIR__ . '/../templates/header.php';
         <h3>Quick Overview</h3>
         <div class="quick-stats-grid">
             <div class="quick-stat">
-                <div class="quick-stat-number">0</div>
+                <div class="quick-stat-number"><?php echo number_format($total_users); ?></div>
                 <div class="quick-stat-label">Total Users</div>
             </div>
             <div class="quick-stat">
-                <div class="quick-stat-number">0</div>
+                <div class="quick-stat-number"><?php echo number_format($total_categories); ?></div>
                 <div class="quick-stat-label">Categories</div>
             </div>
             <div class="quick-stat">
-                <div class="quick-stat-number">0</div>
+                <div class="quick-stat-number"><?php echo number_format($total_products); ?></div>
                 <div class="quick-stat-label">Products</div>
             </div>
             <div class="quick-stat">
-                <div class="quick-stat-number">0</div>
+                <div class="quick-stat-number"><?php echo number_format($total_orders); ?></div>
                 <div class="quick-stat-label">Orders</div>
             </div>
         </div>
