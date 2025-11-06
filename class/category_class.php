@@ -257,55 +257,77 @@ class category_class extends db_class {
      * @return array Array of all categories.
      */
     public function get_all_categories($limit = 100, $offset = 0) {
+        // Ensure connection is established - use same pattern as count_all_categories
+        if (!isset($this->conn) || $this->conn === null) {
+            try {
+                $this->connect();
+            } catch (Exception $e) {
+                error_log("get_all_categories - Connection failed: " . $e->getMessage());
+                return [];
+            }
+        }
+        
+        // Verify connection is still available and valid
+        if (!isset($this->conn) || $this->conn === null) {
+            error_log("get_all_categories - Connection is null after attempts");
+            return [];
+        }
+        
         try {
-            // Check if database connection is available
-            if (!isset($this->conn) || $this->conn === null) {
-                // Try to reconnect
-                try {
-                    $this->connect();
-                } catch (Exception $e) {
-                    throw new Exception("Database connection not available");
-                }
+            // Build SQL query - use direct SQL string like count_all_categories does
+            $sql = "SELECT cat_id, cat_name, created_at, updated_at 
+                    FROM categories 
+                    ORDER BY cat_name ASC";
+            
+            // Add LIMIT/OFFSET if not fetching all
+            if ($limit < 999999) {
+                $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
             }
             
-            $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
-                           u.customer_name as creator_name
-                    FROM categories c
-                    LEFT JOIN customer u ON c.user_id = u.customer_id
-                    ORDER BY c.cat_name ASC 
-                    LIMIT ? OFFSET ?";
+            error_log("get_all_categories - Executing SQL: " . $sql);
             
-            $result = $this->fetchAll($sql, [$limit, $offset]);
-            
-            // Return empty array if no categories found - NO SAMPLE DATA
-            if (empty($result)) {
-                error_log("No categories found in database");
+            // Use direct query execution like count_all_categories pattern
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                $error = $this->conn->errorInfo();
+                error_log("get_all_categories - Prepare failed: " . print_r($error, true));
                 return [];
             }
             
-            return $result;
-        } catch (Exception $e) {
-            error_log("get_all_categories error: " . $e->getMessage());
-            error_log("get_all_categories error trace: " . $e->getTraceAsString());
-            
-            // Try one more time with parent constructor if connection failed
-            if (strpos($e->getMessage(), "connection") !== false || strpos($e->getMessage(), "Connection") !== false) {
-                try {
-                    parent::__construct();
-                    // Try query again
-                    $sql = "SELECT c.cat_id, c.cat_name, c.created_at, c.updated_at,
-                                   u.customer_name as creator_name
-                            FROM categories c
-                            LEFT JOIN customer u ON c.user_id = u.customer_id
-                            ORDER BY c.cat_name ASC 
-                            LIMIT ? OFFSET ?";
-                    $result = $this->fetchAll($sql, [$limit, $offset]);
-                    return $result ?: [];
-                } catch (Exception $e2) {
-                    error_log("get_all_categories - Retry also failed: " . $e2->getMessage());
-                }
+            $executed = $stmt->execute();
+            if (!$executed) {
+                $error = $stmt->errorInfo();
+                error_log("get_all_categories - Execute failed: " . print_r($error, true));
+                return [];
             }
             
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("get_all_categories - Query returned " . count($result) . " rows");
+            
+            // Return empty array if no categories found
+            if (empty($result)) {
+                error_log("get_all_categories - No categories found in database (limit: $limit, offset: $offset)");
+                return [];
+            }
+            
+            // Add creator_name field for compatibility (can be populated later if needed)
+            foreach ($result as &$row) {
+                if (!isset($row['creator_name'])) {
+                    $row['creator_name'] = null;
+                }
+            }
+            unset($row);
+            
+            error_log("get_all_categories - Successfully retrieved " . count($result) . " categories");
+            return $result;
+            
+        } catch (PDOException $e) {
+            error_log("get_all_categories - PDO error: " . $e->getMessage());
+            error_log("get_all_categories - SQL: " . $sql);
+            error_log("get_all_categories - Error code: " . $e->getCode());
+            return [];
+        } catch (Exception $e) {
+            error_log("get_all_categories - General error: " . $e->getMessage());
             return [];
         }
     }

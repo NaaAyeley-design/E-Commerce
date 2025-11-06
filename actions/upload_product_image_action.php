@@ -54,10 +54,10 @@ try {
         exit;
     }
     
-    // Verify product belongs to user
-    $product = get_product_ctr($product_id, $user_id);
-    if (is_string($product)) {
-        $error_msg = 'Product not found or access denied.';
+    // Verify product exists
+    $product = get_product_ctr($product_id);
+    if (is_string($product) || !$product) {
+        $error_msg = 'Product not found.';
         if ($is_ajax) {
             echo json_encode(['success' => false, 'message' => $error_msg]);
         } else {

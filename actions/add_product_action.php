@@ -40,7 +40,6 @@ try {
     }
 
     // Get and sanitize input
-    $user_id = $_SESSION['user_id'];
     $cat_id = (int)($_POST['cat_id'] ?? 0);
     $brand_id = (int)($_POST['brand_id'] ?? 0);
     $title = trim($_POST['title'] ?? '');
@@ -48,14 +47,100 @@ try {
     $desc = trim($_POST['desc'] ?? '');
     $keyword = trim($_POST['keyword'] ?? '');
     $image_path = trim($_POST['image_path'] ?? '');
-    $sku = trim($_POST['sku'] ?? '');
-    $compare_price = $_POST['compare_price'] ?? '';
-    $cost_price = $_POST['cost_price'] ?? '';
-    $stock_quantity = $_POST['stock_quantity'] ?? '';
-    $weight = $_POST['weight'] ?? '';
-    $dimensions = trim($_POST['dimensions'] ?? '');
-    $meta_title = trim($_POST['meta_title'] ?? '');
-    $meta_description = trim($_POST['meta_description'] ?? '');
+    
+    // Handle image file upload for new products
+    $user_id = $_SESSION['user_id'];
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['product_image'];
+        
+        // Validate file size (max 5MB)
+        $max_size = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $max_size) {
+            $error_msg = 'File size must not exceed 5MB.';
+            if ($is_ajax) {
+                echo json_encode(['success' => false, 'message' => $error_msg]);
+            } else {
+                echo $error_msg;
+            }
+            exit;
+        }
+        
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type = mime_content_type($file['tmp_name']);
+        
+        if (!in_array($file_type, $allowed_types)) {
+            $error_msg = 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.';
+            if ($is_ajax) {
+                echo json_encode(['success' => false, 'message' => $error_msg]);
+            } else {
+                echo $error_msg;
+            }
+            exit;
+        }
+        
+        // Validate file extension
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        if (!in_array($file_extension, $allowed_extensions)) {
+            $error_msg = 'Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp files are allowed.';
+            if ($is_ajax) {
+                echo json_encode(['success' => false, 'message' => $error_msg]);
+            } else {
+                echo $error_msg;
+            }
+            exit;
+        }
+        
+        // Create uploads directory structure
+        $uploads_base = __DIR__ . '/../uploads';
+        $temp_dir = $uploads_base . '/temp';
+        
+        if (!is_dir($uploads_base)) {
+            if (!mkdir($uploads_base, 0755, true)) {
+                $error_msg = 'Failed to create uploads directory.';
+                if ($is_ajax) {
+                    echo json_encode(['success' => false, 'message' => $error_msg]);
+                } else {
+                    echo $error_msg;
+                }
+                exit;
+            }
+        }
+        
+        if (!is_dir($temp_dir)) {
+            if (!mkdir($temp_dir, 0755, true)) {
+                $error_msg = 'Failed to create temp directory.';
+                if ($is_ajax) {
+                    echo json_encode(['success' => false, 'message' => $error_msg]);
+                } else {
+                    echo $error_msg;
+                }
+                exit;
+            }
+        }
+        
+        // Generate unique filename
+        $timestamp = time();
+        $random_string = bin2hex(random_bytes(4));
+        $new_filename = 'product_' . $timestamp . '_' . $random_string . '.' . $file_extension;
+        $temp_file_path = $temp_dir . '/' . $new_filename;
+        
+        // Move uploaded file to temp location
+        if (!move_uploaded_file($file['tmp_name'], $temp_file_path)) {
+            $error_msg = 'Failed to save uploaded file.';
+            if ($is_ajax) {
+                echo json_encode(['success' => false, 'message' => $error_msg]);
+            } else {
+                echo $error_msg;
+            }
+            exit;
+        }
+        
+        // Set image path (will be moved to final location after product creation)
+        $image_path = 'uploads/temp/' . $new_filename;
+    }
     
     // Basic validation
     if (empty($cat_id)) {
@@ -120,22 +205,13 @@ try {
     
     // Prepare data array
     $data = [
-        'user_id' => $user_id,
         'cat_id' => $cat_id,
         'brand_id' => $brand_id,
         'title' => $title,
         'price' => (float)$price,
         'desc' => $desc,
         'keyword' => $keyword,
-        'image_path' => $image_path,
-        'sku' => $sku,
-        'compare_price' => $compare_price !== '' ? (float)$compare_price : null,
-        'cost_price' => $cost_price !== '' ? (float)$cost_price : null,
-        'stock_quantity' => $stock_quantity !== '' ? (int)$stock_quantity : 0,
-        'weight' => $weight !== '' ? (float)$weight : null,
-        'dimensions' => $dimensions,
-        'meta_title' => $meta_title,
-        'meta_description' => $meta_description
+        'image_path' => $image_path
     ];
     
     // Additional validation using controller function
@@ -151,9 +227,48 @@ try {
     }
     
     // Attempt to add product
-    $result = add_product_ctr($data);
+    $product_obj = new product_class();
+    $result = $product_obj->add_product($cat_id, $brand_id, $title, $price, $desc, $keyword, $image_path);
     
-    if ($result === "success") {
+    if ($result['success']) {
+        $product_id = $result['product_id'] ?? null;
+        
+        // If image was uploaded to temp and product was created, move it to final location
+        if (!empty($image_path) && strpos($image_path, 'uploads/temp/') === 0 && $product_id) {
+            // Create final product directory
+            $uploads_base = __DIR__ . '/../uploads';
+            $user_dir = $uploads_base . '/u' . $user_id;
+            $product_dir = $user_dir . '/p' . $product_id;
+            
+            if (!is_dir($user_dir)) {
+                mkdir($user_dir, 0755, true);
+            }
+            
+            if (!is_dir($product_dir)) {
+                mkdir($product_dir, 0755, true);
+            }
+            
+            // Move file from temp to final location
+            $temp_file = __DIR__ . '/../' . $image_path;
+            $final_filename = 'product_' . $product_id . '_' . time() . '.' . pathinfo($temp_file, PATHINFO_EXTENSION);
+            $final_file_path = $product_dir . '/' . $final_filename;
+            
+            if (file_exists($temp_file) && rename($temp_file, $final_file_path)) {
+                // Update product with final image path
+                $final_image_path = 'uploads/u' . $user_id . '/p' . $product_id . '/' . $final_filename;
+                $update_result = $product_obj->update_product(
+                    $product_id,
+                    $cat_id,
+                    $brand_id,
+                    $title,
+                    $price,
+                    $desc,
+                    $keyword,
+                    $final_image_path
+                );
+            }
+        }
+        
         if ($is_ajax) {
             echo json_encode([
                 'success' => true, 
@@ -170,10 +285,18 @@ try {
             echo 'Product added successfully!';
         }
     } else {
+        // If product creation failed and we uploaded a temp file, delete it
+        if (!empty($image_path) && strpos($image_path, 'uploads/temp/') === 0) {
+            $temp_file = __DIR__ . '/../' . $image_path;
+            if (file_exists($temp_file)) {
+                @unlink($temp_file);
+            }
+        }
+        
         if ($is_ajax) {
-            echo json_encode(['success' => false, 'message' => $result]);
+            echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Failed to add product']);
         } else {
-            echo $result;
+            echo $result['message'] ?? 'Failed to add product';
         }
     }
     

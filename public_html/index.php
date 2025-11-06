@@ -28,9 +28,9 @@ include __DIR__ . '/view/templates/header.php';
     <div class="container">
         <div class="hero-content">
             <div class="hero-text">
-                <h1 class="hero-title">Welcome to <?php echo APP_NAME; ?></h1>
+                <h1 class="hero-title">Welcome shsisishis to <?php echo APP_NAME; ?></h1>
                 <p class="hero-subtitle">
-                    Discover amazing products with our secure and modern e-commerce platform. 
+                    Discover amazing products with our hghhjctxtxhj secure and modern e-commerce platform. 
                     Shop with confidence and enjoy a seamless shopping experience.
                 </p>
                 <div class="hero-actions">
@@ -38,7 +38,7 @@ include __DIR__ . '/view/templates/header.php';
                         <a href="<?php echo url('view/user/dashboard.php'); ?>" class="btn btn-primary btn-lg">
                             <i class="fas fa-tachometer-alt"></i> Go to Dashboard
                         </a>
-                        <a href="<?php echo url('view/product/product_list.php'); ?>" class="btn btn-outline btn-lg">
+                        <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn btn-outline btn-lg">
                             <i class="fas fa-shopping-bag"></i> Browse Products
                         </a>
                     <?php else: ?>

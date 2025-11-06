@@ -31,8 +31,8 @@ $error = '';
 
 // Get categories for dropdown - for admin users, show ALL categories
 try {
-    $category = new category_class();
-    $categories = $category->get_all_categories(1000, 0);
+    $category_obj = new category_class();
+    $categories = $category_obj->get_all_categories(1000, 0);
     
     if ($categories === false) {
         $categories = [];
@@ -44,38 +44,63 @@ try {
 
 // Get brands for dropdown - for admin users, show ALL brands
 try {
-    $brand = new brand_class();
-    $brands = $brand->get_all_brands(1000, 0);
+    $brand_obj = new brand_class();
+    $brands = $brand_obj->get_all_brands(1000, 0);
     
     if ($brands === false) {
         $brands = [];
     }
+    
+    // Debug: Log brands for troubleshooting
+    error_log("Brands loaded for dropdown: " . count($brands));
+    if (!empty($brands)) {
+        error_log("Sample brand: " . print_r($brands[0], true));
+    }
 } catch (Exception $e) {
     error_log("Get brands error: " . $e->getMessage());
+    error_log("Get brands error trace: " . $e->getTraceAsString());
     $brands = [];
 }
 
-// Get products grouped by category and brand
+// Get all products
+$all_products = [];
+try {
+    $product_obj = new product_class();
+    $all_products = $product_obj->get_all_products(1000, 0);
+    if ($all_products === false) {
+        $all_products = [];
+    }
+} catch (Exception $e) {
+    error_log("Get products error: " . $e->getMessage());
+    $all_products = [];
+}
+
+// Group products by category and brand
 $products_by_category = [];
 if (!empty($categories)) {
-    foreach ($categories as $category) {
-        $category_products = get_products_by_category_ctr($user_id, $category['cat_id']);
-        if (is_array($category_products)) {
+    foreach ($categories as $cat) {
+        $category_products = array_filter($all_products, function($product) use ($cat) {
+            return isset($product['product_cat']) && $product['product_cat'] == $cat['cat_id'];
+        });
+        
+        if (!empty($category_products)) {
             // Group products by brand within each category
             $products_by_brand = [];
             foreach ($category_products as $product) {
-                $brand_id = $product['brand_id'];
-                if (!isset($products_by_brand[$brand_id])) {
-                    $products_by_brand[$brand_id] = [
-                        'brand_name' => $product['brand_name'],
-                        'products' => []
-                    ];
+                $brand_id = $product['product_brand'] ?? null;
+                if ($brand_id) {
+                    if (!isset($products_by_brand[$brand_id])) {
+                        $products_by_brand[$brand_id] = [
+                            'brand_name' => $product['brand_name'] ?? 'Unknown Brand',
+                            'products' => []
+                        ];
+                    }
+                    $products_by_brand[$brand_id]['products'][] = $product;
                 }
-                $products_by_brand[$brand_id]['products'][] = $product;
             }
             
-            $products_by_category[$category['cat_id']] = [
-                'category' => $category,
+            $products_by_category[$cat['cat_id']] = [
+                'category' => $cat,
                 'brands' => $products_by_brand
             ];
         }
@@ -107,6 +132,19 @@ include __DIR__ . '/../templates/header.php';
                 <?php endif; ?>
                 <?php if (empty($brands)): ?>
                     <br><em>No brands found. Make sure brands exist in the database.</em>
+                <?php else: ?>
+                    <?php 
+                    $brands_with_cat = 0;
+                    foreach ($brands as $brand) {
+                        if (isset($brand['cat_id']) && $brand['cat_id'] !== null && $brand['cat_id'] !== '') {
+                            $brands_with_cat++;
+                        }
+                    }
+                    ?>
+                    <br><em>Brands with category ID: <?php echo $brands_with_cat; ?> out of <?php echo count($brands); ?> total</em>
+                    <?php if ($brands_with_cat === 0): ?>
+                        <br><strong style="color: #dc3545;">Warning: No brands have category IDs. Brands cannot be filtered without category IDs.</strong>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -119,27 +157,51 @@ include __DIR__ . '/../templates/header.php';
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cat_id">Category:</label>
-                        <select id="cat_id" name="cat_id" required class="form-input">
-                            <option value="">Select a category</option>
-                            <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo $category['cat_id']; ?>">
-                                    <?php echo escape_html($category['cat_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
+                        <label for="cat_id">Category: <span class="required">*</span></label>
+                        <select id="cat_id" name="cat_id" required class="form-input" style="cursor: pointer; pointer-events: auto; position: relative; z-index: 1;">
+                            <option value="">Select a category first</option>
+                            <?php if (!empty($categories)): ?>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo $cat['cat_id']; ?>">
+                                        <?php echo escape_html($cat['cat_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="" disabled>No categories available</option>
+                            <?php endif; ?>
                         </select>
+                        <small class="form-help">Select a category first to filter available brands</small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="brand_id">Brand:</label>
-                        <select id="brand_id" name="brand_id" required class="form-input">
-                            <option value="">Select a brand</option>
-                            <?php foreach ($brands as $brand): ?>
-                                <option value="<?php echo $brand['brand_id']; ?>" data-cat-id="<?php echo $brand['cat_id']; ?>">
-                                    <?php echo escape_html($brand['brand_name']); ?> (<?php echo escape_html($brand['cat_name']); ?>)
-                                </option>
-                            <?php endforeach; ?>
+                        <label for="brand_id">Brand: <span class="required">*</span></label>
+                        <select id="brand_id" name="brand_id" required class="form-input" style="cursor: pointer; pointer-events: auto; position: relative; z-index: 1;" disabled>
+                            <option value="">Select a category first</option>
+                            <?php if (!empty($brands)): ?>
+                                <?php 
+                                $brands_rendered = 0;
+                                foreach ($brands as $brand): 
+                                    // Ensure cat_id exists and is not null
+                                    $cat_id = isset($brand['cat_id']) && $brand['cat_id'] !== null && $brand['cat_id'] !== '' ? (string)$brand['cat_id'] : '';
+                                    
+                                    if (!empty($cat_id)): 
+                                        $brands_rendered++;
+                                ?>
+                                        <option value="<?php echo $brand['brand_id']; ?>" data-cat-id="<?php echo htmlspecialchars($cat_id, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo escape_html($brand['brand_name']); ?> (<?php echo escape_html($brand['cat_name'] ?? ''); ?>)
+                                        </option>
+                                <?php 
+                                    endif;
+                                endforeach; 
+                                
+                                if ($brands_rendered === 0): ?>
+                                    <option value="" disabled>No brands with categories available</option>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <option value="" disabled>No brands available</option>
+                            <?php endif; ?>
                         </select>
+                        <small class="form-help" id="brand-help">Brands will be filtered based on the selected category</small>
                     </div>
                 </div>
                 
@@ -148,72 +210,27 @@ include __DIR__ . '/../templates/header.php';
                     <input type="text" id="title" name="title" placeholder="Enter product title" required class="form-input">
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="price">Price ($):</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0" placeholder="0.00" required class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="compare_price">Compare Price ($):</label>
-                        <input type="number" id="compare_price" name="compare_price" step="0.01" min="0" placeholder="0.00" class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cost_price">Cost Price ($):</label>
-                        <input type="number" id="cost_price" name="cost_price" step="0.01" min="0" placeholder="0.00" class="form-input">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="sku">SKU:</label>
-                        <input type="text" id="sku" name="sku" placeholder="Product SKU" class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stock_quantity">Stock Quantity:</label>
-                        <input type="number" id="stock_quantity" name="stock_quantity" min="0" placeholder="0" class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="weight">Weight (lbs):</label>
-                        <input type="number" id="weight" name="weight" step="0.01" min="0" placeholder="0.00" class="form-input">
-                    </div>
+                <div class="form-group">
+                    <label for="price">Product Price ($): <span class="required">*</span></label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" placeholder="0.00" required class="form-input">
                 </div>
                 
                 <div class="form-group">
-                    <label for="desc">Product Description:</label>
+                    <label for="desc">Product Description: <span class="required">*</span></label>
                     <textarea id="desc" name="desc" placeholder="Enter detailed product description" required class="form-input" rows="4"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="keyword">Keywords (comma-separated):</label>
+                    <label for="keyword">Product Keywords: <span class="required">*</span></label>
                     <input type="text" id="keyword" name="keyword" placeholder="keyword1, keyword2, keyword3" required class="form-input">
-                </div>
-                
-                <div class="form-group">
-                    <label for="dimensions">Dimensions:</label>
-                    <input type="text" id="dimensions" name="dimensions" placeholder="e.g., 12x8x4 inches" class="form-input">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="meta_title">Meta Title:</label>
-                        <input type="text" id="meta_title" name="meta_title" placeholder="SEO meta title" class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="meta_description">Meta Description:</label>
-                        <input type="text" id="meta_description" name="meta_description" placeholder="SEO meta description" class="form-input">
-                    </div>
+                    <small class="form-help">Enter keywords separated by commas</small>
                 </div>
                 
                 <!-- Image Upload Section -->
                 <div class="form-group">
-                    <label for="product_image">Product Images:</label>
-                    <input type="file" id="product_image" name="product_image" accept="image/*" multiple class="form-input">
-                    <small class="form-help">Upload multiple JPEG, PNG, GIF, or WebP images (max 5MB each). Hold Ctrl/Cmd to select multiple files.</small>
+                    <label for="product_image">Product Image:</label>
+                    <input type="file" id="product_image" name="product_image" accept="image/*" class="form-input">
+                    <small class="form-help">Upload a JPEG, PNG, GIF, or WebP image (max 5MB)</small>
                 </div>
                 
                 <div id="image-preview" class="image-preview" style="display: none;">
@@ -261,47 +278,38 @@ include __DIR__ . '/../templates/header.php';
                                                 <div class="product-card" data-product-id="<?php echo $product['product_id']; ?>">
                                                     <div class="product-header">
                                                         <h6 class="product-title" id="product-title-<?php echo $product['product_id']; ?>">
-                                                            <?php echo escape_html($product['product_name']); ?>
+                                                            <?php echo escape_html($product['product_title'] ?? 'N/A'); ?>
                                                         </h6>
                                                         <div class="product-actions">
                                                             <button class="btn btn-sm btn-outline edit-product-btn" data-product-id="<?php echo $product['product_id']; ?>">
                                                                 Edit
                                                             </button>
-                                                            <button class="btn btn-sm btn-danger delete-product-btn" data-product-id="<?php echo $product['product_id']; ?>" data-product-title="<?php echo escape_html($product['product_name']); ?>">
+                                                            <button class="btn btn-sm btn-danger delete-product-btn" data-product-id="<?php echo $product['product_id']; ?>" data-product-title="<?php echo escape_html($product['product_title'] ?? 'N/A'); ?>">
                                                                 Delete
                                                             </button>
                                                         </div>
                                                     </div>
                                                     
+                                                    <?php if (!empty($product['product_image'])): ?>
+                                                        <div class="product-image">
+                                                            <img src="<?php echo escape_html($product['product_image']); ?>" alt="<?php echo escape_html($product['product_title'] ?? ''); ?>" onerror="this.style.display='none'">
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    
                                                     <div class="product-details">
                                                         <div class="product-price">
-                                                            <span class="current-price">$<?php echo number_format($product['price'], 2); ?></span>
-                                                            <?php if ($product['compare_price'] && $product['compare_price'] > $product['price']): ?>
-                                                                <span class="compare-price">$<?php echo number_format($product['compare_price'], 2); ?></span>
-                                                            <?php endif; ?>
+                                                            <span class="current-price">$<?php echo number_format($product['product_price'] ?? 0, 2); ?></span>
                                                         </div>
                                                         
-                                                        <div class="product-meta">
-                                                            <small class="product-sku">SKU: <?php echo escape_html($product['sku'] ?: 'N/A'); ?></small>
-                                                            <small class="product-stock">Stock: <?php echo $product['stock_quantity']; ?></small>
-                                                        </div>
-                                                        
-                                                        <?php if (!empty($product['product_description'])): ?>
-                                                            <p class="product-description"><?php echo escape_html(substr($product['product_description'], 0, 100)) . (strlen($product['product_description']) > 100 ? '...' : ''); ?></p>
+                                                        <?php if (!empty($product['product_desc'])): ?>
+                                                            <p class="product-description"><?php echo escape_html(substr($product['product_desc'], 0, 100)) . (strlen($product['product_desc']) > 100 ? '...' : ''); ?></p>
                                                         <?php endif; ?>
                                                         
-                                                        <div class="product-status">
-                                                            <span class="status-badge <?php echo $product['is_active'] ? 'active' : 'inactive'; ?>">
-                                                                <?php echo $product['is_active'] ? 'Active' : 'Inactive'; ?>
-                                                            </span>
-                                                            <?php if ($product['is_featured']): ?>
-                                                                <span class="status-badge featured">Featured</span>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        
-                                                        <div class="product-date">
-                                                            <small>Created: <?php echo date('M j, Y', strtotime($product['created_at'])); ?></small>
-                                                        </div>
+                                                        <?php if (!empty($product['product_keywords'])): ?>
+                                                            <div class="product-keywords">
+                                                                <small><strong>Keywords:</strong> <?php echo escape_html($product['product_keywords']); ?></small>
+                                                            </div>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
@@ -317,7 +325,63 @@ include __DIR__ . '/../templates/header.php';
     </div>
 
     <!-- JavaScript -->
-    <script src="<?php echo ASSETS_URL; ?>/js/products.js"></script>
+    <script>
+        // Define BASE_URL for JavaScript if not already defined
+        if (typeof BASE_URL === 'undefined') {
+            var BASE_URL = '<?php echo BASE_URL; ?>';
+        }
+        
+        // Immediate test to ensure dropdown works
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const catSelect = document.getElementById('cat_id');
+                if (catSelect) {
+                    // Force enable the dropdown
+                    catSelect.disabled = false;
+                    catSelect.style.pointerEvents = 'auto';
+                    catSelect.style.zIndex = '9999';
+                    catSelect.style.position = 'relative';
+                    
+                    // Remove any overlays that might be blocking
+                    const overlays = document.querySelectorAll('.modal-overlay, #loading-overlay, .overlay');
+                    overlays.forEach(function(overlay) {
+                        if (overlay && overlay.style) {
+                            overlay.style.display = 'none';
+                        }
+                    });
+                    
+                    // Test click
+                    catSelect.addEventListener('click', function(e) {
+                        console.log('Category dropdown clicked - native behavior should work');
+                    }, true);
+                    
+                    console.log('Category dropdown forced enabled. Options:', catSelect.options.length);
+                } else {
+                    console.error('Category dropdown not found in immediate test!');
+                }
+                
+                // Also force enable brand dropdown
+                const brandSelect = document.getElementById('brand_id');
+                if (brandSelect) {
+                    brandSelect.disabled = false;
+                    brandSelect.removeAttribute('readonly');
+                    brandSelect.style.pointerEvents = 'auto';
+                    brandSelect.style.zIndex = '9999';
+                    brandSelect.style.position = 'relative';
+                    brandSelect.style.cursor = 'pointer';
+                    
+                    brandSelect.addEventListener('click', function(e) {
+                        console.log('Brand dropdown clicked - native behavior should work');
+                    }, true);
+                    
+                    console.log('Brand dropdown forced enabled. Options:', brandSelect.options.length);
+                } else {
+                    console.error('Brand dropdown not found in immediate test!');
+                }
+            }, 50);
+        });
+    </script>
+    <script src="<?php echo ASSETS_URL; ?>/js/products.js?v=<?php echo time(); ?>"></script>
 
 <?php
 // Include footer

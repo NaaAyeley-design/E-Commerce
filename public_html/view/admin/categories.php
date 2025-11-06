@@ -114,8 +114,13 @@ try {
     
     // Debug logging
     error_log("Categories retrieved: " . count($categories));
+    error_log("Categories variable type: " . gettype($categories));
+    error_log("Is categories false? " . ($categories === false ? 'yes' : 'no'));
+    error_log("Is categories empty? " . (empty($categories) ? 'yes' : 'no'));
     if (count($categories) > 0) {
         error_log("Sample category: " . $categories[0]['cat_name']);
+    } else {
+        error_log("Categories array is empty or has 0 items");
     }
 } catch (Exception $e) {
     error_log("Get categories error: " . $e->getMessage());
@@ -240,34 +245,34 @@ include __DIR__ . '/../templates/header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($categories as $category): ?>
+                            <?php foreach ($categories as $cat): ?>
                                 <tr>
-                                    <td><?php echo $category['cat_id']; ?></td>
+                                    <td><?php echo $cat['cat_id']; ?></td>
                                     <td>
-                                        <span id="name-<?php echo $category['cat_id']; ?>">
-                                            <?php echo escape_html($category['cat_name']); ?>
+                                        <span id="name-<?php echo $cat['cat_id']; ?>">
+                                            <?php echo escape_html($cat['cat_name']); ?>
                                         </span>
-                                        <form id="edit-form-<?php echo $category['cat_id']; ?>" method="post" style="display: none;" class="form-inline">
+                                        <form id="edit-form-<?php echo $cat['cat_id']; ?>" method="post" style="display: none;" class="form-inline">
                                             <input type="hidden" name="action" value="update">
-                                            <input type="hidden" name="cat_id" value="<?php echo $category['cat_id']; ?>">
-                                            <input type="text" name="cat_name" value="<?php echo escape_html($category['cat_name']); ?>" required class="form-input">
+                                            <input type="hidden" name="cat_id" value="<?php echo $cat['cat_id']; ?>">
+                                            <input type="text" name="cat_name" value="<?php echo escape_html($cat['cat_name']); ?>" required class="form-input">
                                             <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="fas fa-check"></i> Save
                                             </button>
-                                            <button type="button" onclick="toggleEdit(<?php echo $category['cat_id']; ?>)" class="btn btn-sm btn-outline">
+                                            <button type="button" onclick="toggleEdit(<?php echo $cat['cat_id']; ?>)" class="btn btn-sm btn-outline">
                                                 <i class="fas fa-times"></i> Cancel
                                             </button>
                                         </form>
                                     </td>
-                                    <td><?php echo date('M j, Y', strtotime($category['created_at'])); ?></td>
+                                    <td><?php echo date('M j, Y', strtotime($cat['created_at'])); ?></td>
                                     <td>
-                                        <button onclick="toggleEdit(<?php echo $category['cat_id']; ?>)" class="btn btn-sm btn-outline">
+                                        <button onclick="toggleEdit(<?php echo $cat['cat_id']; ?>)" class="btn btn-sm btn-outline">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         
                                         <form method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
                                             <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="cat_id" value="<?php echo $category['cat_id']; ?>">
+                                            <input type="hidden" name="cat_id" value="<?php echo $cat['cat_id']; ?>">
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>

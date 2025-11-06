@@ -24,14 +24,14 @@ if (!is_admin()) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'] ?? 1; // Fallback to user ID 1 for testing
+$user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
 $message = '';
 $error = '';
 
 // Get categories for dropdown - for admin users, show ALL categories
 try {
-    $category = new category_class();
-    $categories = $category->get_all_categories(1000, 0);
+    $category_obj = new category_class();
+    $categories = $category_obj->get_all_categories(1000, 0);
     
     if ($categories === false) {
         $categories = [];
@@ -44,16 +44,28 @@ try {
 // Get brands grouped by category
 $brands_by_category = [];
 if (!empty($categories)) {
-    foreach ($categories as $category) {
-        $brands = get_brands_by_category_ctr($user_id, $category['cat_id']);
+    foreach ($categories as $cat) {
+        $brands = get_brands_by_category_ctr($user_id, $cat['cat_id']);
+        // Check if result is an error message (string) or valid array
         if (is_array($brands)) {
-            $brands_by_category[$category['cat_id']] = [
-                'category' => $category,
+            // Always add the category section, even if brands array is empty
+            $brands_by_category[$cat['cat_id']] = [
+                'category' => $cat,
                 'brands' => $brands
+            ];
+            error_log("Brands for category {$cat['cat_id']} ({$cat['cat_name']}): " . count($brands));
+        } else {
+            error_log("Error getting brands for category {$cat['cat_id']}: " . $brands);
+            // Still add the category with empty brands array
+            $brands_by_category[$cat['cat_id']] = [
+                'category' => $cat,
+                'brands' => []
             ];
         }
     }
 }
+
+error_log("Total categories with brands: " . count($brands_by_category));
 
 // Include header
 include __DIR__ . '/../templates/header.php';
@@ -94,9 +106,9 @@ include __DIR__ . '/../templates/header.php';
                     <label for="cat_id">Category:</label>
                     <select id="cat_id" name="cat_id" required class="form-input">
                         <option value="">Select a category</option>
-                        <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['cat_id']; ?>">
-                                <?php echo escape_html($category['cat_name']); ?>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat['cat_id']; ?>">
+                                <?php echo escape_html($cat['cat_name']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -120,8 +132,24 @@ include __DIR__ . '/../templates/header.php';
         <div class="card">
             <h3>Your Brands</h3>
             
-            <?php if (empty($brands_by_category)): ?>
+            <?php 
+            // Debug: Count total brands
+            $total_brands = 0;
+            foreach ($brands_by_category as $cat_data) {
+                $total_brands += count($cat_data['brands']);
+            }
+            ?>
+            
+            <?php if (empty($brands_by_category) || $total_brands === 0): ?>
                 <p>No brands found. Add your first brand above.</p>
+                <?php if (defined('APP_ENV') && APP_ENV === 'development'): ?>
+                    <div class="alert" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0;">
+                        <strong>Debug Info:</strong> 
+                        Categories checked: <?php echo count($categories); ?> | 
+                        Categories with brand sections: <?php echo count($brands_by_category); ?> | 
+                        Total brands: <?php echo $total_brands; ?>
+                    </div>
+                <?php endif; ?>
             <?php else: ?>
                 <?php foreach ($brands_by_category as $category_data): ?>
                     <div class="category-section">
@@ -202,7 +230,12 @@ include __DIR__ . '/../templates/header.php';
     </div>
 
     <!-- JavaScript -->
-    <script src="<?php echo ASSETS_URL; ?>/js/brands.js"></script>
+    <script>
+        // Define BASE_URL for JavaScript
+        const BASE_URL = '<?php echo BASE_URL; ?>';
+        console.log('BASE_URL set to:', BASE_URL);
+    </script>
+    <script src="<?php echo ASSETS_URL; ?>/js/brands.js?v=<?php echo time(); ?>"></script>
 
 <?php
 // Include footer

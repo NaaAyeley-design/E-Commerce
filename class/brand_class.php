@@ -65,9 +65,29 @@ class brand_class extends db_class {
             return ['success' => false, 'message' => 'Brand name already exists in this category.'];
         }
         
-        // Verify category belongs to user
-        if (!$this->category_belongs_to_user($cat_id, $user_id)) {
+        // For admin users, allow all categories. For regular users, verify category belongs to them.
+        // Check if user is admin (role 1)
+        $is_admin = false;
+        try {
+            $user_sql = "SELECT user_role FROM customer WHERE customer_id = ?";
+            $user_result = $this->fetchRow($user_sql, [$user_id]);
+            if ($user_result && isset($user_result['user_role']) && $user_result['user_role'] == 1) {
+                $is_admin = true;
+            }
+        } catch (Exception $e) {
+            error_log("Error checking user role: " . $e->getMessage());
+        }
+        
+        // Only verify category ownership for non-admin users
+        if (!$is_admin && !$this->category_belongs_to_user($cat_id, $user_id)) {
             return ['success' => false, 'message' => 'Category not found or access denied.'];
+        }
+        
+        // Verify category exists
+        $cat_check_sql = "SELECT cat_id FROM categories WHERE cat_id = ?";
+        $cat_exists = $this->fetchRow($cat_check_sql, [$cat_id]);
+        if (!$cat_exists) {
+            return ['success' => false, 'message' => 'Category not found.'];
         }
         
         $sql = "INSERT INTO brands (brand_name, brand_description, cat_id, user_id, brand_logo, created_at, updated_at) 
@@ -106,19 +126,101 @@ class brand_class extends db_class {
 
     /**
      * Get brands by category for a specific user.
+     * For admin users, get all brands in the category regardless of user_id.
      *
      * @param int $user_id The user ID.
      * @param int $cat_id The category ID.
      * @return array Array of brands in the specified category.
      */
     public function get_brands_by_category($user_id, $cat_id) {
-        $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
-                       b.is_active, b.created_at, b.updated_at
-                FROM brands b
-                WHERE b.user_id = ? AND b.cat_id = ? AND b.is_active = 1
-                ORDER BY b.brand_name ASC";
+        // Ensure connection is established
+        if (!isset($this->conn) || $this->conn === null) {
+            try {
+                $this->connect();
+            } catch (Exception $e) {
+                error_log("get_brands_by_category - Connection failed: " . $e->getMessage());
+                return [];
+            }
+        }
         
-        return $this->fetchAll($sql, [$user_id, $cat_id]);
+        // Verify connection is still available
+        if (!isset($this->conn) || $this->conn === null) {
+            error_log("get_brands_by_category - Connection is null");
+            return [];
+        }
+        
+        try {
+            // Check if user is admin (role 1)
+            $is_admin = false;
+            try {
+                $user_sql = "SELECT user_role FROM customer WHERE customer_id = ?";
+                $user_result = $this->fetchRow($user_sql, [$user_id]);
+                if ($user_result && isset($user_result['user_role']) && $user_result['user_role'] == 1) {
+                    $is_admin = true;
+                }
+            } catch (Exception $e) {
+                error_log("Error checking user role in get_brands_by_category: " . $e->getMessage());
+            }
+            
+            // For admin users, show all brands in category. For regular users, only their brands.
+            // Remove is_active filter to show all brands (can filter in UI if needed)
+            // Include cat_id and cat_name for proper frontend display
+            if ($is_admin) {
+                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                               c.cat_name
+                        FROM brands b
+                        LEFT JOIN categories c ON b.cat_id = c.cat_id
+                        WHERE b.cat_id = ?
+                        ORDER BY b.brand_name ASC";
+                $params = [$cat_id];
+            } else {
+                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                               c.cat_name
+                        FROM brands b
+                        LEFT JOIN categories c ON b.cat_id = c.cat_id
+                        WHERE b.user_id = ? AND b.cat_id = ?
+                        ORDER BY b.brand_name ASC";
+                $params = [$user_id, $cat_id];
+            }
+            
+            error_log("get_brands_by_category - SQL: " . $sql);
+            error_log("get_brands_by_category - Params: " . print_r($params, true));
+            error_log("get_brands_by_category - is_admin: " . ($is_admin ? 'yes' : 'no'));
+            
+            // Use direct PDO execution like get_all_categories
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                $error = $this->conn->errorInfo();
+                error_log("get_brands_by_category - Prepare failed: " . print_r($error, true));
+                return [];
+            }
+            
+            $executed = $stmt->execute($params);
+            if (!$executed) {
+                $error = $stmt->errorInfo();
+                error_log("get_brands_by_category - Execute failed: " . print_r($error, true));
+                return [];
+            }
+            
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("get_brands_by_category - Query returned " . count($result) . " brands");
+            if (count($result) > 0) {
+                error_log("get_brands_by_category - Sample brand: " . $result[0]['brand_name']);
+            }
+            
+            // Return result (even if empty)
+            return $result;
+            
+        } catch (PDOException $e) {
+            error_log("get_brands_by_category - PDO error: " . $e->getMessage());
+            return [];
+        } catch (Exception $e) {
+            error_log("get_brands_by_category - General error: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -360,6 +462,10 @@ class brand_class extends db_class {
                 }
             }
             
+            // Cast limit and offset to integers to ensure proper binding
+            $limit = (int)$limit;
+            $offset = (int)$offset;
+            
             $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
                            b.cat_id, b.is_active, b.created_at, b.updated_at,
                            c.cat_name,
@@ -370,22 +476,43 @@ class brand_class extends db_class {
                     ORDER BY b.brand_name ASC 
                     LIMIT ? OFFSET ?";
             
-            $result = $this->fetchAll($sql, [$limit, $offset]);
+            error_log("get_all_brands - Executing SQL: " . $sql);
+            error_log("get_all_brands - Params: limit=" . $limit . " (type: " . gettype($limit) . "), offset=" . $offset . " (type: " . gettype($offset) . ")");
             
-            // Return empty array if no brands found - NO SAMPLE DATA
-            if (empty($result)) {
+            // Use prepare and bindValue to explicitly bind as integers
+            try {
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+                $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+                $stmt->execute();
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                error_log("get_all_brands - PDO error: " . $e->getMessage());
+                // Fallback: try without explicit binding
+                $result = $this->fetchAll($sql, [$limit, $offset]);
+            }
+            
+            error_log("get_all_brands - Query returned: " . (is_array($result) ? count($result) . " rows" : "false"));
+            
+            // Return empty array if no brands found
+            if (empty($result) || $result === false) {
                 error_log("No brands found in database");
                 return [];
+            }
+            
+            // Debug: Log first brand to verify cat_id is present
+            if (count($result) > 0) {
+                error_log("get_all_brands - Sample brand data: " . print_r($result[0], true));
+                error_log("get_all_brands - Sample brand has cat_id: " . (isset($result[0]['cat_id']) ? 'yes' : 'no'));
+                error_log("get_all_brands - Sample brand cat_id value: " . ($result[0]['cat_id'] ?? 'NULL'));
             }
             
             return $result;
         } catch (Exception $e) {
             error_log("get_all_brands error: " . $e->getMessage());
+            error_log("get_all_brands error trace: " . $e->getTraceAsString());
             
-            // Return empty array on database error - NO SAMPLE DATA
-            error_log("Database connection failed - returning empty array");
-            return [];
-            
+            // Return empty array on database error
             return [];
         }
     }

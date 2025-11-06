@@ -117,45 +117,23 @@ CREATE TABLE IF NOT EXISTS brands (
     INDEX idx_is_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- Products table (belongs to both category and brand, created by a user)
+-- Products table (belongs to both category and brand)
 CREATE TABLE IF NOT EXISTS products (
     product_id INT(11) NOT NULL AUTO_INCREMENT,
-    product_name VARCHAR(200) NOT NULL,
-    product_description TEXT,
-    product_short_desc VARCHAR(500),
-    cat_id INT(11) NOT NULL,
-    brand_id INT(11) NOT NULL,
-    user_id INT(11) NOT NULL,
-    sku VARCHAR(100) DEFAULT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    compare_price DECIMAL(10,2) DEFAULT NULL,
-    cost_price DECIMAL(10,2) DEFAULT NULL,
-    stock_quantity INT(11) DEFAULT 0,
-    min_stock_level INT(11) DEFAULT 5,
-    weight DECIMAL(8,2) DEFAULT NULL,
-    dimensions VARCHAR(100) DEFAULT NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    is_featured TINYINT(1) DEFAULT 0,
-    meta_title VARCHAR(200) DEFAULT NULL,
-    meta_description TEXT DEFAULT NULL,
-    meta_keywords TEXT DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    product_cat INT(11) NOT NULL,
+    product_brand INT(11) NOT NULL,
+    product_title VARCHAR(200) NOT NULL,
+    product_price DECIMAL(10,2) NOT NULL,
+    product_desc TEXT,
+    product_image VARCHAR(500) DEFAULT NULL,
+    product_keywords TEXT DEFAULT NULL,
     PRIMARY KEY (product_id),
-    FOREIGN KEY (cat_id) REFERENCES categories(cat_id) ON DELETE CASCADE,
-    FOREIGN KEY (brand_id) REFERENCES brands(brand_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_sku (sku),
-    UNIQUE KEY unique_product_category_brand_user (product_name, cat_id, brand_id, user_id),
-    INDEX idx_cat_id (cat_id),
-    INDEX idx_brand_id (brand_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_product_name (product_name),
-    INDEX idx_price (price),
-    INDEX idx_stock_quantity (stock_quantity),
-    INDEX idx_is_active (is_active),
-    INDEX idx_is_featured (is_featured),
-    INDEX idx_created_at (created_at)
+    FOREIGN KEY (product_cat) REFERENCES categories(cat_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_brand) REFERENCES brands(brand_id) ON DELETE CASCADE,
+    INDEX idx_product_cat (product_cat),
+    INDEX idx_product_brand (product_brand),
+    INDEX idx_product_title (product_title),
+    INDEX idx_product_price (product_price)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Product images table (optional, for multiple images per product)

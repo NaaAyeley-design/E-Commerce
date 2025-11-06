@@ -41,24 +41,37 @@ try {
 
     // Get and sanitize input
     $product_id = (int)($_POST['product_id'] ?? 0);
-    $user_id = $_SESSION['user_id'];
+    $cat_id = (int)($_POST['cat_id'] ?? 0);
+    $brand_id = (int)($_POST['brand_id'] ?? 0);
     $title = trim($_POST['title'] ?? '');
     $price = $_POST['price'] ?? '';
     $desc = trim($_POST['desc'] ?? '');
     $keyword = trim($_POST['keyword'] ?? '');
     $image_path = trim($_POST['image_path'] ?? '');
-    $sku = trim($_POST['sku'] ?? '');
-    $compare_price = $_POST['compare_price'] ?? '';
-    $cost_price = $_POST['cost_price'] ?? '';
-    $stock_quantity = $_POST['stock_quantity'] ?? '';
-    $weight = $_POST['weight'] ?? '';
-    $dimensions = trim($_POST['dimensions'] ?? '');
-    $meta_title = trim($_POST['meta_title'] ?? '');
-    $meta_description = trim($_POST['meta_description'] ?? '');
     
     // Basic validation
     if (empty($product_id)) {
         $error_msg = 'Product ID is required.';
+        if ($is_ajax) {
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+        } else {
+            echo $error_msg;
+        }
+        exit;
+    }
+    
+    if (empty($cat_id)) {
+        $error_msg = 'Category ID is required.';
+        if ($is_ajax) {
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+        } else {
+            echo $error_msg;
+        }
+        exit;
+    }
+    
+    if (empty($brand_id)) {
+        $error_msg = 'Brand ID is required.';
         if ($is_ajax) {
             echo json_encode(['success' => false, 'message' => $error_msg]);
         } else {
@@ -110,20 +123,13 @@ try {
     // Prepare data array
     $data = [
         'product_id' => $product_id,
-        'user_id' => $user_id,
+        'cat_id' => $cat_id,
+        'brand_id' => $brand_id,
         'title' => $title,
         'price' => (float)$price,
         'desc' => $desc,
         'keyword' => $keyword,
-        'image_path' => $image_path,
-        'sku' => $sku,
-        'compare_price' => $compare_price !== '' ? (float)$compare_price : null,
-        'cost_price' => $cost_price !== '' ? (float)$cost_price : null,
-        'stock_quantity' => $stock_quantity !== '' ? (int)$stock_quantity : null,
-        'weight' => $weight !== '' ? (float)$weight : null,
-        'dimensions' => $dimensions,
-        'meta_title' => $meta_title,
-        'meta_description' => $meta_description
+        'image_path' => $image_path
     ];
     
     // Additional validation using controller function

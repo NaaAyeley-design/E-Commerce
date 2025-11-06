@@ -40,7 +40,16 @@ try {
     }
 
     // Get and sanitize input
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+    if (!$user_id) {
+        $error_msg = 'User ID not found in session. Please log in again.';
+        if ($is_ajax) {
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+        } else {
+            echo $error_msg;
+        }
+        exit;
+    }
     $cat_id = (int)($_POST['cat_id'] ?? 0);
     $brand_name = trim($_POST['brand_name'] ?? '');
     $brand_description = trim($_POST['brand_description'] ?? '');

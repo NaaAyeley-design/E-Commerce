@@ -11,6 +11,7 @@
     <!-- CSS Files -->
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/toast.css">
     
     <!-- Additional CSS Files -->
     <?php if (isset($additional_css) && is_array($additional_css)): ?>
@@ -81,9 +82,29 @@
                         </a>
                     </div>
                     
+                    <!-- Search Box -->
+                    <div class="header-search">
+                        <form action="<?php echo url('view/product/product_search_result.php'); ?>" method="GET" class="search-form" id="header-search-form">
+                            <input type="text" 
+                                   name="query" 
+                                   id="header-search-input"
+                                   placeholder="Search products..." 
+                                   class="search-input"
+                                   value="<?php echo isset($_GET['query']) ? escape_html($_GET['query']) : ''; ?>">
+                            <button type="submit" class="search-btn" aria-label="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
                     <!-- Navigation Menu -->
                     <nav class="main-nav" role="navigation" aria-label="Main navigation">
                         <ul class="nav-menu">
+                            <li class="nav-item">
+                                <a href="<?php echo url('view/product/all_product.php'); ?>" class="nav-link">
+                                    <i class="fas fa-shopping-bag"></i> All Products
+                                </a>
+                            </li>
                             <?php if (is_logged_in()): ?>
                                 <?php if (is_admin()): ?>
                                     <!-- Admin User Menu -->
@@ -103,16 +124,16 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="<?php echo url('actions/logout_action.php'); ?>" class="nav-link">
+                                        <a href="../../../actions/logout_action.php" class="nav-link">
                                             <i class="fas fa-sign-out-alt"></i> Logout
                                         </a>
                                     </li>
                                 <?php else: ?>
                                     <!-- Regular User Menu -->
                                     <li class="nav-item">
-                                        <a href="<?php echo url('actions/logout_action.php'); ?>" class="nav-link">
-                                            <i class="fas fa-sign-out-alt"></i> Logout
-                                        </a>
+                                        <a href="../../../actions/logout_action.php" class="nav-link">
+                                         <i class="fas fa-sign-out-alt"></i> Logout
+                                     </a>
                                     </li>
                                 <?php endif; ?>
                             <?php else: ?>

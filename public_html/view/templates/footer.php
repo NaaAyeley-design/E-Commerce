@@ -105,6 +105,7 @@
     </button>
     
     <!-- JavaScript Files -->
+    <script src="<?php echo ASSETS_URL; ?>/js/toast.js"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>

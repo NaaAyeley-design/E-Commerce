@@ -67,11 +67,14 @@ try {
     $result = register_user_ctr($name, $email, $password, $country, $city, $contact);
 
     if ($result === 'success') {
+        // Make redirect absolute using BASE_URL to avoid incorrect relative paths
+        $loginUrl = rtrim(BASE_URL, '/') . '/view/user/login.php';
         echo json_encode([
             'success' => true,
             'message' => 'Registration successful! Redirecting to login page...',
-            'redirect' => url('view/user/login.php')
+            'redirect' => $loginUrl
         ]);
+        exit;
     } else {
         // Log the failure reason for debugging (non-sensitive)
         error_log("Registration failed for {$email}: " . $result);

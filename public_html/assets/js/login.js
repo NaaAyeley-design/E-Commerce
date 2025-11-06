@@ -221,6 +221,18 @@ document.addEventListener('DOMContentLoaded', function() {
      * Show message with type
      */
     function showMessage(message, type) {
+        // Use toast notification if available
+        if (typeof Toast !== 'undefined') {
+            if (type === 'success') {
+                Toast.success(message);
+            } else if (type === 'error') {
+                Toast.error(message);
+            } else {
+                Toast.info(message);
+            }
+        }
+        
+        // Also show inline message for form context
         hideMessage();
 
         const messageDiv = document.createElement('div');

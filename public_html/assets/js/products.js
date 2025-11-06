@@ -17,8 +17,76 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add refresh button
     addRefreshButton();
     
-    // Load initial data
-    loadProductsData();
+    // Debug: Check if category dropdown exists and is populated
+    const categorySelect = document.getElementById('cat_id');
+    if (categorySelect) {
+        console.log('Category dropdown found. Options:', categorySelect.options.length);
+        console.log('Category dropdown disabled?', categorySelect.disabled);
+        console.log('Category dropdown readonly?', categorySelect.readOnly);
+        
+        // Check for any overlays blocking the dropdown
+        const overlays = document.querySelectorAll('.modal-overlay, #loading-overlay, .overlay');
+        if (overlays.length > 0) {
+            console.warn('Found overlays that might be blocking:', overlays);
+            overlays.forEach(overlay => {
+                if (overlay.style.display !== 'none') {
+                    overlay.style.display = 'none';
+                    console.log('Hidden overlay:', overlay);
+                }
+            });
+        }
+        
+        // Ensure the dropdown is enabled and not readonly
+        categorySelect.disabled = false;
+        categorySelect.removeAttribute('readonly');
+        categorySelect.style.pointerEvents = 'auto';
+        
+        // Test if dropdown is actually clickable
+        setTimeout(() => {
+            const rect = categorySelect.getBoundingClientRect();
+            const elementAtPoint = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            console.log('Element at dropdown center:', elementAtPoint);
+            if (elementAtPoint && elementAtPoint !== categorySelect && !categorySelect.contains(elementAtPoint)) {
+                console.warn('Something is blocking the dropdown!', elementAtPoint);
+            } else if (!elementAtPoint) {
+                // Element might not be visible yet, but that's okay
+                console.log('Dropdown not yet visible in viewport (this is normal during page load)');
+            }
+        }, 100);
+        
+        // Initialize category-based brand filtering on page load if a category is already selected
+        if (categorySelect.value) {
+            console.log('Initializing with existing category:', categorySelect.value);
+            handleCategoryChange({ target: categorySelect });
+        } else {
+            // Initialize brand dropdown state even when no category is selected
+            const brandSelect = document.getElementById('brand_id');
+            if (brandSelect) {
+                console.log('No category selected on page load - initializing brand dropdown as disabled');
+                brandSelect.disabled = true;
+                brandSelect.style.pointerEvents = 'none';
+                brandSelect.style.cursor = 'not-allowed';
+                
+                // Log all brand options for debugging
+                const allBrandOptions = brandSelect.querySelectorAll('option[data-cat-id]');
+                console.log('Brand options available:', allBrandOptions.length);
+                allBrandOptions.forEach((option, index) => {
+                    if (index < 5) { // Log first 5 only
+                        console.log(`Brand option ${index + 1}:`, {
+                            value: option.value,
+                            text: option.textContent,
+                            catId: option.getAttribute('data-cat-id')
+                        });
+                    }
+                });
+            }
+        }
+    } else {
+        console.error('Category dropdown (cat_id) not found!');
+    }
+    
+    // Load initial data (only if needed - page already displays products server-side)
+    // loadProductsData();
 });
 
 function initializeProductManagement() {
@@ -46,10 +114,114 @@ function initializeProductManagement() {
         removeImageBtn.addEventListener('click', handleRemoveImage);
     }
     
-    // Category change handler
+    // Category change handler - ensure it's not blocked
     const categorySelect = document.getElementById('cat_id');
     if (categorySelect) {
-        categorySelect.addEventListener('change', handleCategoryChange);
+        // Ensure it's not disabled or blocked
+        categorySelect.disabled = false;
+        categorySelect.removeAttribute('readonly');
+        categorySelect.style.pointerEvents = 'auto';
+        categorySelect.style.cursor = 'pointer';
+        categorySelect.style.position = 'relative';
+        categorySelect.style.zIndex = '1';
+        
+        // Add change event listener
+        categorySelect.addEventListener('change', function(e) {
+            console.log('Category changed to:', e.target.value);
+            handleCategoryChange(e);
+        });
+        
+        // Ensure clicks work - don't prevent default
+        categorySelect.addEventListener('click', function(e) {
+            // Don't stop propagation - let the native select behavior work
+            console.log('Category dropdown clicked');
+        });
+        
+        // Test if dropdown is functional
+        console.log('Category dropdown initialized:', {
+            element: categorySelect,
+            disabled: categorySelect.disabled,
+            readonly: categorySelect.readOnly,
+            options: categorySelect.options.length,
+            parent: categorySelect.parentElement
+        });
+    } else {
+        console.error('Category dropdown element not found!');
+    }
+    
+    // Brand dropdown handler - ensure it's always accessible when enabled
+    const brandSelect = document.getElementById('brand_id');
+    if (brandSelect) {
+        // Initialize brand dropdown as disabled (needs category first)
+        brandSelect.disabled = true;
+        brandSelect.removeAttribute('readonly');
+        brandSelect.style.pointerEvents = 'none';
+        brandSelect.style.cursor = 'not-allowed';
+        brandSelect.style.position = 'relative';
+        brandSelect.style.zIndex = '10';
+        
+        // Log all brand options for debugging
+        console.log('Brand dropdown initialized. Total options:', brandSelect.options.length);
+        
+        // Log ALL options first to see what we have
+        console.log('All brand options:');
+        for (let i = 0; i < brandSelect.options.length; i++) {
+            const option = brandSelect.options[i];
+            console.log(`Option ${i}:`, {
+                value: option.value,
+                text: option.textContent,
+                hasDataCatId: option.hasAttribute('data-cat-id'),
+                dataCatId: option.getAttribute('data-cat-id'),
+                outerHTML: option.outerHTML.substring(0, 100)
+            });
+        }
+        
+        // Now check for options with data-cat-id
+        const allBrandOptions = brandSelect.querySelectorAll('option[data-cat-id]');
+        console.log('Brand options with data-cat-id attribute:', allBrandOptions.length);
+        
+        // Also try alternative query
+        const allOptionsWithCatId = Array.from(brandSelect.options).filter(opt => opt.hasAttribute('data-cat-id'));
+        console.log('Brand options with data-cat-id (alternative method):', allOptionsWithCatId.length);
+        
+        allBrandOptions.forEach((option, index) => {
+            console.log(`Brand ${index + 1}:`, {
+                value: option.value,
+                text: option.textContent,
+                catId: option.getAttribute('data-cat-id')
+            });
+        });
+        
+        // Add click handler to ensure it works
+        brandSelect.addEventListener('click', function(e) {
+            console.log('Brand dropdown clicked. Disabled:', brandSelect.disabled);
+            if (brandSelect.disabled) {
+                console.warn('Brand dropdown is disabled! Current category:', categorySelect ? categorySelect.value : 'none');
+            }
+        });
+        
+        // Add change handler
+        brandSelect.addEventListener('change', function(e) {
+            console.log('Brand changed to:', e.target.value);
+        });
+        
+        // Add mousedown handler to ensure clicks register
+        brandSelect.addEventListener('mousedown', function(e) {
+            console.log('Brand dropdown mousedown. Disabled:', brandSelect.disabled);
+            if (!brandSelect.disabled) {
+                console.log('Brand dropdown is enabled and should work');
+            }
+        });
+        
+        console.log('Brand dropdown initialized:', {
+            element: brandSelect,
+            disabled: brandSelect.disabled,
+            readonly: brandSelect.readOnly,
+            options: brandSelect.options.length,
+            brandOptionsWithDataAttr: allBrandOptions.length
+        });
+    } else {
+        console.error('Brand dropdown element not found!');
     }
     
     // Edit product buttons
@@ -81,6 +253,20 @@ function validateProductForm(formData) {
         }
     });
     
+    // Validate that brand belongs to selected category
+    const categoryId = formData.get('cat_id');
+    const brandId = formData.get('brand_id');
+    if (categoryId && brandId) {
+        const brandSelect = document.getElementById('brand_id');
+        const selectedBrandOption = brandSelect.querySelector(`option[value="${brandId}"]`);
+        if (selectedBrandOption) {
+            const brandCatId = selectedBrandOption.getAttribute('data-cat-id');
+            if (brandCatId !== categoryId) {
+                errors.push('The selected brand does not belong to the selected category. Please select a brand that matches the category.');
+            }
+        }
+    }
+    
     // Validate title
     const title = formData.get('title');
     if (title) {
@@ -88,8 +274,8 @@ function validateProductForm(formData) {
             errors.push('Product title must be at least 2 characters long');
         } else if (title.length > 200) {
             errors.push('Product title must not exceed 200 characters');
-        } else if (!/^[a-zA-Z0-9\s\-_.]+$/.test(title)) {
-            errors.push('Product title can only contain letters, numbers, spaces, hyphens, underscores, and periods');
+        } else if (!/^[\p{L}\p{N}\s'\-_.&,()]+$/u.test(title)) {
+            errors.push('Product title contains invalid characters');
         }
     }
     
@@ -105,53 +291,6 @@ function validateProductForm(formData) {
         }
     }
     
-    // Validate compare price
-    const comparePrice = formData.get('compare_price');
-    if (comparePrice && comparePrice !== '') {
-        if (!isNumeric(comparePrice)) {
-            errors.push('Compare price must be a valid number');
-        } else if (parseFloat(comparePrice) < 0) {
-            errors.push('Compare price must be a positive number');
-        } else if (parseFloat(comparePrice) > 999999.99) {
-            errors.push('Compare price must not exceed $999,999.99');
-        }
-    }
-    
-    // Validate cost price
-    const costPrice = formData.get('cost_price');
-    if (costPrice && costPrice !== '') {
-        if (!isNumeric(costPrice)) {
-            errors.push('Cost price must be a valid number');
-        } else if (parseFloat(costPrice) < 0) {
-            errors.push('Cost price must be a positive number');
-        } else if (parseFloat(costPrice) > 999999.99) {
-            errors.push('Cost price must not exceed $999,999.99');
-        }
-    }
-    
-    // Validate stock quantity
-    const stockQuantity = formData.get('stock_quantity');
-    if (stockQuantity && stockQuantity !== '') {
-        if (!isNumeric(stockQuantity)) {
-            errors.push('Stock quantity must be a valid number');
-        } else if (parseInt(stockQuantity) < 0) {
-            errors.push('Stock quantity must be a positive number');
-        } else if (parseInt(stockQuantity) > 999999) {
-            errors.push('Stock quantity must not exceed 999,999');
-        }
-    }
-    
-    // Validate weight
-    const weight = formData.get('weight');
-    if (weight && weight !== '') {
-        if (!isNumeric(weight)) {
-            errors.push('Weight must be a valid number');
-        } else if (parseFloat(weight) < 0) {
-            errors.push('Weight must be a positive number');
-        } else if (parseFloat(weight) > 999.99) {
-            errors.push('Weight must not exceed 999.99 lbs');
-        }
-    }
     
     // Validate description
     const desc = formData.get('desc');
@@ -173,26 +312,6 @@ function validateProductForm(formData) {
         }
     }
     
-    // Validate SKU
-    const sku = formData.get('sku');
-    if (sku && sku !== '') {
-        if (sku.length > 100) {
-            errors.push('SKU must not exceed 100 characters');
-        } else if (!/^[a-zA-Z0-9\-_]+$/.test(sku)) {
-            errors.push('SKU can only contain letters, numbers, hyphens, and underscores');
-        }
-    }
-    
-    // Validate meta fields
-    const metaTitle = formData.get('meta_title');
-    if (metaTitle && metaTitle.length > 200) {
-        errors.push('Meta title must not exceed 200 characters');
-    }
-    
-    const metaDescription = formData.get('meta_description');
-    if (metaDescription && metaDescription.length > 500) {
-        errors.push('Meta description must not exceed 500 characters');
-    }
     
     return errors;
 }
@@ -204,8 +323,14 @@ function isNumeric(value) {
 function setupRealTimeValidation() {
     const inputs = document.querySelectorAll('#product-form input, #product-form textarea, #product-form select');
     inputs.forEach(input => {
-        input.addEventListener('blur', validateField);
-        input.addEventListener('input', clearFieldError);
+        // Don't add input event to select elements (use change instead)
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', clearFieldError);
+            input.addEventListener('blur', validateField);
+        } else {
+            input.addEventListener('blur', validateField);
+            input.addEventListener('input', clearFieldError);
+        }
     });
 }
 
@@ -281,16 +406,16 @@ function handleProductSubmit(e) {
     
     const isEdit = currentProductId !== null;
     
-    // Handle image upload first if there are new images
+    // For new products, upload image directly with the form
+    // For editing, if there's a new image, upload it first then update product
     const imageFiles = document.getElementById('product_image').files;
-    if (imageFiles && imageFiles.length > 0) {
+    if (imageFiles && imageFiles.length > 0 && isEdit) {
+        // Editing existing product - upload image first
         uploadProductImages(imageFiles, isEdit)
             .then(imagePaths => {
                 if (imagePaths && imagePaths.length > 0) {
                     // Set the first image as primary
                     formData.set('image_path', imagePaths[0]);
-                    // Store all image paths for potential future use
-                    formData.set('all_image_paths', JSON.stringify(imagePaths));
                     submitProductForm(formData, isEdit);
                 } else {
                     showModal('Error', 'Failed to upload images. Please try again.', 'error');
@@ -301,7 +426,7 @@ function handleProductSubmit(e) {
                 showModal('Error', 'Failed to upload images. Please try again.', 'error');
             });
     } else {
-        // No new images, submit form directly
+        // New product or no new image - submit form directly (image will be handled server-side)
         submitProductForm(formData, isEdit);
     }
 }
@@ -344,7 +469,16 @@ function uploadProductImages(imageFiles, isEdit) {
         
         showLoading();
         
-        fetch('actions/upload_product_image_action.php', {
+        // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
+        let uploadActionUrl;
+        if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+            // Remove /public_html from BASE_URL to get root, then add /actions/
+            uploadActionUrl = BASE_URL.replace('/public_html', '') + '/actions/upload_product_image_action.php';
+        } else {
+            uploadActionUrl = '../../actions/upload_product_image_action.php';
+        }
+        
+        fetch(uploadActionUrl, {
             method: 'POST',
             body: formData
         })
@@ -403,7 +537,16 @@ function uploadProductImage(imageFile, isEdit) {
         
         showLoading();
         
-        fetch('actions/upload_product_image_action.php', {
+        // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
+        let uploadActionUrl;
+        if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+            // Remove /public_html from BASE_URL to get root, then add /actions/
+            uploadActionUrl = BASE_URL.replace('/public_html', '') + '/actions/upload_product_image_action.php';
+        } else {
+            uploadActionUrl = '../../actions/upload_product_image_action.php';
+        }
+        
+        fetch(uploadActionUrl, {
             method: 'POST',
             body: formData
         })
@@ -449,7 +592,15 @@ function validateImageFile(file) {
 }
 
 function submitProductForm(formData, isEdit) {
-    const actionUrl = isEdit ? 'actions/update_product_action.php' : 'actions/add_product_action.php';
+    // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
+    let actionUrl;
+    if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+        // Remove /public_html from BASE_URL to get root, then add /actions/
+        const rootUrl = BASE_URL.replace('/public_html', '');
+        actionUrl = isEdit ? rootUrl + '/actions/update_product_action.php' : rootUrl + '/actions/add_product_action.php';
+    } else {
+        actionUrl = isEdit ? '../../actions/update_product_action.php' : '../../actions/add_product_action.php';
+    }
     
     showLoading();
     
@@ -508,7 +659,17 @@ function handleEditProduct(e) {
 }
 
 function fetchProductData(productId) {
-    return fetch(`actions/get_product_action.php?product_id=${productId}&ajax=1`)
+    // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
+    let fetchUrl;
+    if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+        // Remove /public_html from BASE_URL to get root, then add /actions/
+        const rootUrl = BASE_URL.replace('/public_html', '');
+        fetchUrl = `${rootUrl}/actions/get_product_action.php?product_id=${productId}&ajax=1`;
+    } else {
+        fetchUrl = `../../actions/get_product_action.php?product_id=${productId}&ajax=1`;
+    }
+    
+    return fetch(fetchUrl)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -526,27 +687,31 @@ function fetchProductData(productId) {
 
 function populateEditForm(productData) {
     // Populate form fields with product data
-    document.getElementById('product_id').value = productData.product_id;
-    document.getElementById('cat_id').value = productData.cat_id;
-    document.getElementById('brand_id').value = productData.brand_id;
-    document.getElementById('title').value = productData.product_name;
-    document.getElementById('price').value = productData.price;
-    document.getElementById('compare_price').value = productData.compare_price || '';
-    document.getElementById('cost_price').value = productData.cost_price || '';
-    document.getElementById('sku').value = productData.sku || '';
-    document.getElementById('stock_quantity').value = productData.stock_quantity || '';
-    document.getElementById('weight').value = productData.weight || '';
-    document.getElementById('desc').value = productData.product_description;
-    document.getElementById('keyword').value = productData.meta_keywords;
-    document.getElementById('dimensions').value = productData.dimensions || '';
-    document.getElementById('meta_title').value = productData.meta_title || '';
-    document.getElementById('meta_description').value = productData.meta_description || '';
+    document.getElementById('product_id').value = productData.product_id || '';
+    document.getElementById('cat_id').value = productData.product_cat || '';
+    document.getElementById('brand_id').value = productData.product_brand || '';
+    document.getElementById('title').value = productData.product_title || '';
+    document.getElementById('price').value = productData.product_price || '';
+    document.getElementById('desc').value = productData.product_desc || '';
+    document.getElementById('keyword').value = productData.product_keywords || '';
     
     // Update brand dropdown based on selected category
-    handleCategoryChange({ target: document.getElementById('cat_id') });
+    if (productData.product_cat) {
+        handleCategoryChange({ target: document.getElementById('cat_id') });
+    }
     
-    // Clear image preview
-    document.getElementById('image-preview').style.display = 'none';
+    // Display image if available
+    if (productData.product_image) {
+        const previewDiv = document.getElementById('image-preview');
+        const previewImg = document.getElementById('preview-img');
+        if (previewDiv && previewImg) {
+            previewImg.src = productData.product_image;
+            previewDiv.style.display = 'block';
+        }
+    } else {
+        document.getElementById('image-preview').style.display = 'none';
+    }
+    
     document.getElementById('product_image').value = '';
 }
 
@@ -592,7 +757,17 @@ function handleDeleteProduct(e) {
             
             showLoading();
             
-            fetch('actions/delete_product_action.php', {
+            // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
+            let deleteActionUrl;
+            if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+                // Remove /public_html from BASE_URL to get root, then add /actions/
+                const rootUrl = BASE_URL.replace('/public_html', '');
+                deleteActionUrl = rootUrl + '/actions/delete_product_action.php';
+            } else {
+                deleteActionUrl = '../../actions/delete_product_action.php';
+            }
+            
+            fetch(deleteActionUrl, {
                 method: 'POST',
                 body: formData
             })
@@ -743,50 +918,131 @@ function handleRemoveImage() {
 }
 
 function handleCategoryChange(e) {
-    const categoryId = e.target.value;
+    const categoryId = e.target ? e.target.value : e;
     const brandSelect = document.getElementById('brand_id');
+    const brandHelp = document.getElementById('brand-help');
     
-    // Clear brand selection
+    if (!brandSelect) {
+        console.error('Brand dropdown not found!');
+        return;
+    }
+    
+    console.log('handleCategoryChange called with categoryId:', categoryId);
+    
+    // Always ensure brand dropdown is not blocked - enable it first
+    brandSelect.disabled = false;
+    brandSelect.removeAttribute('readonly');
+    brandSelect.style.pointerEvents = 'auto';
+    brandSelect.style.cursor = 'pointer';
+    brandSelect.style.position = 'relative';
+    brandSelect.style.zIndex = '10';
+    
+    // Clear brand selection when category changes
     brandSelect.value = '';
     
-    // Show/hide brands based on selected category
+    // Get all brand options (excluding the placeholder option)
     const brandOptions = brandSelect.querySelectorAll('option[data-cat-id]');
+    const placeholderOption = brandSelect.querySelector('option:not([data-cat-id])');
+    
+    console.log('Total brand options found:', brandOptions.length);
+    
+    // If no category selected, disable brand dropdown
+    if (!categoryId || categoryId === '') {
+        console.log('No category selected - disabling brand dropdown');
+        brandOptions.forEach(option => {
+            option.style.display = 'none';
+            option.disabled = true;
+            option.hidden = true;
+        });
+        if (placeholderOption) {
+            placeholderOption.style.display = 'block';
+            placeholderOption.textContent = 'Select a category first';
+            placeholderOption.disabled = false;
+        }
+        brandSelect.disabled = true;
+        if (brandHelp) {
+            brandHelp.textContent = 'Select a category first to filter available brands';
+            brandHelp.style.color = '';
+        }
+        return;
+    }
+    
+    // Category is selected - enable the brand dropdown
+    console.log('Category selected:', categoryId, '- enabling brand dropdown');
+    brandSelect.disabled = false;
+    
+    // Show only brands that belong to the selected category
+    // Convert both to strings for comparison to avoid type mismatch issues
+    const selectedCatId = String(categoryId);
+    let hasBrandsInCategory = false;
+    let brandCount = 0;
+    
     brandOptions.forEach(option => {
-        if (categoryId === '' || option.getAttribute('data-cat-id') === categoryId) {
+        const brandCatId = String(option.getAttribute('data-cat-id'));
+        console.log('Comparing brand category:', brandCatId, 'with selected:', selectedCatId);
+        
+        if (brandCatId === selectedCatId) {
             option.style.display = 'block';
+            option.disabled = false;
+            option.hidden = false;
+            option.removeAttribute('hidden');
+            hasBrandsInCategory = true;
+            brandCount++;
+            console.log('Brand enabled:', option.textContent);
         } else {
             option.style.display = 'none';
+            option.disabled = true;
+            option.hidden = true;
+            option.setAttribute('hidden', 'hidden');
         }
     });
+    
+    console.log(`Filtered brands: ${brandCount} available for category ${selectedCatId}`);
+    
+    // Update placeholder text
+    if (placeholderOption) {
+        placeholderOption.style.display = 'block';
+        placeholderOption.disabled = false;
+        if (hasBrandsInCategory) {
+            placeholderOption.textContent = `Select a brand (${brandCount} available)`;
+        } else {
+            placeholderOption.textContent = 'No brands available for this category';
+        }
+    }
+    
+    // Update help text
+    if (brandHelp) {
+        if (hasBrandsInCategory) {
+            brandHelp.textContent = `${brandCount} brand(s) available for this category`;
+            brandHelp.style.color = '';
+        } else {
+            brandHelp.textContent = 'No brands found for this category. Please add brands to this category first.';
+            brandHelp.style.color = '#dc3545';
+        }
+    }
+    
+    // Final check - ensure dropdown is enabled
+    if (hasBrandsInCategory) {
+        brandSelect.disabled = false;
+        brandSelect.style.pointerEvents = 'auto';
+        console.log('Brand dropdown enabled with', brandCount, 'brands available');
+    } else {
+        console.warn('No brands available for the selected category. Please add brands to this category first.');
+        brandSelect.disabled = true;
+    }
 }
 
 // Dynamic refresh functionality
 function loadProductsData() {
-    showLoading();
+    // Disabled - fetch_products_action.php doesn't exist
+    // The page already displays products server-side, so no need to fetch via AJAX
+    console.log('loadProductsData called but disabled - products are loaded server-side');
+    return;
     
-    fetch('actions/fetch_products_action.php?ajax=1')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        hideLoading();
-        
-        if (data.success) {
-            productsData = data.data;
-            updateProductsDisplay();
-        } else {
-            showModal('Error', data.message || 'Failed to load products', 'error');
-        }
-    })
-    .catch(error => {
-        hideLoading();
-        console.error('Error:', error);
-        // Removed obstructive modal - just log to console
-        console.log('Error occurred while loading products:', error.message);
-    });
+    // NOTE: This entire function is disabled because:
+    // 1. fetch_products_action.php doesn't exist (causes 404 errors)
+    // 2. Products are already loaded server-side on page load
+    // 3. No need for AJAX reload unless we implement product management features later
 }
 
 function refreshProductList() {
@@ -826,11 +1082,14 @@ function addRefreshButton() {
     }
 }
 
-// Modal functions
-// Modal functions - DISABLED to prevent obstruction
+// Modal functions - Use toast notifications instead
 function showModal(title, message, type = 'info') {
-    console.log(`Modal [${type.toUpperCase()}]: ${title} - ${message}`);
-    // Modal functionality disabled to prevent obstruction
+    if (typeof Toast !== 'undefined') {
+        const toastType = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+        Toast[toastType](message || title);
+    } else {
+        console.log(`Modal [${type.toUpperCase()}]: ${title} - ${message}`);
+    }
 }
 
 function showConfirmModal(title, message, type = 'warning', onConfirm) {

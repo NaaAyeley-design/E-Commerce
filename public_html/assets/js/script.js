@@ -389,6 +389,17 @@ const ECommerceApp = {
 
     // Show response message
     showResponse: function(message, type, responseDiv) {
+        // Use toast notification if available
+        if (typeof Toast !== 'undefined') {
+            if (type === 'success') {
+                Toast.success(message);
+            } else if (type === 'error') {
+                Toast.error(message);
+            } else {
+                Toast.info(message);
+            }
+        }
+        
         if (!responseDiv) return;
         
         responseDiv.textContent = message;

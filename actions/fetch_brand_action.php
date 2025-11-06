@@ -32,7 +32,12 @@ if (!is_admin()) {
 
 try {
     // Get user ID from session
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+    if (!$user_id) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'User ID not found in session. Please log in again.']);
+        exit;
+    }
     
     // Get pagination parameters
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;

@@ -44,7 +44,16 @@ try {
     $brand_name = trim($_POST['brand_name'] ?? '');
     $brand_description = trim($_POST['brand_description'] ?? '');
     $brand_logo = trim($_POST['brand_logo'] ?? '');
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+    if (!$user_id) {
+        $error_msg = 'User ID not found in session. Please log in again.';
+        if ($is_ajax) {
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+        } else {
+            echo $error_msg;
+        }
+        exit;
+    }
     
     // Basic validation
     if (empty($brand_id)) {

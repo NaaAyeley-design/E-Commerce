@@ -11,8 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize brand management
     initializeBrandManagement();
     
-    // Load initial data
-    loadBrandsData();
+    // Only load brands via AJAX if we need to refresh (not on initial page load)
+    // The page already displays brands server-side, so we don't need to reload on initial load
+    // This prevents overwriting the server-side display if AJAX fails
+    // loadBrandsData() will be called after add/update/delete operations
 });
 
 function initializeBrandManagement() {
@@ -206,7 +208,15 @@ function handleAddBrand(e) {
     
     showLoading();
     
-    fetch('actions/add_brand_action.php', {
+    // Use absolute path with BASE_URL
+    let actionUrl;
+    if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+        actionUrl = BASE_URL + '/actions/add_brand_action.php';
+    } else {
+        actionUrl = '../../actions/add_brand_action.php';
+    }
+    console.log('Adding brand via:', actionUrl);
+    fetch(actionUrl, {
         method: 'POST',
         body: formData
     })
@@ -214,24 +224,43 @@ function handleAddBrand(e) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        // Try to parse as JSON first, regardless of content-type
+        // Some servers don't send the correct content-type header
+        return response.text().then(text => {
+            try {
+                // Try to parse as JSON
+                return JSON.parse(text);
+            } catch (e) {
+                // If parsing fails, it's not JSON
+                console.error('Failed to parse response as JSON:', text);
+                throw new Error('Server returned non-JSON response: ' + text.substring(0, 100));
+            }
+        });
     })
     .then(data => {
         hideLoading();
         
-        if (data.success) {
+        if (data && data.success) {
+            // Show success message
             showModal('Success', 'Brand added successfully!', 'success');
             form.reset();
-            // Refresh brand list dynamically
-            refreshBrandList();
+            
+            // Reload the page after a short delay to show the new brand
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
-            showModal('Error', data.message || 'Failed to add brand', 'error');
+            showModal('Error', data?.message || 'Failed to add brand', 'error');
         }
     })
     .catch(error => {
         hideLoading();
-        console.error('Error:', error);
-        showModal('Error', 'An error occurred while adding the brand. Please try again.', 'error');
+        console.error('Error adding brand:', error);
+        console.error('Full error details:', {
+            message: error.message,
+            stack: error.stack
+        });
+        showModal('Error', 'An error occurred while adding the brand: ' + error.message, 'error');
     });
 }
 
@@ -290,7 +319,9 @@ function handleUpdateBrand(e) {
     
     showLoading();
     
-    fetch('actions/update_brand_action.php', {
+    // Use absolute path with BASE_URL
+    const updateUrl = typeof BASE_URL !== 'undefined' ? BASE_URL + '/actions/update_brand_action.php' : '../../actions/update_brand_action.php';
+    fetch(updateUrl, {
         method: 'POST',
         body: formData
     })
@@ -333,7 +364,9 @@ function handleDeleteBrand(e) {
             
             showLoading();
             
-            fetch('actions/delete_brand_action.php', {
+            // Use absolute path with BASE_URL
+            const deleteUrl = typeof BASE_URL !== 'undefined' ? BASE_URL + '/actions/delete_brand_action.php' : '../../actions/delete_brand_action.php';
+            fetch(deleteUrl, {
                 method: 'POST',
                 body: formData
             })
@@ -367,12 +400,29 @@ function handleDeleteBrand(e) {
 function loadBrandsData() {
     showLoading();
     
-    fetch('actions/fetch_brand_action.php?ajax=1')
+    // Use absolute path with BASE_URL - check if it's defined
+    let fetchUrl;
+    if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+        fetchUrl = BASE_URL + '/actions/fetch_brand_action.php?ajax=1';
+    } else {
+        // Fallback: go up from view/admin to public_html, then into actions
+        fetchUrl = '../../actions/fetch_brand_action.php?ajax=1';
+    }
+    console.log('Fetching brands from:', fetchUrl);
+    fetch(fetchUrl)
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        // Try to parse as JSON
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Failed to parse JSON response:', text);
+                throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+            }
+        });
     })
     .then(data => {
         hideLoading();
@@ -527,11 +577,14 @@ function updateCategoryCounts() {
     });
 }
 
-// Modal functions
-// Modal functions - DISABLED to prevent obstruction
+// Modal functions - Use toast notifications instead
 function showModal(title, message, type = 'info') {
-    console.log(`Modal [${type.toUpperCase()}]: ${title} - ${message}`);
-    // Modal functionality disabled to prevent obstruction
+    if (typeof Toast !== 'undefined') {
+        const toastType = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+        Toast[toastType](message || title);
+    } else {
+        console.log(`Modal [${type.toUpperCase()}]: ${title} - ${message}`);
+    }
 }
 
 function showConfirmModal(title, message, type = 'warning', onConfirm) {

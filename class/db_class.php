@@ -86,7 +86,7 @@ class db_class {
      */
     public function fetchRow($sql, $params = []) {
         $stmt = $this->execute($sql, $params);
-        return $stmt ? $stmt->fetch() : false;
+        return $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
     }
     
     /**
@@ -94,7 +94,7 @@ class db_class {
      */
     public function fetchAll($sql, $params = []) {
         $stmt = $this->execute($sql, $params);
-        return $stmt ? $stmt->fetchAll() : false;
+        return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : false;
     }
     
     /**
