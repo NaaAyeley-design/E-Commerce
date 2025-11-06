@@ -157,7 +157,7 @@
                                 </a>
                             </li>
                             <li class="sidebar-nav-item">
-                                <a href="<?php echo str_replace('/public_html', '', BASE_URL) . '/actions/logout_action.php'; ?>" class="sidebar-nav-link" data-tooltip="Logout">
+                                <a href='../../actions/logout_action.php' class="sidebar-nav-link" data-tooltip="Logout">
                                     <span class="sidebar-nav-icon">
                                         <i class="fas fa-sign-out-alt"></i>
                                     </span>

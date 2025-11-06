@@ -7,6 +7,39 @@
  */
 
 class user_class extends db_class {
+    private static $column_cache = null;
+    
+    /**
+     * Check if columns exist in customer table
+     */
+    private function check_customer_columns() {
+        if (self::$column_cache !== null) {
+            return self::$column_cache;
+        }
+        
+        try {
+            $db_name = DB_NAME;
+            $sql = "SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = ? 
+                    AND TABLE_NAME = 'customer' 
+                    AND COLUMN_NAME IN ('is_active', 'created_at')";
+            
+            $result = $this->fetchAll($sql, [$db_name]);
+            $columns = array_column($result, 'COLUMN_NAME');
+            
+            self::$column_cache = [
+                'is_active' => in_array('is_active', $columns),
+                'created_at' => in_array('created_at', $columns)
+            ];
+            
+            return self::$column_cache;
+        } catch (Exception $e) {
+            error_log("Check columns error: " . $e->getMessage());
+            self::$column_cache = ['is_active' => false, 'created_at' => false];
+            return self::$column_cache;
+        }
+    }
     
     /**
      * Add new customer/user
@@ -57,9 +90,25 @@ class user_class extends db_class {
      * Get customer by ID
      */
     public function get_customer_by_id($customer_id) {
-        $sql = "SELECT customer_id, customer_name, customer_email, customer_country, 
-                customer_city, customer_contact, user_role 
-                FROM customer WHERE customer_id = ?";
+        $columns = $this->check_customer_columns();
+        
+        $select_fields = "customer_id, customer_name, customer_email, customer_country, 
+                customer_city, customer_contact, user_role,
+                (user_role = 1) as is_admin";
+        
+        if ($columns['is_active']) {
+            $select_fields .= ", is_active";
+        } else {
+            $select_fields .= ", 1 as is_active";
+        }
+        
+        if ($columns['created_at']) {
+            $select_fields .= ", created_at";
+        } else {
+            $select_fields .= ", '1970-01-01 00:00:00' as created_at";
+        }
+        
+        $sql = "SELECT $select_fields FROM customer WHERE customer_id = ?";
         
         return $this->fetchRow($sql, [$customer_id]);
     }
@@ -156,8 +205,25 @@ class user_class extends db_class {
      * Get all customers (admin function)
      */
     public function get_all_customers($limit = 50, $offset = 0) {
-        $sql = "SELECT customer_id, customer_name, customer_email, customer_country, 
-                customer_city, customer_contact, user_role 
+        $columns = $this->check_customer_columns();
+        
+        $select_fields = "customer_id, customer_name, customer_email, customer_country, 
+                customer_city, customer_contact, user_role,
+                (user_role = 1) as is_admin";
+        
+        if ($columns['is_active']) {
+            $select_fields .= ", is_active";
+        } else {
+            $select_fields .= ", 1 as is_active";
+        }
+        
+        if ($columns['created_at']) {
+            $select_fields .= ", created_at";
+        } else {
+            $select_fields .= ", '1970-01-01 00:00:00' as created_at";
+        }
+        
+        $sql = "SELECT $select_fields 
                 FROM customer 
                 ORDER BY customer_id DESC 
                 LIMIT ? OFFSET ?";
