@@ -138,11 +138,15 @@ class db_class {
      */
     private function handleQueryError($exception, $sql) {
         $error_msg = "Database query error: " . $exception->getMessage() . " | SQL: " . $sql;
+        $error_code = $exception->getCode();
         
+        // Always log errors, never output HTML (breaks JSON responses)
+        error_log($error_msg);
+        error_log("PDO Error Code: " . $error_code);
+        
+        // In development, also log the trace
         if (APP_ENV === 'development') {
-            echo "<div style='color: red; font-family: monospace;'>$error_msg</div>";
-        } else {
-            error_log($error_msg);
+            error_log("PDO Error Trace: " . $exception->getTraceAsString());
         }
     }
     

@@ -156,3 +156,39 @@ CREATE TABLE IF NOT EXISTS product_images (
     INDEX idx_is_primary (is_primary),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Cart table (existing structure)
+-- Columns: p_id, ip_add, c_id, qty
+-- Note: This table already exists in the database
+
+-- Orders table
+CREATE TABLE IF NOT EXISTS orders (
+    order_id INT(11) NOT NULL AUTO_INCREMENT,
+    customer_id INT(11) NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    shipping_address TEXT NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'pending',
+    order_status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (order_id),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
+    INDEX idx_customer_id (customer_id),
+    INDEX idx_order_status (order_status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Order items table
+CREATE TABLE IF NOT EXISTS order_items (
+    item_id INT(11) NOT NULL AUTO_INCREMENT,
+    order_id INT(11) NOT NULL,
+    product_id INT(11) NOT NULL,
+    quantity INT(11) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (item_id),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    INDEX idx_order_id (order_id),
+    INDEX idx_product_id (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

@@ -70,6 +70,21 @@ body.auth-page {
     overflow-y: auto;
     background: #ffffff;
     padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+/* Ensure no sidebar interference on auth pages */
+body.auth-page .sidebar,
+body.auth-page .top-bar,
+body.auth-page .mobile-menu-toggle {
+    display: none !important;
+}
+
+body.auth-page .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
 }
 
 /* Animated Particle Background */
@@ -160,6 +175,8 @@ body.auth-page::before {
     position: relative;
     z-index: 1;
     animation: slideUp 0.6s ease-out;
+    margin: 0 auto;
+    flex-shrink: 0;
 }
 
 @keyframes slideUp {
@@ -278,6 +295,48 @@ body.auth-page::before {
 }
 
 /* Remember Me & Forgot Password */
+.remember-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.875rem;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.checkbox-wrapper label {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.custom-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.forgot-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    font-size: 0.875rem;
+}
+
+.forgot-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
 .form-options {
     display: flex;
     justify-content: space-between;
@@ -290,13 +349,6 @@ body.auth-page::before {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-}
-
-.custom-checkbox {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: var(--primary-color);
 }
 
 .forgot-password {
@@ -407,6 +459,32 @@ body.auth-page::before {
     border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.divider span {
+    padding: 0 var(--spacing-md);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    background: rgba(255, 255, 255, 0.7);
+    position: relative;
+    z-index: 1;
+}
+
 /* Auth Links */
 .auth-links {
     text-align: center;
@@ -490,10 +568,17 @@ body.auth-page::before {
     .auth-container {
         padding: var(--spacing-lg);
         max-width: 100%;
+        margin: 0 auto;
     }
     
     .login-header h2 {
         font-size: 1.5rem;
+    }
+    
+    .remember-section {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: flex-start;
     }
     
     .form-options {

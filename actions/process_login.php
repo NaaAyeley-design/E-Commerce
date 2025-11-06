@@ -5,16 +5,30 @@
  * Handles user login requests with comprehensive validation
  */
 
-header('Content-Type: application/json');
+// Start output buffering to prevent any accidental output
+ob_start();
+
+// Suppress all output except JSON
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(0);
 
 // Include core settings and user controller
 require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 
+// Clear any output that may have been generated during includes
+ob_clean();
+
+// Set JSON header
+header('Content-Type: application/json');
+
 // Only process POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_clean();
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    ob_end_flush();
     exit;
 }
 
@@ -34,14 +48,18 @@ try {
     // Validate required fields
     if (empty($email) || empty($password)) {
         $message = "Email and password are required.";
+        ob_clean();
         echo json_encode(['success' => false, 'message' => $message]);
+        ob_end_flush();
         exit;
     }
 
     // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = "Please enter a valid email address.";
+        ob_clean();
         echo json_encode(['success' => false, 'message' => $message]);
+        ob_end_flush();
         exit;
     }
 
@@ -60,13 +78,18 @@ try {
             'message' => 'Login successful! Redirecting...',
             'redirect' => $redirect_url
         ];
+        // Clean any output and send JSON
+        ob_clean();
         echo json_encode($response);
+        ob_end_flush();
         exit;
     } else {
         // Log failed attempt for debugging (do not include password)
         error_log("Login failed for {$email}: " . $result);
         // Always return JSON error
+        ob_clean();
         echo json_encode(['success' => false, 'message' => $result]);
+        ob_end_flush();
         exit;
     }
 
@@ -75,5 +98,8 @@ try {
     error_log("Login exception for {$email}: " . $e->getMessage());
     error_log($e->getTraceAsString());
     $message = "An internal error occurred during login. Please try again later.";
+    ob_clean();
     echo json_encode(['success' => false, 'message' => $message]);
+    ob_end_flush();
+    exit;
 }

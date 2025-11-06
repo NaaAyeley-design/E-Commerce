@@ -12,7 +12,7 @@
                             <div class="footer-section">
                                 <h3 class="footer-title"><?php echo APP_NAME; ?></h3>
                                 <p class="footer-description">
-                                    Your trusted e-commerce platform for all your shopping needs. 
+                                    Your trusted KenteKart platform for all your shopping needs. 
                                     Secure, fast, and reliable online shopping experience.
                                 </p>
                                 <div class="social-links">
@@ -66,7 +66,7 @@
                                 <div class="contact-info">
                                     <div class="contact-item">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        <span>123 E-Commerce Street<br>Digital City, DC 12345</span>
+                                        <span>123 KenteKart Street<br>Digital City, DC 12345</span>
                                     </div>
                                     <div class="contact-item">
                                         <i class="fas fa-phone"></i>
@@ -74,7 +74,7 @@
                                     </div>
                                     <div class="contact-item">
                                         <i class="fas fa-envelope"></i>
-                                        <span>support@ecommerce-platform.com</span>
+                                        <span>support@kentekart.com</span>
                                     </div>
                                 </div>
                             </div>
@@ -106,6 +106,7 @@
     
     <!-- JavaScript Files -->
     <script src="<?php echo ASSETS_URL; ?>/js/toast.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/sidebar.js"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>

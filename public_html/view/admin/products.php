@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../../controller/brand_controller.php';
 
 // Set page variables
 $page_title = 'Product Management';
-$page_description = 'Manage products for your e-commerce platform.';
+$page_description = 'Manage products for KenteKart.';
 $body_class = 'products-page';
 $additional_css = ['products.css'];
 

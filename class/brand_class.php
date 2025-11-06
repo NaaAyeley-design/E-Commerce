@@ -162,28 +162,16 @@ class brand_class extends db_class {
                 error_log("Error checking user role in get_brands_by_category: " . $e->getMessage());
             }
             
-            // For admin users, show all brands in category. For regular users, only their brands.
-            // Remove is_active filter to show all brands (can filter in UI if needed)
+            // Show only brands created by the logged-in user (for both admin and regular users)
             // Include cat_id and cat_name for proper frontend display
-            if ($is_admin) {
-                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
-                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
-                               c.cat_name
-                        FROM brands b
-                        LEFT JOIN categories c ON b.cat_id = c.cat_id
-                        WHERE b.cat_id = ?
-                        ORDER BY b.brand_name ASC";
-                $params = [$cat_id];
-            } else {
-                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
-                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
-                               c.cat_name
-                        FROM brands b
-                        LEFT JOIN categories c ON b.cat_id = c.cat_id
-                        WHERE b.user_id = ? AND b.cat_id = ?
-                        ORDER BY b.brand_name ASC";
-                $params = [$user_id, $cat_id];
-            }
+            $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                           b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                           c.cat_name
+                    FROM brands b
+                    LEFT JOIN categories c ON b.cat_id = c.cat_id
+                    WHERE b.user_id = ? AND b.cat_id = ?
+                    ORDER BY b.brand_name ASC";
+            $params = [$user_id, $cat_id];
             
             error_log("get_brands_by_category - SQL: " . $sql);
             error_log("get_brands_by_category - Params: " . print_r($params, true));

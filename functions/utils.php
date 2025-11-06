@@ -153,6 +153,17 @@ function get_current_customer_data() {
 }
 
 /**
+ * Get current user ID
+ */
+function get_user_id() {
+    if (!is_logged_in()) {
+        return null;
+    }
+    
+    return $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+}
+
+/**
  * Flash message system
  */
 function set_flash_message($message, $type = 'info') {
@@ -221,16 +232,22 @@ function delete_file($filepath) {
  */
 function json_response($data, $status_code = 200) {
     // Clean up any accidental output that may have been sent earlier
-    if (ob_get_length() !== false && ob_get_length() > 0) {
-        // Capture and log a truncated version of the unexpected output for debugging
-        $prev = ob_get_clean();
-        // Keep logging minimal to avoid exposing sensitive data
-        error_log("Discarded unexpected output before JSON response: " . substr($prev, 0, 1000));
+    while (ob_get_level() > 0) {
+        ob_end_clean();
     }
-
+    
+    // Start fresh output buffer
+    ob_start();
+    
+    // Set headers
     http_response_code($status_code);
     header('Content-Type: application/json');
+    
+    // Output JSON
     echo json_encode($data);
+    
+    // Flush and exit
+    ob_end_flush();
     exit();
 }
 

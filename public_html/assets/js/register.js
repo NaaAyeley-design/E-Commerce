@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validate form
         if (!validateForm()) {
-            console.log('register: validation failed');
             return;
         }
         
@@ -31,53 +30,30 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prepare form data
         const formData = new FormData(registerForm);
 
-        // Debug: log form data keys/values (avoid logging passwords in prod)
-        console.log('register: submitting to', registerForm.action);
-        for (const pair of formData.entries()) {
-            if (pair[0].toLowerCase().includes('password')) {
-                console.log('  form:', pair[0], '= [REDACTED]');
-            } else {
-                console.log('  form:', pair[0], '=', pair[1]);
-            }
-        }
         
         // Submit form via AJAX
         fetch(registerForm.action, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin'
-        })
-        .then(response => response.text().then(text => ({ ok: response.ok, status: response.status, text })))
-        .then(({ ok, status, text }) => {
-            console.log('register: response status', status);
-            console.log('register: raw response text:', text);
-            // robust parse: extract JSON object from text (tolerate stray wrappers)
-            let data = null;
-            try {
-                data = JSON.parse(text);
-                console.log('register: parsed JSON (straight):', data);
-            } catch (err) {
-                console.warn('register: direct JSON.parse failed', err);
-                const match = text.match(/\{[\s\S]*\}/);
-                if (match) {
-                    try {
-                        data = JSON.parse(match[0]);
-                        console.log('register: parsed JSON (from match):', data);
-                    } catch (e) {
-                        console.error('register: Failed to parse response JSON from match', e, match[0]);
-                    }
-                } else {
-                    console.error('register: no JSON object found in response');
-                }
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json'
             }
-
+        })
+        .then(async response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response received:', text);
+                throw new Error('Invalid response format');
+            }
+            return response.json();
+        })
+        .then(data => {
             setLoadingState(false);
 
-            // Debug: show whether we have a data object
-            console.log('register: data object after parse:', data);
-
             if (data && data.success) {
-                console.log('register: success branch, message:', data.message);
                 showSuccess(data.message || 'Registration successful. Redirecting...');
 
                 // Decide redirect URL: prefer server-provided absolute URL, fallback to replacing filename
@@ -85,20 +61,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 let redirectUrl = null;
                 if (serverRedirect && typeof serverRedirect === 'string') {
                     redirectUrl = serverRedirect;
-                    console.log('register: will redirect to server-provided URL:', redirectUrl);
                 } else {
                     const newPath = window.location.pathname.replace('register.php', 'login.php');
                     redirectUrl = window.location.origin + newPath + window.location.search + window.location.hash;
-                    console.log('register: server did not provide redirect; computed fallback:', redirectUrl);
                 }
 
                 // Perform redirect after short delay
                 setTimeout(() => {
-                    console.log('register: performing redirect now to', redirectUrl);
                     window.location.href = redirectUrl;
                 }, 1500);
             } else {
-                console.log('register: failure branch, server message:', data && data.message);
                 showError((data && data.message) || 'Registration failed. Please try again.');
             }
         })

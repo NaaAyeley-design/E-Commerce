@@ -16,7 +16,7 @@ require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Admin Dashboard';
-$page_description = 'Manage your e-commerce platform.';
+$page_description = 'Manage your KenteKart platform.';
 $body_class = 'admin-dashboard-page';
 $additional_css = ['admin_dashboard.css'];
 

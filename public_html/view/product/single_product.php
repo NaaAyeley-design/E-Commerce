@@ -69,16 +69,40 @@ include __DIR__ . '/../templates/header.php';
         <!-- Product Details -->
         <div class="product-detail">
             <div class="product-image-section">
-                <?php if (!empty($product['product_image'])): ?>
-                    <img src="<?php echo BASE_URL . '/' . escape_html($product['product_image']); ?>" 
+                <?php 
+                $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                if (!empty($product['product_image'])): 
+                    $image_path = ltrim($product['product_image'], '/');
+                    // Check if path already includes BASE_URL
+                    if (strpos($image_path, 'http') === 0) {
+                        $image_url = $image_path;
+                    } else {
+                        // If uploads path, remove /public_html from BASE_URL
+                        if (strpos($image_path, 'uploads/') === 0) {
+                            $base_url = str_replace('/public_html', '', BASE_URL);
+                            $full_path = ROOT_PATH . '/' . $image_path;
+                            // Check if file exists before using it
+                            if (file_exists($full_path)) {
+                                $image_url = $base_url . '/' . $image_path;
+                            } else {
+                                $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                            }
+                        } else {
+                            $full_path = ROOT_PATH . '/' . $image_path;
+                            // Check if file exists before using it
+                            if (file_exists($full_path)) {
+                                $image_url = BASE_URL . '/' . $image_path;
+                            } else {
+                                $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                            }
+                        }
+                    }
+                endif;
+                ?>
+                    <img src="<?php echo $image_url; ?>" 
                          alt="<?php echo escape_html($product['product_title']); ?>"
                          class="product-main-image"
-                         onerror="this.src='<?php echo ASSETS_URL; ?>/images/placeholder-product.png'">
-                <?php else: ?>
-                    <img src="<?php echo ASSETS_URL; ?>/images/placeholder-product.png" 
-                         alt="Product Image"
-                         class="product-main-image">
-                <?php endif; ?>
+                         onerror="this.src='<?php echo ASSETS_URL; ?>/images/placeholder-product.svg'">
             </div>
 
             <div class="product-info-section">

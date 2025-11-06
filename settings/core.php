@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/db_cred.php';
 
 // Application Configuration
-define('APP_NAME', 'E-Commerce Platform');
+define('APP_NAME', 'KenteKart');
 define('APP_VERSION', '1.0.0');
 define('APP_ENV', 'development'); // development, staging, production
 

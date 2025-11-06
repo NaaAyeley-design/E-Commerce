@@ -30,13 +30,16 @@ $products = [];
 $total = 0;
 $total_pages = 0;
 
-if ($filter_cat_id > 0) {
-    $products = filter_products_by_category_ctr($filter_cat_id, $limit, $offset);
-    $filters = ['cat_id' => $filter_cat_id];
-    $total = count_filtered_products_ctr($filters);
-} elseif ($filter_brand_id > 0) {
-    $products = filter_products_by_brand_ctr($filter_brand_id, $limit, $offset);
-    $filters = ['brand_id' => $filter_brand_id];
+// Use composite search if we have any filters
+if ($filter_cat_id > 0 || $filter_brand_id > 0) {
+    $filters = [];
+    if ($filter_cat_id > 0) {
+        $filters['cat_id'] = $filter_cat_id;
+    }
+    if ($filter_brand_id > 0) {
+        $filters['brand_id'] = $filter_brand_id;
+    }
+    $products = composite_search_ctr($filters, $limit, $offset);
     $total = count_filtered_products_ctr($filters);
 } else {
     $products = view_all_products_ctr($limit, $offset);
@@ -97,13 +100,28 @@ include __DIR__ . '/../templates/header.php';
 
             <div class="filter-group">
                 <label for="filter-brand">Filter by Brand:</label>
-                <select id="filter-brand" class="form-select">
-                    <option value="0">All Brands</option>
-                    <?php foreach ($brands as $brand): ?>
-                        <option value="<?php echo $brand['brand_id']; ?>" <?php echo ($filter_brand_id == $brand['brand_id']) ? 'selected' : ''; ?>>
-                            <?php echo escape_html($brand['brand_name']); ?>
-                        </option>
-                    <?php endforeach; ?>
+                <select id="filter-brand" class="form-select" <?php echo ($filter_cat_id > 0) ? '' : 'disabled'; ?>>
+                    <option value="0"><?php echo ($filter_cat_id > 0) ? 'All Brands' : 'Select a category first'; ?></option>
+                    <?php if ($filter_cat_id > 0): ?>
+                        <?php 
+                        // Get brands for selected category
+                        $brands_for_category = [];
+                        if ($filter_cat_id > 0) {
+                            $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+                            if ($user_id) {
+                                $brands_for_category = get_brands_by_category_ctr($user_id, $filter_cat_id);
+                                if (!is_array($brands_for_category)) {
+                                    $brands_for_category = [];
+                                }
+                            }
+                        }
+                        ?>
+                        <?php foreach ($brands_for_category as $brand): ?>
+                            <option value="<?php echo $brand['brand_id']; ?>" <?php echo ($filter_brand_id == $brand['brand_id']) ? 'selected' : ''; ?>>
+                                <?php echo escape_html($brand['brand_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
@@ -122,14 +140,39 @@ include __DIR__ . '/../templates/header.php';
                 <?php foreach ($products as $product): ?>
                     <div class="product-card" data-product-id="<?php echo $product['product_id']; ?>">
                         <div class="product-image">
-                            <?php if (!empty($product['product_image'])): ?>
-                                <img src="<?php echo BASE_URL . '/' . escape_html($product['product_image']); ?>" 
+                            <?php 
+                            $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                            if (!empty($product['product_image'])): 
+                                $image_path = ltrim($product['product_image'], '/');
+                                // Check if path already includes BASE_URL
+                                if (strpos($image_path, 'http') === 0) {
+                                    $image_url = $image_path;
+                                } else {
+                                    // If uploads path, remove /public_html from BASE_URL
+                                    if (strpos($image_path, 'uploads/') === 0) {
+                                        $base_url = str_replace('/public_html', '', BASE_URL);
+                                        $full_path = ROOT_PATH . '/' . $image_path;
+                                        // Check if file exists before using it
+                                        if (file_exists($full_path)) {
+                                            $image_url = $base_url . '/' . $image_path;
+                                        } else {
+                                            $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                                        }
+                                    } else {
+                                        $full_path = ROOT_PATH . '/' . $image_path;
+                                        // Check if file exists before using it
+                                        if (file_exists($full_path)) {
+                                            $image_url = BASE_URL . '/' . $image_path;
+                                        } else {
+                                            $image_url = ASSETS_URL . '/images/placeholder-product.svg';
+                                        }
+                                    }
+                                }
+                            endif;
+                            ?>
+                                <img src="<?php echo $image_url; ?>" 
                                      alt="<?php echo escape_html($product['product_title']); ?>"
-                                     onerror="this.src='<?php echo ASSETS_URL; ?>/images/placeholder-product.png'">
-                            <?php else: ?>
-                                <img src="<?php echo ASSETS_URL; ?>/images/placeholder-product.png" 
-                                     alt="Product Image">
-                            <?php endif; ?>
+                                     onerror="this.src='<?php echo ASSETS_URL; ?>/images/placeholder-product.svg'">
                         </div>
                         <div class="product-info">
                             <h3 class="product-title">

@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../../controller/user_controller.php';
 
 // Set page variables
 $page_title = 'User Management';
-$page_description = 'Manage user accounts and permissions for your e-commerce platform.';
+$page_description = 'Manage user accounts and permissions for KenteKart.';
 $body_class = 'users-page';
 $additional_css = ['users.css'];
 
@@ -62,7 +62,7 @@ include __DIR__ . '/../templates/header.php';
 <div class="container">
     <div class="page-header">
         <h1>User Management</h1>
-        <p>Manage user accounts and permissions for your e-commerce platform.</p>
+        <p>Manage user accounts and permissions for KenteKart.</p>
     </div>
     
     <?php if ($message): ?>

@@ -34,40 +34,22 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData,
             // Ensure credentials (cookies) are sent and accepted for same-origin
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json'
+            }
         })
-        .then(response => response.text())
-        .then(text => {
-            // Clean up common accidental wrappers (code fences, HTML comments, BOM)
-            let cleaned = text.trim();
-
-            // Remove leading markdown code fence line (e.g. ```php) if present
-            if (cleaned.startsWith('```')) {
-                const firstNewline = cleaned.indexOf('\n');
-                if (firstNewline !== -1) {
-                    cleaned = cleaned.substring(firstNewline + 1).trim();
-                }
+        .then(async response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response received:', text);
+                throw new Error('Invalid response format');
             }
-            // Remove trailing closing fence if present
-            if (cleaned.endsWith('```')) {
-                cleaned = cleaned.substring(0, cleaned.lastIndexOf('```')).trim();
-            }
-
-            // Strip any leading characters before the first JSON object
-            const firstBrace = cleaned.indexOf('{');
-            if (firstBrace > 0) {
-                cleaned = cleaned.substring(firstBrace);
-            }
-
-            let data;
-            try {
-                data = JSON.parse(cleaned);
-            } catch (err) {
-                console.error('Failed to parse login response as JSON', { raw: text, cleaned });
-                setLoadingState(false);
-                showError('An error occurred during login. Please try again.');
-                return;
-            }
+            return response.json();
+        })
+        .then(data => {
 
             setLoadingState(false);
 

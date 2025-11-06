@@ -11,6 +11,32 @@ let searchTimeout = null;
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initializeProductDisplay();
+    
+    // Initialize brand filter based on current category selection
+    const categoryFilter = document.getElementById('filter-category');
+    const brandFilter = document.getElementById('filter-brand');
+    
+    if (categoryFilter && brandFilter) {
+        const selectedCatId = categoryFilter.value;
+        if (selectedCatId && selectedCatId != '0') {
+            // Enable brand filter and load brands for the currently selected category
+            brandFilter.disabled = false;
+            loadBrandsByCategory(selectedCatId);
+            
+            // Restore selected brand after brands are loaded
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const selectedBrandId = urlParams.get('brand_id');
+                if (selectedBrandId && brandFilter) {
+                    brandFilter.value = selectedBrandId;
+                }
+            }, 800);
+        } else {
+            // Disable brand filter if no category is selected
+            brandFilter.disabled = true;
+            brandFilter.innerHTML = '<option value="0">Select a category first</option>';
+        }
+    }
 });
 
 /**
@@ -65,18 +91,27 @@ function initializeProductDisplay() {
 function handleCategoryFilter(e) {
     const catId = e.target.value;
     
-    if (catId == '0') {
-        // Remove category filter
-        delete currentFilters.cat_id;
+    // Get current URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Update or remove category filter
+    if (catId == '0' || catId == '') {
+        urlParams.delete('cat_id');
     } else {
-        currentFilters.cat_id = catId;
+        urlParams.set('cat_id', catId);
     }
+    
+    // Reset to page 1 when filtering
+    urlParams.set('page', '1');
+    
+    // Remove brand filter when category changes (brands are category-specific)
+    urlParams.delete('brand_id');
     
     // Load brands for selected category
     loadBrandsByCategory(catId);
     
-    // Apply filters
-    applyFilters();
+    // Reload page with new filters
+    window.location.href = window.location.pathname + '?' + urlParams.toString();
 }
 
 /**
@@ -85,13 +120,21 @@ function handleCategoryFilter(e) {
 function handleBrandFilter(e) {
     const brandId = e.target.value;
     
-    if (brandId == '0') {
-        delete currentFilters.brand_id;
+    // Get current URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Update or remove brand filter
+    if (brandId == '0' || brandId == '') {
+        urlParams.delete('brand_id');
     } else {
-        currentFilters.brand_id = brandId;
+        urlParams.set('brand_id', brandId);
     }
     
-    applyFilters();
+    // Reset to page 1 when filtering
+    urlParams.set('page', '1');
+    
+    // Reload page with new filters
+    window.location.href = window.location.pathname + '?' + urlParams.toString();
 }
 
 /**
@@ -99,7 +142,12 @@ function handleBrandFilter(e) {
  */
 function loadBrandsByCategory(catId) {
     const brandFilter = document.getElementById('filter-brand');
-    if (!brandFilter || !catId || catId == '0') {
+    if (!brandFilter) return;
+    
+    if (!catId || catId == '0') {
+        // Reset brand filter if no category selected
+        brandFilter.innerHTML = '<option value="0">Select a category first</option>';
+        brandFilter.disabled = true;
         return;
     }
 
@@ -113,13 +161,13 @@ function loadBrandsByCategory(catId) {
 
     // Show loading state
     brandFilter.disabled = true;
-    const originalHTML = brandFilter.innerHTML;
+    brandFilter.innerHTML = '<option value="0">Loading brands...</option>';
 
     fetch(actionUrl)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.data) {
-                // Clear existing options except first
+            if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
+                // Clear existing options
                 brandFilter.innerHTML = '<option value="0">All Brands</option>';
                 
                 // Add brands for this category
@@ -129,13 +177,15 @@ function loadBrandsByCategory(catId) {
                     option.textContent = brand.brand_name;
                     brandFilter.appendChild(option);
                 });
+                brandFilter.disabled = false;
+            } else {
+                brandFilter.innerHTML = '<option value="0">No brands available</option>';
+                brandFilter.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error loading brands:', error);
-            brandFilter.innerHTML = originalHTML;
-        })
-        .finally(() => {
+            brandFilter.innerHTML = '<option value="0">Error loading brands</option>';
             brandFilter.disabled = false;
         });
 }
@@ -214,9 +264,25 @@ function displayProducts(products) {
 
     let html = '';
     products.forEach(product => {
-        const imageUrl = product.product_image 
-            ? (typeof BASE_URL !== 'undefined' ? BASE_URL + '/' + product.product_image : product.product_image)
-            : (typeof ASSETS_URL !== 'undefined' ? ASSETS_URL + '/images/placeholder-product.png' : '');
+        let imageUrl = '';
+        if (product.product_image) {
+            // If image path is already absolute, use it; otherwise construct from BASE_URL
+            if (product.product_image.startsWith('http://') || product.product_image.startsWith('https://')) {
+                imageUrl = product.product_image;
+            } else {
+                // Remove leading slash if present
+                const cleanPath = product.product_image.startsWith('/') ? product.product_image.substring(1) : product.product_image;
+                // If uploads path, remove /public_html from BASE_URL
+                if (cleanPath.startsWith('uploads/')) {
+                    const baseUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '');
+                    imageUrl = baseUrl + '/' + cleanPath;
+                } else {
+                    imageUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL + '/' + cleanPath : '/' + cleanPath);
+                }
+            }
+        } else {
+            imageUrl = (typeof ASSETS_URL !== 'undefined' ? ASSETS_URL + '/images/placeholder-product.svg' : '/images/placeholder-product.svg');
+        }
         
         const productUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/view/product/single_product.php?id=' + product.product_id;
         
@@ -225,7 +291,7 @@ function displayProducts(products) {
                 <div class="product-image">
                     <img src="${imageUrl}" 
                          alt="${escapeHtml(product.product_title)}"
-                         onerror="this.src='${typeof ASSETS_URL !== 'undefined' ? ASSETS_URL : ''}/images/placeholder-product.png'">
+                         onerror="this.src='${typeof ASSETS_URL !== 'undefined' ? ASSETS_URL : ''}/images/placeholder-product.svg'">
                 </div>
                 <div class="product-info">
                     <h3 class="product-title">
@@ -361,38 +427,117 @@ function clearFilters() {
     const brandFilter = document.getElementById('filter-brand');
     if (brandFilter) {
         brandFilter.value = '0';
+        brandFilter.disabled = true;
+        brandFilter.innerHTML = '<option value="0">Select a category first</option>';
     }
     
-    // Reload page or apply filters
+    // Reload page without filters
     window.location.href = window.location.pathname;
 }
 
 /**
- * Handle add to cart (placeholder)
+ * Handle add to cart
  */
 function handleAddToCart(e) {
     e.preventDefault();
-    const productId = e.target.getAttribute('data-product-id');
+    const button = e.target.closest('.add-to-cart-btn');
+    if (!button) return;
     
-    // Placeholder - implement cart functionality later
-    if (typeof Toast !== 'undefined') {
-        Toast.info('Add to Cart functionality will be implemented. Product ID: ' + productId);
-    } else {
-        alert('Add to Cart functionality will be implemented. Product ID: ' + productId);
+    const productId = button.getAttribute('data-product-id');
+    
+    if (!productId) {
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Product ID is missing.');
+        } else {
+            alert('Product ID is missing.');
+        }
+        return;
     }
-    
-    // You can add AJAX call here to add product to cart
-    // Example:
-    // fetch(BASE_URL + '/actions/add_to_cart_action.php', {
-    //     method: 'POST',
-    //     body: JSON.stringify({ product_id: productId })
-    // })
-    // .then(response => response.json())
-    // .then(data => {
-    //     if (data.success) {
-    //         showNotification('Product added to cart!', 'success');
-    //     }
-    // });
+
+    // Disable button during request
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+    // Get action URL
+    const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/add_to_cart_action.php';
+
+    // Add to cart via AJAX
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(async response => {
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Cart action error response:', errorText);
+            throw new Error('HTTP error! status: ' + response.status + ' - ' + errorText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            if (typeof Toast !== 'undefined') {
+                Toast.success(data.message || 'Product added to cart!');
+            } else {
+                alert(data.message || 'Product added to cart!');
+            }
+            // Optionally update cart count in header if it exists
+            updateCartCount();
+        } else {
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Failed to add product to cart.');
+            } else {
+                alert(data.message || 'Failed to add product to cart.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Add to cart error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            actionUrl: actionUrl
+        });
+        if (typeof Toast !== 'undefined') {
+            Toast.error('An error occurred while adding to cart. Please check the console for details.');
+        } else {
+            alert('An error occurred while adding to cart. Please check the console for details.');
+        }
+    })
+    .finally(() => {
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+/**
+ * Update cart count in header (if cart count element exists)
+ */
+function updateCartCount() {
+    const cartCountElement = document.querySelector('.cart-count, #cart-count, [data-cart-count]');
+    if (cartCountElement) {
+        // Fetch updated cart count
+        const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/get_cart_action.php';
+        fetch(actionUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.count !== undefined) {
+                    cartCountElement.textContent = data.count;
+                    cartCountElement.style.display = data.count > 0 ? 'inline' : 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Failed to update cart count:', error);
+            });
+    }
 }
 
 /**

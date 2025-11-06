@@ -15,8 +15,13 @@ require_once __DIR__ . '/general_controller.php';
  */
 function create_order_ctr($customer_id, $items, $shipping_address, $payment_method = 'pending') {
     try {
-        // Check authentication
-        require_auth();
+        // Check authentication (don't redirect, just return error if not logged in)
+        if (!is_logged_in()) {
+            return [
+                'success' => false,
+                'message' => 'Please log in to create an order.'
+            ];
+        }
         
         // Validate input
         if (empty($items) || !is_array($items)) {
@@ -58,14 +63,7 @@ function create_order_ctr($customer_id, $items, $shipping_address, $payment_meth
                 ];
             }
             
-            // Check availability
-            if (!$product->is_available($item['product_id'], $item['quantity'])) {
-                return [
-                    'success' => false,
-                    'message' => "Insufficient stock for {$product_data['product_name']}."
-                ];
-            }
-            
+            // Calculate item total
             $item_total = $product_data['product_price'] * $item['quantity'];
             $order_total += $item_total;
             
@@ -74,7 +72,7 @@ function create_order_ctr($customer_id, $items, $shipping_address, $payment_meth
                 'quantity' => $item['quantity'],
                 'price' => $product_data['product_price'],
                 'total' => $item_total,
-                'product_name' => $product_data['product_name']
+                'product_title' => $product_data['product_title']
             ];
         }
         
@@ -106,11 +104,6 @@ function create_order_ctr($customer_id, $items, $shipping_address, $payment_meth
                     'message' => 'Failed to add order items.'
                 ];
             }
-            
-            // Update product stock
-            $current_stock = $product_data['stock_quantity'] ?? 0;
-            $new_stock = $current_stock - $item['quantity'];
-            $product->update_stock($item['product_id'], $new_stock);
         }
         
         // Log order creation
@@ -380,8 +373,8 @@ function get_all_orders_ctr($page = 1, $limit = 20, $status = null) {
         $order = new order_class();
         $orders = $order->get_all_orders($limit, $offset, $status);
         
-        // Get total count (simplified for now)
-        $total_orders = 1000; // Placeholder - would need a count method
+        // Get total count (with status filter if provided)
+        $total_orders = $order->count_all_orders($status);
         
         $pagination = get_paginated_results($total_orders, $limit, $page);
         

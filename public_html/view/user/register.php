@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../../settings/core.php';
 
 // Set page variables
 $page_title = 'Create Account';
-$page_description = 'Join our e-commerce platform and start shopping with exclusive deals and offers.';
+$page_description = 'Join KenteKart and start shopping with exclusive deals and offers.';
 $standalone_page = true;
 $body_class = 'auth-page register-page';
 $additional_css = ['registercss.css']; // Custom registration page styles
@@ -32,7 +32,7 @@ include __DIR__ . '/../templates/header.php';
     
     <div class="register-header">
         <h2>Create Account</h2>
-        <p>Join our e-commerce platform and start shopping!</p>
+        <p>Join KenteKart and start shopping!</p>
     </div>
 
     <!-- Progress Steps -->

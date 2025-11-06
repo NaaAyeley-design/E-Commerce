@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../class/category_class.php';
 
 // Set page variables
 $page_title = 'Category Management';
-$page_description = 'Manage product categories for your e-commerce platform.';
+$page_description = 'Manage product categories for KenteKart.';
 $body_class = 'categories-page';
 $additional_css = ['categories.css'];
 
@@ -135,7 +135,7 @@ include __DIR__ . '/../templates/header.php';
 <div class="container">
     <div class="page-header">
         <h1>Category Management</h1>
-        <p>Manage product categories for your e-commerce platform.</p>
+        <p>Manage product categories for KenteKart.</p>
     </div>
     
     <?php if ($message): ?>

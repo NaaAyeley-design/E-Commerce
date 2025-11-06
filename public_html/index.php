@@ -16,7 +16,7 @@ require_once __DIR__ . '/../settings/core.php';
 
 // Set page variables
 $page_title = 'Home';
-$page_description = 'Welcome to our modern e-commerce platform. Discover amazing products with secure shopping experience.';
+$page_description = 'Welcome to KenteKart. Discover amazing products with secure shopping experience.';
 $body_class = 'home-page';
 $additional_css = ['homepage.css']; // Specific CSS for homepage
 
@@ -30,7 +30,7 @@ include __DIR__ . '/view/templates/header.php';
             <div class="hero-text">
                 <h1 class="hero-title">Welcome shsisishis to <?php echo APP_NAME; ?></h1>
                 <p class="hero-subtitle">
-                    Discover amazing products with our hghhjctxtxhj secure and modern e-commerce platform. 
+                    Discover amazing products with KenteKart - your secure and modern shopping platform. 
                     Shop with confidence and enjoy a seamless shopping experience.
                 </p>
                 <div class="hero-actions">
