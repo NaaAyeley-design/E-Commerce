@@ -22,14 +22,14 @@ try {
     if ($result === "success") {
         // Redirect to login page with success message
         redirect_with_message(
-            BASE_URL . '/view/user/login.php?message=logged_out',
+            '../public_html/view/user/login.php?message=logged_out',
             'You have been logged out successfully.',
             'success'
         );
     } else {
         // Redirect to login page with error message
         redirect_with_message(
-            BASE_URL . '/view/user/login.php?error=logout_failed',
+            '../public_html/view/user/login.php?error=logout_failed',
             'An error occurred during logout.',
             'error'
         );
@@ -41,7 +41,7 @@ try {
     
     // Redirect to login page with error message
     redirect_with_message(
-        BASE_URL . '/view/user/login.php?error=logout_failed',
+        '../public_html/view/user/login.php?error=logout_failed',
         'An error occurred during logout.',
         'error'
     );
