@@ -129,7 +129,14 @@ class product_class extends db_class {
         $offset = (int)$offset;
         
         try {
-            $stmt = $this->conn->prepare($sql);
+            // Ensure database connection is established
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("get_all_products error: Database connection is null");
+                return [];
+            }
+            
+            $stmt = $conn->prepare($sql);
             $stmt->bindValue(1, $limit, PDO::PARAM_INT);
             $stmt->bindValue(2, $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -292,7 +299,12 @@ class product_class extends db_class {
         $offset = (int)$offset;
         
         try {
-            $stmt = $this->conn->prepare($sql);
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("search_products error: Database connection is null");
+                return [];
+            }
+            $stmt = $conn->prepare($sql);
             $stmt->bindValue(1, $search_param, PDO::PARAM_STR);
             $stmt->bindValue(2, $search_param, PDO::PARAM_STR);
             $stmt->bindValue(3, $search_param, PDO::PARAM_STR);
@@ -330,7 +342,12 @@ class product_class extends db_class {
         $offset = (int)$offset;
         
         try {
-            $stmt = $this->conn->prepare($sql);
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("filter_products_by_category error: Database connection is null");
+                return [];
+            }
+            $stmt = $conn->prepare($sql);
             $stmt->bindValue(1, $cat_id, PDO::PARAM_INT);
             $stmt->bindValue(2, $limit, PDO::PARAM_INT);
             $stmt->bindValue(3, $offset, PDO::PARAM_INT);
@@ -366,7 +383,12 @@ class product_class extends db_class {
         $offset = (int)$offset;
         
         try {
-            $stmt = $this->conn->prepare($sql);
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("filter_products_by_brand error: Database connection is null");
+                return [];
+            }
+            $stmt = $conn->prepare($sql);
             $stmt->bindValue(1, $brand_id, PDO::PARAM_INT);
             $stmt->bindValue(2, $limit, PDO::PARAM_INT);
             $stmt->bindValue(3, $offset, PDO::PARAM_INT);
@@ -434,7 +456,12 @@ class product_class extends db_class {
         $params[] = (int)$offset;
         
         try {
-            $stmt = $this->conn->prepare($sql);
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("composite_search error: Database connection is null");
+                return [];
+            }
+            $stmt = $conn->prepare($sql);
             foreach ($params as $index => $param) {
                 $param_type = is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR;
                 $stmt->bindValue($index + 1, $param, $param_type);

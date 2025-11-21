@@ -21,14 +21,18 @@ define('APP_ENV', 'development'); // development, staging, production
 // Error reporting configuration
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);
-    ini_set('display_errors', 0); // Don't display errors on frontend
-    ini_set('display_startup_errors', 0);
-    ini_set('log_errors', 0); // Don't log errors to prevent output
+    // Allow individual files to control error display
+    // But default to showing errors in development for debugging
+    if (!isset($suppress_errors) || !$suppress_errors) {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+    }
+    ini_set('log_errors', 1);
 } else {
     error_reporting(0);
     ini_set('display_errors', 0);
     ini_set('display_startup_errors', 0);
-    ini_set('log_errors', 0);
+    ini_set('log_errors', 1);
 }
 
 // Path Configuration
@@ -46,8 +50,11 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https:
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
 // Normalize paths to forward slashes
-$doc_root = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
-$public_path_norm = str_replace('\\', '/', realpath(PUBLIC_PATH));
+$doc_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
+if ($doc_root) {
+    $doc_root = str_replace('\\', '/', realpath($doc_root) ?: $doc_root);
+}
+$public_path_norm = str_replace('\\', '/', realpath(PUBLIC_PATH) ?: PUBLIC_PATH);
 
 // Compute the web-accessible path to PUBLIC_PATH by removing the document root
 $web_path = '/';
@@ -59,7 +66,15 @@ if ($doc_root && $public_path_norm && strpos($public_path_norm, $doc_root) === 0
 // Fallback: if we couldn't compute via document root, try to infer PUBLIC_PATH from the
 // current script path (useful on shared hosts with ~username in the URL).
 if (empty($web_path) || $web_path === '/') {
-    $script_name = $_SERVER['SCRIPT_NAME'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
+    // Try SCRIPT_NAME first (more reliable)
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+    
+    // If SCRIPT_NAME is empty, try REQUEST_URI (but remove query string)
+    if (empty($script_name)) {
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $script_name = parse_url($request_uri, PHP_URL_PATH) ?: '/';
+    }
+    
     // Prefer to extract up to /public_html if present in the script path
     $needle = '/public_html';
     $pos = strpos($script_name, $needle);
@@ -93,19 +108,7 @@ define('SMTP_ENCRYPTION', 'tls');
 define('FROM_EMAIL', 'noreply@ecommerce-platform.com');
 define('FROM_NAME', APP_NAME);
 
-// Error Reporting
-if (APP_ENV === 'development') {
-    error_reporting(E_ALL);
-    // Only show errors if not already suppressed by individual files
-    if (!isset($suppress_errors) || !$suppress_errors) {
-        ini_set('display_errors', 1);
-        ini_set('display_startup_errors', 1);
-    }
-} else {
-    error_reporting(0);
-    ini_set('display_errors', 0);
-    ini_set('display_startup_errors', 0);
-}
+// Error Reporting (already set above, this section removed to avoid duplication)
 
 // Timezone
 date_default_timezone_set('UTC');
@@ -138,44 +141,43 @@ set_exception_handler('custom_exception_handler');
  * Custom error handler
  */
 function custom_error_handler($severity, $message, $file, $line) {
+    // Don't handle errors that are suppressed
     if (!(error_reporting() & $severity)) {
         return false;
     }
     
     $error_msg = "Error: [$severity] $message in $file on line $line";
     
-    if (APP_ENV === 'development') {
-        // If the client expects JSON, return a minimal JSON error. Otherwise show a
-        // friendly error page. Never echo raw debug details to the frontend.
-        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
-        $is_json = (strpos($accept, 'application/json') !== false) ||
-                   (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
-                   (isset($_POST['ajax']) || isset($_REQUEST['ajax']));
+    // Always log errors
+    error_log($error_msg);
+    
+    // Only handle fatal errors, let PHP handle warnings/notices normally
+    if ($severity === E_ERROR || $severity === E_CORE_ERROR || $severity === E_COMPILE_ERROR || $severity === E_PARSE) {
+        if (APP_ENV === 'development') {
+            $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+            $is_json = (strpos($accept, 'application/json') !== false) ||
+                       (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+                       (isset($_POST['ajax']) || isset($_REQUEST['ajax']));
 
-        // Log the detailed error for developers
-        error_log($error_msg);
-
-        if ($is_json) {
-            if (!headers_sent()) {
+            if ($is_json && !headers_sent()) {
                 header('Content-Type: application/json', true, 500);
-            }
-            echo json_encode(['success' => false, 'message' => 'An internal server error occurred.']);
-        } else {
-            // For non-AJAX requests, show the generic 500 error page if available
-            if (!headers_sent()) {
+                echo json_encode(['success' => false, 'message' => 'An internal server error occurred.']);
+                exit;
+            } elseif (!headers_sent()) {
                 http_response_code(500);
                 if (defined('VIEW_PATH') && file_exists(VIEW_PATH . '/error/500.php')) {
                     include VIEW_PATH . '/error/500.php';
+                    exit;
                 } else {
                     echo "<h1>500 Internal Server Error</h1><p>An internal error occurred.</p>";
+                    exit;
                 }
             }
         }
-    } else {
-        error_log($error_msg);
     }
     
-    return true;
+    // For non-fatal errors, return false to let PHP handle them normally
+    return false;
 }
 
 /**

@@ -123,7 +123,7 @@ include __DIR__ . '/../templates/header.php';
                                 <th>Price</th>
                                 <th>Quantity</th>
                                 <th>Subtotal</th>
-                                <th style="text-align: center;">Action</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="cart-items-body">

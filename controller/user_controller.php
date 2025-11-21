@@ -79,6 +79,12 @@ function login_user_ctr($email, $password, $remember = false)
 
         $user = new user_class();
         $customer_data = $user->login_customer($email, $password);
+        
+        // Check if database connection failed
+        if ($customer_data === false && $user->getConnection() === null) {
+            error_log("Login failed: Database connection not available");
+            return "Database connection error. Please check if MySQL is running in XAMPP.";
+        }
 
         if ($customer_data) {
             if (session_status() === PHP_SESSION_NONE) {
@@ -332,6 +338,7 @@ function toggle_user_status_ctr($target_user_id, $admin_user_id) {
     }
 }
 
-// Auto-check remember me
-check_remember_me();
+// Note: check_remember_me() is no longer auto-executed on every page load
+// to prevent database connection delays. It should be called explicitly
+// only when needed (e.g., in login pages or authentication checks).
 ?>

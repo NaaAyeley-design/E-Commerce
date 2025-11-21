@@ -177,7 +177,7 @@ include __DIR__ . '/../templates/header.php';
                             </tr>
                             <!-- Cart Items Row (Expandable) -->
                             <?php if (!empty($items)): ?>
-                                <tr class="cart-items-row" id="cart-items-<?php echo $order['order_id']; ?>" style="display: none;">
+                                <tr class="cart-items-row" id="cart-items-<?php echo $order['order_id']; ?>">
                                     <td colspan="8" class="cart-items-container">
                                         <div class="cart-items-header">
                                             <h4><i class="fas fa-shopping-cart"></i> Cart Items for <?php echo escape_html($order['customer_name'] ?? 'Customer'); ?></h4>

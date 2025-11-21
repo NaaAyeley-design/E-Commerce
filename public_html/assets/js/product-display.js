@@ -380,7 +380,7 @@ function handleSearchSubmit(e) {
         const query = searchInput.value.trim();
         if (query) {
             window.location.href = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
-                                   '/view/product/product_search_result.php?query=' + 
+                                   '/view/product/all_product.php?query=' + 
                                    encodeURIComponent(query);
         }
     }

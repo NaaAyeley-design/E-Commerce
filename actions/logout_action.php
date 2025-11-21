@@ -19,20 +19,25 @@ try {
     // Perform logout
     $result = logout_user_ctr();
     
+    // Build absolute login URL using BASE_URL
+    $loginUrl = rtrim(BASE_URL, '/') . '/view/user/login.php';
+
     if ($result === "success") {
         // Redirect to login page with success message
         redirect_with_message(
-            '../public_html/view/user/login.php?message=logged_out',
+            $loginUrl . '?message=logged_out',
             'You have been logged out successfully.',
             'success'
         );
+        exit;
     } else {
         // Redirect to login page with error message
         redirect_with_message(
-            '../public_html/view/user/login.php?error=logout_failed',
+            $loginUrl . '?error=logout_failed',
             'An error occurred during logout.',
             'error'
         );
+        exit;
     }
     
 } catch (Exception $e) {
@@ -41,9 +46,9 @@ try {
     
     // Redirect to login page with error message
     redirect_with_message(
-        '../public_html/view/user/login.php?error=logout_failed',
+        $loginUrl . '?error=logout_failed',
         'An error occurred during logout.',
         'error'
     );
+    exit;
 }
-?>

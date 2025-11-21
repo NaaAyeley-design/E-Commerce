@@ -84,13 +84,6 @@ include __DIR__ . '/../templates/header.php';
                 <div class="message message-error" id="error-message"><?php echo escape_html($error); ?></div>
             <?php endif; ?>
             
-            <!-- Debug info -->
-            <div class="message message-info" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                <strong>Debug Info:</strong> Loaded <?php echo count($categories); ?> categories for dropdown
-                <?php if (empty($categories)): ?>
-                    <br><em>No categories found. Make sure categories exist in the database.</em>
-                <?php endif; ?>
-            </div>
         </div>
 
         <!-- Add Brand Form -->
@@ -133,7 +126,6 @@ include __DIR__ . '/../templates/header.php';
             <h3>Your Brands</h3>
             
             <?php 
-            // Debug: Count total brands
             $total_brands = 0;
             foreach ($brands_by_category as $cat_data) {
                 $total_brands += count($cat_data['brands']);
@@ -142,14 +134,6 @@ include __DIR__ . '/../templates/header.php';
             
             <?php if (empty($brands_by_category) || $total_brands === 0): ?>
                 <p>No brands found. Add your first brand above.</p>
-                <?php if (defined('APP_ENV') && APP_ENV === 'development'): ?>
-                    <div class="alert" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0;">
-                        <strong>Debug Info:</strong> 
-                        Categories checked: <?php echo count($categories); ?> | 
-                        Categories with brand sections: <?php echo count($brands_by_category); ?> | 
-                        Total brands: <?php echo $total_brands; ?>
-                    </div>
-                <?php endif; ?>
             <?php else: ?>
                 <?php foreach ($brands_by_category as $category_data): ?>
                     <div class="category-section">
@@ -198,7 +182,7 @@ include __DIR__ . '/../templates/header.php';
                                         </div>
                                         
                                         <!-- Edit Form (Hidden by default) -->
-                                        <form class="edit-brand-form" id="edit-form-<?php echo $brand['brand_id']; ?>" style="display: none;">
+                                        <form class="edit-brand-form" id="edit-form-<?php echo $brand['brand_id']; ?>">
                                             <div class="form-group">
                                                 <label>Brand Name:</label>
                                                 <input type="text" name="brand_name" value="<?php echo escape_html($brand['brand_name']); ?>" required class="form-input">
@@ -233,7 +217,6 @@ include __DIR__ . '/../templates/header.php';
     <script>
         // Define BASE_URL for JavaScript
         const BASE_URL = '<?php echo BASE_URL; ?>';
-        console.log('BASE_URL set to:', BASE_URL);
     </script>
     <script src="<?php echo ASSETS_URL; ?>/js/brands.js?v=<?php echo time(); ?>"></script>
 

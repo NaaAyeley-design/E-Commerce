@@ -51,11 +51,6 @@ try {
         $brands = [];
     }
     
-    // Debug: Log brands for troubleshooting
-    error_log("Brands loaded for dropdown: " . count($brands));
-    if (!empty($brands)) {
-        error_log("Sample brand: " . print_r($brands[0], true));
-    }
 } catch (Exception $e) {
     error_log("Get brands error: " . $e->getMessage());
     error_log("Get brands error trace: " . $e->getTraceAsString());
@@ -124,29 +119,6 @@ include __DIR__ . '/../templates/header.php';
                 <div class="message message-error" id="error-message"><?php echo escape_html($error); ?></div>
             <?php endif; ?>
             
-            <!-- Debug info -->
-            <div class="message message-info" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                <strong>Debug Info:</strong> Loaded <?php echo count($categories); ?> categories and <?php echo count($brands); ?> brands for dropdowns
-                <?php if (empty($categories)): ?>
-                    <br><em>No categories found. Make sure categories exist in the database.</em>
-                <?php endif; ?>
-                <?php if (empty($brands)): ?>
-                    <br><em>No brands found. Make sure brands exist in the database.</em>
-                <?php else: ?>
-                    <?php 
-                    $brands_with_cat = 0;
-                    foreach ($brands as $brand) {
-                        if (isset($brand['cat_id']) && $brand['cat_id'] !== null && $brand['cat_id'] !== '') {
-                            $brands_with_cat++;
-                        }
-                    }
-                    ?>
-                    <br><em>Brands with category ID: <?php echo $brands_with_cat; ?> out of <?php echo count($brands); ?> total</em>
-                    <?php if ($brands_with_cat === 0): ?>
-                        <br><strong style="color: #dc3545;">Warning: No brands have category IDs. Brands cannot be filtered without category IDs.</strong>
-                    <?php endif; ?>
-                <?php endif; ?>
-            </div>
         </div>
 
         <!-- Add/Edit Product Form -->
@@ -158,7 +130,7 @@ include __DIR__ . '/../templates/header.php';
                 <div class="form-row">
                     <div class="form-group">
                         <label for="cat_id">Category: <span class="required">*</span></label>
-                        <select id="cat_id" name="cat_id" required class="form-input" style="cursor: pointer; pointer-events: auto; position: relative; z-index: 1;">
+                        <select id="cat_id" name="cat_id" required class="form-input">
                             <option value="">Select a category first</option>
                             <?php if (!empty($categories)): ?>
                                 <?php foreach ($categories as $cat): ?>
@@ -175,7 +147,7 @@ include __DIR__ . '/../templates/header.php';
                     
                     <div class="form-group">
                         <label for="brand_id">Brand: <span class="required">*</span></label>
-                        <select id="brand_id" name="brand_id" required class="form-input" style="cursor: pointer; pointer-events: auto; position: relative; z-index: 1;" disabled>
+                        <select id="brand_id" name="brand_id" required class="form-input" disabled>
                             <option value="">Select a category first</option>
                             <?php if (!empty($brands)): ?>
                                 <?php 
@@ -233,7 +205,7 @@ include __DIR__ . '/../templates/header.php';
                     <small class="form-help">Upload a JPEG, PNG, GIF, or WebP image (max 5MB)</small>
                 </div>
                 
-                <div id="image-preview" class="image-preview" style="display: none;">
+                <div id="image-preview" class="image-preview">
                     <img id="preview-img" src="" alt="Image preview">
                     <div id="preview-info" class="preview-info"></div>
                     <button type="button" id="remove-image" class="btn btn-sm btn-danger">Remove Images</button>
@@ -241,7 +213,7 @@ include __DIR__ . '/../templates/header.php';
                 
                 <div class="form-actions">
                     <button type="submit" id="submit-btn" class="btn btn-primary">Add Product</button>
-                    <button type="button" id="cancel-btn" class="btn btn-outline" style="display: none;">Cancel</button>
+                    <button type="button" id="cancel-btn" class="btn btn-outline">Cancel</button>
                 </div>
             </form>
         </div>
@@ -350,14 +322,8 @@ include __DIR__ . '/../templates/header.php';
                         }
                     });
                     
-                    // Test click
-                    catSelect.addEventListener('click', function(e) {
-                        console.log('Category dropdown clicked - native behavior should work');
-                    }, true);
-                    
-                    console.log('Category dropdown forced enabled. Options:', catSelect.options.length);
                 } else {
-                    console.error('Category dropdown not found in immediate test!');
+                    // Category dropdown not found
                 }
                 
                 // Also force enable brand dropdown
@@ -369,14 +335,6 @@ include __DIR__ . '/../templates/header.php';
                     brandSelect.style.zIndex = '9999';
                     brandSelect.style.position = 'relative';
                     brandSelect.style.cursor = 'pointer';
-                    
-                    brandSelect.addEventListener('click', function(e) {
-                        console.log('Brand dropdown clicked - native behavior should work');
-                    }, true);
-                    
-                    console.log('Brand dropdown forced enabled. Options:', brandSelect.options.length);
-                } else {
-                    console.error('Brand dropdown not found in immediate test!');
                 }
             }, 50);
         });

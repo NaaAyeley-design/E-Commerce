@@ -8,14 +8,36 @@
 // Start output buffering to prevent any accidental output
 ob_start();
 
-// Suppress all output except JSON
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(0);
+// Enable error reporting for debugging (can be disabled in production)
+if (defined('APP_ENV') && APP_ENV === 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0); // Don't display, but log
+    ini_set('log_errors', 1);
+} else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(0);
+}
+
+// Set execution time limit for login (30 seconds max)
+set_time_limit(30);
 
 // Include core settings and user controller
-require_once __DIR__ . '/../settings/core.php';
-require_once __DIR__ . '/../controller/user_controller.php';
+try {
+    require_once __DIR__ . '/../settings/core.php';
+    require_once __DIR__ . '/../controller/user_controller.php';
+} catch (Exception $e) {
+    ob_clean();
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Server configuration error. Please contact support.'
+    ]);
+    error_log("Login endpoint error: " . $e->getMessage());
+    ob_end_flush();
+    exit;
+}
 
 // Clear any output that may have been generated during includes
 ob_clean();
@@ -63,8 +85,15 @@ try {
         exit;
     }
 
-    // Attempt login
+    // Attempt login with timeout protection
+    $start_time = microtime(true);
     $result = login_user_ctr($email, $password, $remember);
+    $duration = microtime(true) - $start_time;
+    
+    // Log if login takes too long
+    if ($duration > 5) {
+        error_log("Login took {$duration} seconds for {$email}");
+    }
 
     if ($result === "success") {
         // Determine redirect URL based on user role

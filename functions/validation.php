@@ -195,6 +195,38 @@ function validate_csrf_token($token) {
 }
 
 /**
+ * Validate CSRF token from form submission
+ * Validates token from POST data and exits with error if invalid
+ */
+function validate_form_csrf() {
+    $token = $_POST['csrf_token'] ?? '';
+    
+    if (empty($token)) {
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'CSRF token is required.']);
+        if (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        exit;
+    }
+    
+    if (!validate_csrf_token($token)) {
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Invalid CSRF token. Please refresh the page and try again.']);
+        if (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        exit;
+    }
+}
+
+/**
  * Generate CSRF token
  */
 function generate_csrf_token() {

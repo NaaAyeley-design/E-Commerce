@@ -72,17 +72,31 @@ class user_class extends db_class {
      * Authenticate user login
      */
     public function login_customer($email, $password) {
+        // Check database connection first
+        if ($this->getConnection() === null) {
+            error_log("Login attempt failed: Database connection not available");
+            return false; // Will be handled by controller
+        }
+        
         $sql = "SELECT customer_id, customer_name, customer_email, customer_pass, user_role 
                 FROM customer WHERE customer_email = ?";
         
         $customer = $this->fetchRow($sql, [$email]);
         
-        if ($customer && password_verify($password, $customer['customer_pass'])) {
+        // If fetchRow returns false, it could be wrong email OR database error
+        // Check connection status to distinguish
+        if ($customer === false && $this->getConnection() === null) {
+            // Database error
+            return false;
+        }
+        
+        if ($customer && isset($customer['customer_pass']) && password_verify($password, $customer['customer_pass'])) {
             // Remove password from returned data for security
             unset($customer['customer_pass']);
             return $customer;
         }
         
+        // Wrong email or password
         return false;
     }
 

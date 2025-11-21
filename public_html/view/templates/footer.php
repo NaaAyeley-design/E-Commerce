@@ -105,12 +105,11 @@
     </button>
     
     <!-- JavaScript Files -->
-    <script src="<?php echo ASSETS_URL; ?>/js/toast.js"></script>
-    <script src="<?php echo ASSETS_URL; ?>/js/sidebar.js"></script>
-    <script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/toast.js?v=<?php echo get_js_version('toast.js'); ?>"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/script.js?v=<?php echo get_js_version('script.js'); ?>"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>
-            <script src="<?php echo ASSETS_URL; ?>/js/<?php echo $js_file; ?>"></script>
+            <script src="<?php echo ASSETS_URL; ?>/js/<?php echo $js_file; ?>?v=<?php echo get_js_version($js_file); ?>"></script>
         <?php endforeach; ?>
     <?php endif; ?>
     
@@ -141,7 +140,36 @@
                 });
             });
             
-            // Mobile menu functionality
+            // Mobile menu functionality for top navbar (non-admin pages)
+            const topNavbarToggle = document.querySelector('.top-navbar-mobile-toggle');
+            const topNavbarMenu = document.querySelector('.top-navbar-menu');
+            
+            if (topNavbarToggle && topNavbarMenu) {
+                topNavbarToggle.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    topNavbarMenu.setAttribute('aria-expanded', !isExpanded);
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!topNavbarToggle.contains(e.target) && !topNavbarMenu.contains(e.target)) {
+                        topNavbarToggle.setAttribute('aria-expanded', 'false');
+                        topNavbarMenu.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Close menu when clicking a link
+                const topNavbarLinks = topNavbarMenu.querySelectorAll('.top-navbar-link');
+                topNavbarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        topNavbarToggle.setAttribute('aria-expanded', 'false');
+                        topNavbarMenu.setAttribute('aria-expanded', 'false');
+                    });
+                });
+            }
+            
+            // Mobile menu functionality for sidebar (admin pages)
             const mobileToggle = document.querySelector('.mobile-menu-toggle');
             const navMenu = document.querySelector('.nav-menu');
             

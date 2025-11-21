@@ -2,22 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo BASE_URL; ?>/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?php echo BASE_URL; ?>/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?php echo BASE_URL; ?>/favicon_io/favicon-16x16.png">
+    <link rel="icon" href="<?php echo BASE_URL; ?>/favicon_io/favicon.ico">
+    <link rel="manifest" href="<?php echo BASE_URL; ?>/favicon_io/site.webmanifest">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? escape_html($page_title) . ' - ' . APP_NAME : APP_NAME; ?></title>
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="<?php echo ASSETS_URL; ?>/images/favicon.ico">
-    
     <!-- CSS Files -->
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css">
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css">
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sidebar.css">
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/toast.css">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css?v=<?php echo get_css_version('sleep.css'); ?>">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css?v=<?php echo get_css_version('header_footer.css'); ?>">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sidebar.css?v=<?php echo get_css_version('sidebar.css'); ?>">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/toast.css?v=<?php echo get_css_version('toast.css'); ?>">
     
     <!-- Additional CSS Files -->
     <?php if (isset($additional_css) && is_array($additional_css)): ?>
         <?php foreach ($additional_css as $css_file): ?>
-            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css_file; ?>?v=<?php echo time(); ?>">
+            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css_file; ?>?v=<?php echo get_css_version($css_file); ?>">
         <?php endforeach; ?>
     <?php endif; ?>
     
@@ -70,153 +72,149 @@
         </div>
     <?php endif; ?>
     
-    <!-- Sidebar Navigation (if not a standalone page) -->
+    <?php
+    // Determine if this is an admin page
+    $is_admin_page = false;
+    if (isset($_SERVER['SCRIPT_NAME'])) {
+        $script_path = $_SERVER['SCRIPT_NAME'];
+        $is_admin_page = (strpos($script_path, '/admin/') !== false) || 
+                        (strpos($script_path, '/view/admin/') !== false);
+    }
+    // Also check if user is admin and explicitly set admin layout
+    if (isset($use_admin_layout) && $use_admin_layout) {
+        $is_admin_page = true;
+    }
+    
+    // Add admin-page class to body for CSS targeting
+    if ($is_admin_page) {
+        $body_class = (isset($body_class) ? $body_class . ' ' : '') . 'admin-page';
+    }
+    ?>
+    
     <?php if (!isset($standalone_page) || !$standalone_page): ?>
-        <!-- Mobile Menu Toggle Button (only visible on mobile) -->
-        <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar-navigation">
-            <svg class="mobile-menu-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
-        
-        <!-- Overlay Backdrop (mobile only) -->
-        <div class="sidebar-overlay" aria-hidden="true"></div>
-        
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar-navigation" role="navigation" aria-label="Main navigation">
-            <!-- Sidebar Header -->
-            <div class="sidebar-header">
-                <a href="<?php echo url('index.php'); ?>" class="sidebar-logo">
-                    <img src="<?php echo ASSETS_URL; ?>/images/logo.svg" alt="<?php echo APP_NAME; ?>" class="sidebar-logo-image" onerror="this.style.display='none';">
-                    <span class="sidebar-logo-text"><?php echo APP_NAME; ?></span>
-                </a>
-                <button class="sidebar-toggle" aria-expanded="true" aria-controls="sidebar-navigation" aria-label="Toggle sidebar">
-                    <svg class="sidebar-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Sidebar Navigation -->
-            <nav class="sidebar-nav">
-                <ul class="sidebar-nav-list">
-                    <li class="sidebar-nav-item">
-                        <a href="<?php echo url('view/product/all_product.php'); ?>" class="sidebar-nav-link" data-tooltip="All Products">
-                            <span class="sidebar-nav-icon">
-                                <i class="fas fa-shopping-bag"></i>
-                            </span>
-                            <span class="sidebar-nav-label">All Products</span>
+        <!-- Top Navigation Bar (for non-admin pages) -->
+        <nav class="top-navbar" role="navigation" aria-label="Main navigation">
+            <div class="top-navbar-container">
+                <!-- Logo -->
+                <div class="top-navbar-logo">
+                    <a href="<?php echo url('index.php'); ?>" class="top-navbar-logo-link">
+                        <span class="top-navbar-logo-text"><?php echo APP_NAME; ?></span>
+                    </a>
+                </div>
+                
+                <!-- Navigation Links -->
+                <ul class="top-navbar-menu" id="top-navbar-menu">
+                    <li class="top-navbar-item">
+                        <a href="<?php echo url('index.php'); ?>" class="top-navbar-link">
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li class="top-navbar-item">
+                        <a href="<?php echo url('view/product/all_product.php'); ?>" class="top-navbar-link">
+                            <i class="fas fa-shopping-bag"></i>
+                            <span>Products</span>
                         </a>
                     </li>
                     
                     <?php if (is_logged_in()): ?>
                         <?php if (!is_admin()): ?>
-                            <!-- Regular User Cart (not for admins) -->
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="sidebar-nav-link" data-tooltip="Shopping Cart">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-shopping-cart"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Cart</span>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span>Cart</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-user"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                        <?php else: ?>
+                            <!-- Admin Navigation Links -->
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/dashboard.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/categories.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-tags"></i>
+                                    <span>Categories</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/brands.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-trademark"></i>
+                                    <span>Brands</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/products.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-box"></i>
+                                    <span>Products</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/orders.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span>Orders</span>
+                                </a>
+                            </li>
+                            <li class="top-navbar-item">
+                                <a href="<?php echo url('view/admin/users.php'); ?>" class="top-navbar-link">
+                                    <i class="fas fa-users"></i>
+                                    <span>Users</span>
                                 </a>
                             </li>
                         <?php endif; ?>
                         
-                        <?php if (is_admin()): ?>
-                            <!-- Admin User Menu -->
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo url('view/admin/categories.php'); ?>" class="sidebar-nav-link" data-tooltip="Categories">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-tags"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Category</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo url('view/admin/brands.php'); ?>" class="sidebar-nav-link" data-tooltip="Brands">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-trademark"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Brand</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo url('view/admin/products.php'); ?>" class="sidebar-nav-link" data-tooltip="Add Product">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Add Product</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo url('view/admin/orders.php'); ?>" class="sidebar-nav-link" data-tooltip="Orders">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-shopping-cart"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Orders</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-nav-item">
-                                <a href='../../actions/logout_action.php' class="sidebar-nav-link" data-tooltip="Logout">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Logout</span>
-                                </a>
-                            </li>
-                        <?php else: ?>
-                            <!-- Regular User Menu -->
-                            <li class="sidebar-nav-item">
-                                <a href="<?php echo str_replace('/public_html', '', BASE_URL) . '/actions/logout_action.php'; ?>" class="sidebar-nav-link" data-tooltip="Logout">
-                                    <span class="sidebar-nav-icon">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                    </span>
-                                    <span class="sidebar-nav-label">Logout</span>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <!-- Guest User Menu -->
-                        <li class="sidebar-nav-item">
-                            <a href="<?php echo url('view/user/register.php'); ?>" class="sidebar-nav-link" data-tooltip="Register">
-                                <span class="sidebar-nav-icon">
-                                    <i class="fas fa-user-plus"></i>
-                                </span>
-                                <span class="sidebar-nav-label">Register</span>
+                        <li class="top-navbar-item">
+                            <a href="<?php echo str_replace('/public_html', '', BASE_URL) . '/actions/logout_action.php'; ?>" class="top-navbar-link">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
                             </a>
                         </li>
-                        <li class="sidebar-nav-item">
-                            <a href="<?php echo url('view/user/login.php'); ?>" class="sidebar-nav-link" data-tooltip="Login">
-                                <span class="sidebar-nav-icon">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                </span>
-                                <span class="sidebar-nav-label">Login</span>
+                    <?php else: ?>
+                        <li class="top-navbar-item">
+                            <a href="<?php echo url('view/user/login.php'); ?>" class="top-navbar-link">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Login</span>
+                            </a>
+                        </li>
+                        <li class="top-navbar-item">
+                            <a href="<?php echo url('view/user/register.php'); ?>" class="top-navbar-link top-navbar-link-primary">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Register</span>
                             </a>
                         </li>
                     <?php endif; ?>
                 </ul>
-            </nav>
-        </aside>
-        
-        <!-- Top Bar with Search (replaces horizontal header) -->
-        <div class="top-bar">
-            <div class="top-bar-content">
+                
                 <!-- Search Box -->
-                <div class="top-bar-search">
-                    <form action="<?php echo url('view/product/product_search_result.php'); ?>" method="GET" class="search-form" id="header-search-form">
+                <div class="top-navbar-search">
+                    <form action="<?php echo url('view/product/all_product.php'); ?>" method="GET" class="top-navbar-search-form">
                         <input type="text" 
                                name="query" 
-                               id="header-search-input"
                                placeholder="Search products..." 
-                               class="search-input"
+                               class="top-navbar-search-input"
                                value="<?php echo isset($_GET['query']) ? escape_html($_GET['query']) : ''; ?>">
-                        <button type="submit" class="search-btn" aria-label="Search">
+                        <button type="submit" class="top-navbar-search-btn" aria-label="Search">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
                 </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="top-navbar-mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="top-navbar-menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </div>
-        </div>
+        </nav>
     <?php endif; ?>
     
     <!-- Main Content Area -->

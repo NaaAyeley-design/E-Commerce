@@ -125,7 +125,7 @@ include __DIR__ . '/../templates/header.php';
                                     <td><?php echo date('M j, Y', strtotime($user['created_at'])); ?></td>
                                     <td>
                                         <?php if ($user['customer_id'] != $user_id): // Don't allow self-modification ?>
-                                            <form method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to toggle this user\'s status?');">
+                                            <form method="post" onsubmit="return confirm('Are you sure you want to toggle this user\'s status?');">
                                                 <input type="hidden" name="action" value="toggle_status">
                                                 <input type="hidden" name="user_id" value="<?php echo $user['customer_id']; ?>">
                                                 <button type="submit" class="btn btn-sm <?php echo $user['is_active'] ? 'btn-warning' : 'btn-success'; ?>">
@@ -147,91 +147,6 @@ include __DIR__ . '/../templates/header.php';
     </div>
 </div>
 
-<style>
-.badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.badge-admin {
-    background-color: #dc3545;
-    color: white;
-}
-
-.badge-user {
-    background-color: #6c757d;
-    color: white;
-}
-
-.badge-active {
-    background-color: #28a745;
-    color: white;
-}
-
-.badge-inactive {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #6c757d;
-}
-
-.empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-}
-
-.empty-state h4 {
-    margin-bottom: 0.5rem;
-    color: #495057;
-}
-
-.table-responsive {
-    overflow-x: auto;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-
-.table th,
-.table td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-</style>
 
 <?php
 // Include footer

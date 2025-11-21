@@ -85,16 +85,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     INDEX idx_created_at (created_at)
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_customer_email ON customer(customer_email);
-CREATE INDEX idx_customer_role ON customer(user_role);
-CREATE INDEX idx_customer_created ON customer(created_at);
 
--- Clean up expired password reset tokens (run this periodically)
--- DELETE FROM password_resets WHERE expires_at < NOW();
-
--- Clean up expired sessions (run this periodically)
--- DELETE FROM user_sessions WHERE expires_at < NOW();
 
 -- Brands table (belongs to category, created by a user)
 CREATE TABLE IF NOT EXISTS brands (

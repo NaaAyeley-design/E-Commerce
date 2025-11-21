@@ -29,43 +29,101 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(loginForm);
         formData.append('ajax', '1');
 
-        // Submit form via AJAX
+        // Submit form via AJAX with timeout
+        const controller = new AbortController();
+        const timeoutMs = 30000; // 30s timeout (increased for slow connections)
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
         fetch(loginForm.action, {
             method: 'POST',
             body: formData,
-            // Ensure credentials (cookies) are sent and accepted for same-origin
             credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json'
-            }
+            signal: controller.signal
         })
-        .then(async response => {
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.error('Non-JSON response received:', text);
-                throw new Error('Invalid response format');
+        .then(response => {
+            clearTimeout(timeoutId);
+            // Check if response is OK
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
             }
-            return response.json();
+            // Parse JSON response
+            return response.json().catch(() => {
+                // If JSON parsing fails, try to get text
+                return response.text().then(text => {
+                    throw new Error('Invalid JSON response: ' + text);
+                });
+            });
         })
         .then(data => {
-
+            clearTimeout(timeoutId);
             setLoadingState(false);
-
-            if (data.success) {
-                showSuccess(data.message);
+            
+            // Handle response - only show the message text, not the JSON structure
+            if (data && data.success === true) {
+                // Extract only the message text
+                const message = (data.message && typeof data.message === 'string') 
+                    ? data.message 
+                    : 'Login successful! Redirecting...';
+                showSuccess(message);
+                
+                // Redirect after short delay
                 setTimeout(() => {
-                    window.location.href = data.redirect || window.location.origin + window.location.pathname.replace('login.php', 'dashboard.php');
-                }, 1500);
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = loginForm.action.replace('actions/process_login.php', 'view/user/dashboard.php');
+                    }
+                }, 1000);
             } else {
-                showError(data.message || 'Login failed');
+                // Extract only the message text for errors
+                const errorMessage = (data && data.message && typeof data.message === 'string')
+                    ? data.message
+                    : 'Login failed. Please check your credentials and try again.';
+                showError(errorMessage);
             }
         })
-        .catch(error => {
+        .catch(err => {
+            clearTimeout(timeoutId);
             setLoadingState(false);
-            console.error('Login error:', error);
-            showError('An error occurred during login. Please try again.');
+            
+            if (err.name === 'AbortError') {
+                console.warn('Login error: request aborted (timeout)');
+                showError('Login request timed out. This usually means:\n' +
+                         '• The server is not responding\n' +
+                         '• Database connection is slow\n' +
+                         '• Network issues\n\n' +
+                         'Please check:\n' +
+                         '1. MySQL/MariaDB is running in XAMPP\n' +
+                         '2. Your internet connection\n' +
+                         '3. Try again in a few moments');
+            } else if (err.message && err.message.includes('Failed to fetch')) {
+                console.error('Login error: Network error', err);
+                showError('Cannot connect to server. Please check:\n' +
+                         '• Apache is running in XAMPP\n' +
+                         '• You are accessing the correct URL\n' +
+                         '• No firewall is blocking the connection');
+            } else {
+                console.error('Login error:', err);
+                // Extract message from error if it's a JSON string
+                let errorMessage = 'An error occurred during login. Please try again.';
+                if (err.message) {
+                    try {
+                        // Try to parse if it's a JSON string
+                        const parsed = JSON.parse(err.message);
+                        if (parsed.message) {
+                            errorMessage = parsed.message;
+                        } else {
+                            errorMessage = err.message;
+                        }
+                    } catch (e) {
+                        // Not JSON, use the error message as-is
+                        errorMessage = err.message;
+                    }
+                }
+                showError(errorMessage);
+            }
         });
     });
 
@@ -213,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Toast.info(message);
             }
         }
-        
+
         // Also show inline message for form context
         hideMessage();
 

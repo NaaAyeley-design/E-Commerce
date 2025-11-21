@@ -10,10 +10,12 @@ class db_class {
     private static $instance = null;
     
     /**
-     * Constructor - Initialize database connection
+     * Constructor - Don't connect immediately (lazy loading)
      */
     public function __construct() {
-        $this->connect();
+        // Don't connect immediately - use lazy loading
+        // Connection will be established on first use
+        $this->conn = null;
     }
     
     /**
@@ -31,15 +33,25 @@ class db_class {
      */
     private function connect() {
         try {
+            // Set connection timeout (MySQL timeout in seconds)
+            $connection_timeout = 5; // 5 seconds for connection
+            
             // Use configuration constants from db_cred.php
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+            // Add timeout to DSN for MySQL
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET . ";connect_timeout=" . $connection_timeout;
             
             $options = array_merge(DB_OPTIONS, [
                 PDO::ATTR_PERSISTENT => DB_PERSISTENT,
-                PDO::ATTR_TIMEOUT => DB_TIMEOUT
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => $connection_timeout
             ]);
             
+            // Try to connect with timeout
             $this->conn = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
+            
+            // Set query timeout (MySQL wait_timeout)
+            $this->conn->exec("SET SESSION wait_timeout = 30");
+            $this->conn->exec("SET SESSION interactive_timeout = 30");
             
         } catch (PDOException $e) {
             $this->handleConnectionError($e);
@@ -50,10 +62,30 @@ class db_class {
      * Handle connection errors
      */
     private function handleConnectionError($exception) {
+        $error_msg = "Database connection failed: " . $exception->getMessage();
+        $error_code = $exception->getCode();
+        
+        // Always log the error
+        error_log($error_msg);
+        error_log("PDO Error Code: " . $error_code);
+        error_log("Attempted to connect to: " . DB_HOST . " / " . DB_NAME);
+        
+        // In development, provide more details
         if (APP_ENV === 'development') {
-            error_log("Database connection failed: " . $exception->getMessage());
-            // In development, don't die, just set conn to null
+            error_log("DB_USERNAME: " . DB_USERNAME);
+            error_log("DB_PASSWORD: " . (DB_PASSWORD ? '***SET***' : '***EMPTY***'));
+            
+            // Set conn to null but log helpful error messages
             $this->conn = null;
+            
+            // Common error solutions
+            if ($error_code == 1049) {
+                error_log("SOLUTION: Database '" . DB_NAME . "' does not exist. Create it in phpMyAdmin.");
+            } elseif ($error_code == 1045) {
+                error_log("SOLUTION: Access denied. Check username and password in settings/db_cred.php");
+            } elseif ($error_code == 2002) {
+                error_log("SOLUTION: Cannot connect to MySQL server. Make sure MySQL is running in XAMPP.");
+            }
         } else {
             error_log("Database connection failed: " . $exception->getMessage());
             die("Database connection failed. Please try again later.");
@@ -64,13 +96,43 @@ class db_class {
      * Get database connection
      */
     public function getConnection() {
+        if (!$this->ensureConnection()) {
+            if (APP_ENV === 'development') {
+                error_log("getConnection() called but connection is null. Check error logs for connection failure details.");
+            }
+            return null;
+        }
         return $this->conn;
+    }
+    
+    /**
+     * Ensure database connection is established (lazy loading)
+     */
+    private function ensureConnection() {
+        if ($this->conn === null) {
+            $this->connect();
+            // If connection still failed, log detailed error
+            if ($this->conn === null && APP_ENV === 'development') {
+                error_log("ensureConnection() failed - connection is still null after connect() attempt");
+                error_log("DB_HOST: " . DB_HOST);
+                error_log("DB_NAME: " . DB_NAME);
+                error_log("DB_USERNAME: " . DB_USERNAME);
+                error_log("DB_PASSWORD: " . (DB_PASSWORD ? '***SET***' : '***EMPTY***'));
+            }
+        }
+        return $this->conn !== null;
     }
     
     /**
      * Execute a prepared statement
      */
     public function execute($sql, $params = []) {
+        // Lazy load connection only when needed
+        if (!$this->ensureConnection()) {
+            error_log("Failed to establish database connection for query: " . substr($sql, 0, 100));
+            return false;
+        }
+        
         try {
             $stmt = $this->conn->prepare($sql);
             $stmt->execute($params);
@@ -101,6 +163,9 @@ class db_class {
      * Get last insert ID
      */
     public function lastInsertId() {
+        if (!$this->ensureConnection()) {
+            return false;
+        }
         return $this->conn->lastInsertId();
     }
     
@@ -116,6 +181,9 @@ class db_class {
      * Begin transaction
      */
     public function beginTransaction() {
+        if (!$this->ensureConnection()) {
+            return false;
+        }
         return $this->conn->beginTransaction();
     }
     
@@ -123,6 +191,9 @@ class db_class {
      * Commit transaction
      */
     public function commit() {
+        if ($this->conn === null) {
+            return false;
+        }
         return $this->conn->commit();
     }
     
@@ -130,6 +201,9 @@ class db_class {
      * Rollback transaction
      */
     public function rollback() {
+        if ($this->conn === null) {
+            return false;
+        }
         return $this->conn->rollback();
     }
     

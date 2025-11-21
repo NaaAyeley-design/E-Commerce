@@ -84,32 +84,11 @@ function log_user_activity($action, $description = '') {
 }
 
 /**
- * Check rate limiting for actions
+ * Note: check_action_rate_limit() and validate_form_csrf() are now defined in:
+ * - functions/utils.php (check_action_rate_limit)
+ * - functions/validation.php (validate_form_csrf)
+ * These functions are auto-loaded via core.php, so they're available here.
  */
-function check_action_rate_limit($action, $limit = 5, $window = 300) {
-    if (!check_rate_limit($action, $limit, $window)) {
-        send_json_response([
-            'success' => false,
-            'message' => 'Too many attempts. Please try again later.'
-        ], 429);
-    }
-}
-
-/**
- * Validate CSRF token for forms
- */
-function validate_form_csrf($token = null) {
-    if ($token === null) {
-        $token = $_POST['csrf_token'] ?? '';
-    }
-    
-    if (!validate_csrf_token($token)) {
-        send_json_response([
-            'success' => false,
-            'message' => 'Invalid security token. Please refresh the page and try again.'
-        ], 403);
-    }
-}
 
 /**
  * Get paginated results

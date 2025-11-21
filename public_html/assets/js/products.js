@@ -394,6 +394,22 @@ function handleProductSubmit(e) {
     const form = e.target;
     const formData = new FormData(form);
     
+    // Debug: Check if file is in FormData
+    const imageFiles = document.getElementById('product_image').files;
+    console.log('Image files selected:', imageFiles.length);
+    if (imageFiles.length > 0) {
+        console.log('First file:', imageFiles[0].name, imageFiles[0].size, 'bytes');
+    }
+    
+    // Verify file is in FormData
+    if (imageFiles.length > 0) {
+        // Ensure file is in FormData (sometimes FormData from form doesn't include files properly)
+        if (!formData.has('product_image')) {
+            formData.append('product_image', imageFiles[0]);
+            console.log('Added product_image to FormData');
+        }
+    }
+    
     // Validate form data
     const validationErrors = validateProductForm(formData);
     if (validationErrors.length > 0) {
@@ -408,7 +424,6 @@ function handleProductSubmit(e) {
     
     // For new products, upload image directly with the form
     // For editing, if there's a new image, upload it first then update product
-    const imageFiles = document.getElementById('product_image').files;
     if (imageFiles && imageFiles.length > 0 && isEdit) {
         // Editing existing product - upload image first
         uploadProductImages(imageFiles, isEdit)
@@ -427,6 +442,7 @@ function handleProductSubmit(e) {
             });
     } else {
         // New product or no new image - submit form directly (image will be handled server-side)
+        console.log('Submitting form with FormData. Has product_image:', formData.has('product_image'));
         submitProductForm(formData, isEdit);
     }
 }
@@ -483,10 +499,27 @@ function uploadProductImages(imageFiles, isEdit) {
             body: formData
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+            // Try to parse JSON even if status is not OK to get error message
+            return response.text().then(text => {
+                console.log('Upload response status:', response.status);
+                console.log('Upload response text:', text.substring(0, 500)); // First 500 chars
+                
+                try {
+                    const data = JSON.parse(text);
+                    // If status is not OK, include error info
+                    if (!response.ok) {
+                        data.httpStatus = response.status;
+                    }
+                    return data;
+                } catch (e) {
+                    // If not JSON, return error object with the text
+                    console.error('Failed to parse JSON:', e, 'Response text:', text);
+                    if (response.status === 500) {
+                        throw new Error('Server error (500): ' + (text.substring(0, 200) || response.statusText));
+                    }
+                    throw new Error(`HTTP ${response.status}: ${text.substring(0, 200) || response.statusText}`);
+                }
+            });
         })
         .then(data => {
             hideLoading();
@@ -511,11 +544,19 @@ function uploadProductImages(imageFiles, isEdit) {
                 
                 resolve(imagePaths);
             } else {
-                reject(new Error(data.message || 'Failed to upload images'));
+                const errorMsg = data.message || 'Failed to upload images';
+                if (data.debug) {
+                    console.error('Upload error details:', data.debug);
+                }
+                showModal('Upload Error', errorMsg, 'error');
+                reject(new Error(errorMsg));
             }
         })
         .catch(error => {
             hideLoading();
+            console.error('Upload error:', error);
+            const errorMsg = error.message || 'Failed to upload images. Please check your connection and try again.';
+            showModal('Upload Error', errorMsg, 'error');
             reject(error);
         });
     });
@@ -551,23 +592,33 @@ function uploadProductImage(imageFile, isEdit) {
             body: formData
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+            // Try to parse JSON even if status is not OK to get error message
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    // If not JSON, return error object
+                    throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+                }
+            });
         })
         .then(data => {
             hideLoading();
             
             if (data.success) {
-                uploadedImagePath = data.data.file_path;
-                resolve(data.data.file_path);
+                uploadedImagePath = data.data.file_path || (data.data.uploaded_files && data.data.uploaded_files[0] && data.data.uploaded_files[0].file_path);
+                resolve(uploadedImagePath);
             } else {
-                reject(new Error(data.message || 'Failed to upload image'));
+                const errorMsg = data.message || 'Failed to upload image';
+                showModal('Upload Error', errorMsg, 'error');
+                reject(new Error(errorMsg));
             }
         })
         .catch(error => {
             hideLoading();
+            console.error('Upload error:', error);
+            const errorMsg = error.message || 'Failed to upload image. Please check your connection and try again.';
+            showModal('Upload Error', errorMsg, 'error');
             reject(error);
         });
     });
@@ -602,6 +653,7 @@ function submitProductForm(formData, isEdit) {
         actionUrl = isEdit ? '../../actions/update_product_action.php' : '../../actions/add_product_action.php';
     }
     
+    console.log('Submitting to:', actionUrl);
     showLoading();
     
     fetch(actionUrl, {
@@ -609,13 +661,19 @@ function submitProductForm(formData, isEdit) {
         body: formData
     })
     .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+        // Try to parse JSON even if status is not OK
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+            }
+        });
     })
     .then(data => {
         hideLoading();
+        
+        console.log('Product submission response:', data);
         
         if (data.success) {
             showModal('Success', isEdit ? 'Product updated successfully!' : 'Product added successfully!', 'success');

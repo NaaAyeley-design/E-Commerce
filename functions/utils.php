@@ -364,4 +364,56 @@ function check_rate_limit($action, $limit = 5, $window = 300) {
     return true;
 }
 
+/**
+ * Check action rate limit and exit with error if exceeded
+ * This is a wrapper around check_rate_limit that handles JSON responses
+ */
+function check_action_rate_limit($action, $limit = 5, $window = 300) {
+    if (!check_rate_limit($action, $limit, $window)) {
+        $minutes = round($window / 60);
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        http_response_code(429);
+        echo json_encode([
+            'success' => false, 
+            'message' => "Too many attempts. Please wait {$minutes} minute(s) before trying again."
+        ]);
+        if (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        exit;
+    }
+}
+
+/**
+ * Get cache-busting version for CSS files based on file modification time
+ */
+function get_css_version($css_file) {
+    if (!defined('ASSETS_PATH')) {
+        return time(); // Fallback if ASSETS_PATH not defined
+    }
+    
+    $file_path = ASSETS_PATH . '/css/' . $css_file;
+    if (file_exists($file_path)) {
+        return filemtime($file_path);
+    }
+    return time(); // Fallback to current time if file doesn't exist
+}
+
+/**
+ * Get cache-busting version for JS files based on file modification time
+ */
+function get_js_version($js_file) {
+    if (!defined('ASSETS_PATH')) {
+        return time(); // Fallback if ASSETS_PATH not defined
+    }
+    
+    $file_path = ASSETS_PATH . '/js/' . $js_file;
+    if (file_exists($file_path)) {
+        return filemtime($file_path);
+    }
+    return time(); // Fallback to current time if file doesn't exist
+}
+
 ?>

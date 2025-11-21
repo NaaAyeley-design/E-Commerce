@@ -86,16 +86,6 @@ $show_all = isset($_GET['show_all']) && $_GET['show_all'] == '1';
 try {
     $category = new category_class();
     
-    // Verify database connection
-    if (!isset($category->conn) || $category->conn === null) {
-        error_log("Category class connection is null - attempting to reconnect");
-        // Force reconnection by creating new instance
-        try {
-            $category = new category_class();
-        } catch (Exception $e2) {
-            error_log("Reconnection failed: " . $e2->getMessage());
-        }
-    }
     
     if ($show_all) {
         // Show ALL categories from database (no limit)
@@ -112,16 +102,6 @@ try {
         $categories = [];
     }
     
-    // Debug logging
-    error_log("Categories retrieved: " . count($categories));
-    error_log("Categories variable type: " . gettype($categories));
-    error_log("Is categories false? " . ($categories === false ? 'yes' : 'no'));
-    error_log("Is categories empty? " . (empty($categories) ? 'yes' : 'no'));
-    if (count($categories) > 0) {
-        error_log("Sample category: " . $categories[0]['cat_name']);
-    } else {
-        error_log("Categories array is empty or has 0 items");
-    }
 } catch (Exception $e) {
     error_log("Get categories error: " . $e->getMessage());
     error_log("Get categories error trace: " . $e->getTraceAsString());
@@ -152,19 +132,6 @@ include __DIR__ . '/../templates/header.php';
         </div>
     <?php endif; ?>
     
-    <!-- Debug Info (Development Only) -->
-    <?php if (defined('APP_ENV') && APP_ENV === 'development'): ?>
-        <div class="alert" style="background: #e3f2fd; color: #1976d2; padding: 10px; margin: 10px 0;">
-            <strong>Debug Info:</strong> 
-            Database: <?php echo DB_NAME; ?> | 
-            Categories Retrieved: <?php echo count($categories); ?>
-            <?php if (empty($categories)): ?>
-                <br><em>⚠️ No categories found. <a href="<?php echo BASE_URL; ?>/test_categories_simple.php">Test database connection</a></em>
-            <?php else: ?>
-                <br><em>✅ Successfully loaded <?php echo count($categories); ?> categories from database!</em>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
 
     <!-- Add Category Form -->
     <div class="card">
@@ -191,7 +158,7 @@ include __DIR__ . '/../templates/header.php';
         </div>
         <div class="card-body">
             <form method="get" class="form-inline">
-                <div class="form-group" style="flex: 1; min-width: 300px;">
+                <div class="form-group">
                     <input type="text" name="search" placeholder="Search categories..." value="<?php echo escape_html($search_term); ?>" class="form-input">
                 </div>
                 <button type="submit" class="btn btn-outline">
@@ -252,7 +219,7 @@ include __DIR__ . '/../templates/header.php';
                                         <span id="name-<?php echo $cat['cat_id']; ?>">
                                             <?php echo escape_html($cat['cat_name']); ?>
                                         </span>
-                                        <form id="edit-form-<?php echo $cat['cat_id']; ?>" method="post" style="display: none;" class="form-inline">
+                                        <form id="edit-form-<?php echo $cat['cat_id']; ?>" method="post" class="form-inline">
                                             <input type="hidden" name="action" value="update">
                                             <input type="hidden" name="cat_id" value="<?php echo $cat['cat_id']; ?>">
                                             <input type="text" name="cat_name" value="<?php echo escape_html($cat['cat_name']); ?>" required class="form-input">
@@ -270,7 +237,7 @@ include __DIR__ . '/../templates/header.php';
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         
-                                        <form method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                        <form method="post" onsubmit="return confirm('Are you sure you want to delete this category?');">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="cat_id" value="<?php echo $cat['cat_id']; ?>">
                                             <button type="submit" class="btn btn-sm btn-danger">
