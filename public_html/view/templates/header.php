@@ -110,12 +110,14 @@
                             <span>Home</span>
                         </a>
                     </li>
+                    <?php if (!is_logged_in() || !is_admin()): ?>
                     <li class="top-navbar-item">
                         <a href="<?php echo url('view/product/all_product.php'); ?>" class="top-navbar-link">
                             <i class="fas fa-shopping-bag"></i>
                             <span>Products</span>
                         </a>
                     </li>
+                    <?php endif; ?>
                     
                     <?php if (is_logged_in()): ?>
                         <?php if (!is_admin()): ?>

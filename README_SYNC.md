@@ -62,3 +62,4 @@ After syncing or moving, check:
 - If you use the sync script, remember to run it after each change
 - The sync script preserves your file structure and excludes unnecessary files (.git, node_modules, etc.)
 
+
