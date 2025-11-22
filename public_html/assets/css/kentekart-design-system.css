@@ -1,0 +1,279 @@
+/**
+ * KenteKart Design System
+ * Blue glowing gradient theme - Core design tokens and components
+ */
+
+/* ================================
+   DESIGN TOKENS
+   ================================ */
+
+:root {
+    /* Primary Colors */
+    --primary-cyan: #00d4ff;
+    --primary-purple: #6b5ce7;
+    --primary-purple-light: #c77dff;
+    
+    /* Background Gradients */
+    --bg-gradient-primary: linear-gradient(180deg, #1e1e3f 0%, #3d3d7a 40%, #5c5cb8 100%);
+    --bg-gradient-accent: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    
+    /* Dark Backgrounds */
+    --bg-dark-1: #1e1e3f;
+    --bg-dark-2: #3d3d7a;
+    --bg-dark-3: #5c5cb8;
+    
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(0, 212, 255, 0.3);
+    --glass-blur: blur(20px);
+    
+    /* Glow Effects */
+    --glow-cyan: rgba(0, 212, 255, 0.5);
+    --glow-purple: rgba(107, 92, 231, 0.5);
+    
+    /* Text Colors */
+    --text-white: #ffffff;
+    --text-white-90: rgba(255, 255, 255, 0.9);
+    --text-white-80: rgba(255, 255, 255, 0.8);
+    --text-white-70: rgba(255, 255, 255, 0.7);
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 30px;
+    --radius-full: 50px;
+    
+    /* Shadows */
+    --shadow-sm: 0 4px 15px rgba(0, 212, 255, 0.2);
+    --shadow-md: 0 8px 20px rgba(0, 212, 255, 0.3);
+    --shadow-lg: 0 15px 40px rgba(0, 212, 255, 0.4);
+    --shadow-glow: 0 20px 60px rgba(0, 212, 255, 0.5);
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.4s ease;
+}
+
+/* ================================
+   BASE COMPONENTS
+   ================================ */
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 32px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all var(--transition-base);
+    cursor: pointer;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--bg-gradient-accent);
+    color: var(--text-white);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-outline {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 2px solid var(--glass-border);
+    color: var(--primary-cyan);
+}
+
+.btn-outline:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: var(--primary-cyan);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Cards */
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(0, 212, 255, 0.5);
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 212, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-cyan);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Icons */
+.icon {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-gradient-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--text-white);
+    box-shadow: var(--shadow-glow);
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 20px 60px var(--glow-cyan);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 25px 80px var(--glow-cyan);
+    }
+}
+
+/* Text Gradients */
+.text-gradient {
+    background: var(--bg-gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Input Fields */
+.input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all var(--transition-base);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    color: var(--text-white);
+}
+
+.input::placeholder {
+    color: var(--text-white-50);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Utility Classes */
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease backwards;
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 0.6s ease backwards;
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.4s ease;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .btn {
+        padding: 12px 24px;
+        font-size: 0.95rem;
+    }
+
+    .card {
+        padding: 30px 20px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .btn,
+    .badge,
+    .icon {
+        box-shadow: none;
+    }
+}
+
