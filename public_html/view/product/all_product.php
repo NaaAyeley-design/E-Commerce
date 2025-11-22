@@ -24,7 +24,7 @@ try {
 $page_title = 'All Products';
 $page_description = 'Browse all available products';
 $body_class = 'products-page';
-$additional_css = ['products-display.css'];
+$additional_css = ['products.css'];
 
 // Get pagination parameters
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;

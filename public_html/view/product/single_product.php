@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../../controller/product_controller.php';
 $page_title = 'Product Details';
 $page_description = 'View product details';
 $body_class = 'single-product-page';
-$additional_css = ['products-display.css'];
+$additional_css = ['products.css'];
 
 // Get product ID
 $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
