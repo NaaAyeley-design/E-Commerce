@@ -1,6 +1,6 @@
 /**
  * Toast Notification Styles
- * Blue glowing gradient theme with glassmorphic effects
+ * African Ochre & Rust warm gradient theme with glassmorphic effects
  */
 
 /* ================================
@@ -32,7 +32,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(183, 65, 14, 0.2);
     border-left: 5px solid;
     animation: slideInRight 0.4s ease;
     pointer-events: auto;
@@ -65,28 +65,28 @@
 
 .toast:hover {
     transform: translateX(-5px);
-    box-shadow: 0 15px 40px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 15px 40px rgba(183, 65, 14, 0.3);
 }
 
 /* Toast Types */
 .toast-success {
-    border-left-color: #7dcfb6;
-    background: rgba(125, 207, 182, 0.2);
+    border-left-color: #9B6B4F;
+    background: rgba(155, 107, 79, 0.2);
 }
 
 .toast-error {
-    border-left-color: #ff6b9d;
-    background: rgba(255, 107, 157, 0.2);
+    border-left-color: #B7410E;
+    background: rgba(183, 65, 14, 0.2);
 }
 
 .toast-warning {
-    border-left-color: #ffd93d;
-    background: rgba(255, 217, 61, 0.2);
+    border-left-color: #E3B778;
+    background: rgba(227, 183, 120, 0.2);
 }
 
 .toast-info {
-    border-left-color: #00d4ff;
-    background: rgba(0, 212, 255, 0.2);
+    border-left-color: #CC8B3C;
+    background: rgba(204, 139, 60, 0.2);
 }
 
 /* Toast Icon */
@@ -103,22 +103,22 @@
 
 .toast-success .toast-icon {
     background: rgba(125, 207, 182, 0.3);
-    color: #7dcfb6;
+    color: #9B6B4F;
 }
 
 .toast-error .toast-icon {
     background: rgba(255, 107, 157, 0.3);
-    color: #ff6b9d;
+    color: #B7410E;
 }
 
 .toast-warning .toast-icon {
     background: rgba(255, 217, 61, 0.3);
-    color: #ffd93d;
+    color: #E3B778;
 }
 
 .toast-info .toast-icon {
     background: rgba(0, 212, 255, 0.3);
-    color: #00d4ff;
+    color: #CC8B3C;
 }
 
 /* Toast Content */
@@ -128,13 +128,13 @@
 
 .toast-title {
     font-weight: 600;
-    color: white;
+    color: #FFF8E7;
     font-size: 0.95rem;
     margin-bottom: 4px;
 }
 
 .toast-message {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 248, 231, 0.9);
     font-size: 0.9rem;
     line-height: 1.5;
 }
@@ -159,7 +159,7 @@
 
 .toast-close:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: white;
+    color: #FFF8E7;
     transform: rotate(90deg);
 }
 

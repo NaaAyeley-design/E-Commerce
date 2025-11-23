@@ -1,14 +1,14 @@
 /**
  * Admin Dashboard Page Styles
- * Blue glowing gradient theme with animated particles
+ * African Ochre & Rust warm gradient theme with animated particles
  */
 
 /* ================================
    PAGE LAYOUT
    ================================ */
 
-body.admin-dashboard-page {
-    background: linear-gradient(180deg, #1e1e3f 0%, #3d3d7a 40%, #5c5cb8 100%);
+   body.admin-dashboard-page {
+    background: linear-gradient(180deg, #3d2817 0%, #5d3a1f 40%, #8B5A3C 100%);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
@@ -23,13 +23,13 @@ body.admin-dashboard-page::before {
     width: 100%;
     height: 100%;
     background-image: 
-        radial-gradient(2px 2px at 20% 30%, rgba(0, 212, 255, 0.8), transparent),
-        radial-gradient(2px 2px at 60% 70%, rgba(0, 212, 255, 0.8), transparent),
-        radial-gradient(1px 1px at 50% 50%, rgba(107, 92, 231, 0.8), transparent),
-        radial-gradient(1px 1px at 80% 10%, rgba(0, 212, 255, 0.8), transparent),
-        radial-gradient(2px 2px at 90% 60%, rgba(107, 92, 231, 0.8), transparent),
-        radial-gradient(1px 1px at 33% 80%, rgba(0, 212, 255, 0.8), transparent),
-        radial-gradient(1px 1px at 15% 90%, rgba(107, 92, 231, 0.8), transparent);
+        radial-gradient(2px 2px at 20% 30%, rgba(204, 139, 60, 0.8), transparent),
+        radial-gradient(2px 2px at 60% 70%, rgba(227, 183, 120, 0.8), transparent),
+        radial-gradient(1px 1px at 50% 50%, rgba(183, 65, 14, 0.8), transparent),
+        radial-gradient(1px 1px at 80% 10%, rgba(204, 139, 60, 0.8), transparent),
+        radial-gradient(2px 2px at 90% 60%, rgba(193, 80, 47, 0.8), transparent),
+        radial-gradient(1px 1px at 33% 80%, rgba(227, 183, 120, 0.8), transparent),
+        radial-gradient(1px 1px at 15% 90%, rgba(183, 65, 14, 0.8), transparent);
     background-size: 200% 200%;
     animation: stars-drift 60s linear infinite;
     opacity: 0.6;
@@ -42,13 +42,13 @@ body.admin-dashboard-page::before {
     100% { background-position: 100% 100%; }
 }
 
-/* Cyan/Blue Glowing Bubbles */
+/* Ochre/Rust Glowing Bubbles */
 body.admin-dashboard-page::after {
     content: '';
     position: fixed;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
+    background: radial-gradient(circle, rgba(204, 139, 60, 0.3), transparent);
     border-radius: 50%;
     filter: blur(90px);
     top: -200px;
@@ -64,7 +64,7 @@ body.admin-dashboard-page::after {
     position: fixed;
     width: 550px;
     height: 550px;
-    background: radial-gradient(circle, rgba(107, 92, 231, 0.3), transparent);
+    background: radial-gradient(circle, rgba(183, 65, 14, 0.3), transparent);
     border-radius: 50%;
     filter: blur(90px);
     bottom: -200px;
@@ -79,7 +79,7 @@ body.admin-dashboard-page::after {
     position: fixed;
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(0, 212, 255, 0.25), transparent);
+    background: radial-gradient(circle, rgba(193, 80, 47, 0.25), transparent);
     border-radius: 50%;
     filter: blur(80px);
     top: 40%;
@@ -121,11 +121,11 @@ body.admin-dashboard-page::after {
     text-align: center;
     margin-bottom: 50px;
     padding: 40px 30px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 231, 0.1);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
+    border: 1px solid rgba(204, 139, 60, 0.3);
     border-radius: 25px;
-    box-shadow: 0 15px 50px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 15px 50px rgba(183, 65, 14, 0.2);
     animation: fadeInDown 0.6s ease;
     position: relative;
     overflow: hidden;
@@ -149,7 +149,7 @@ body.admin-dashboard-page::after {
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(90deg, #00d4ff, #6b5ce7, #00d4ff, #6b5ce7, #00d4ff);
+    background: linear-gradient(90deg, #CC8B3C, #B7410E, #C1502F, #B7410E, #CC8B3C);
     background-size: 200% 100%;
     animation: gradient-shift 3s ease infinite;
 }
@@ -162,14 +162,14 @@ body.admin-dashboard-page::after {
 .admin-header h2 {
     font-size: 2.8rem;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(135deg, #CC8B3C, #B7410E);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .admin-header p {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 248, 231, 0.9);
     font-size: 1.2rem;
     margin-bottom: 20px;
 }
@@ -179,18 +179,18 @@ body.admin-dashboard-page::after {
     align-items: center;
     gap: 10px;
     padding: 12px 30px;
-    background: rgba(0, 212, 255, 0.2);
+    background: rgba(204, 139, 60, 0.2);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(0, 212, 255, 0.4);
+    border: 2px solid rgba(204, 139, 60, 0.4);
     border-radius: 30px;
-    color: #00d4ff;
+    color: #E3B778;
     font-weight: 700;
     font-size: 1rem;
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 8px 20px rgba(183, 65, 14, 0.3);
 }
 
 .admin-badge i {
-    color: #00d4ff;
+    color: #CC8B3C;
     font-size: 1.2rem;
 }
 
@@ -204,7 +204,7 @@ body.admin-dashboard-page::after {
 
 .quick-stats h3 {
     font-size: 1.8rem;
-    color: white;
+    color: #FFF8E7;
     margin-bottom: 25px;
     text-align: center;
     position: relative;
@@ -219,7 +219,7 @@ body.admin-dashboard-page::after {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(90deg, #CC8B3C, #B7410E);
     border-radius: 2px;
 }
 
@@ -230,17 +230,17 @@ body.admin-dashboard-page::after {
 }
 
 .quick-stat {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 231, 0.1);
     backdrop-filter: blur(20px);
     border-radius: 20px;
     padding: 35px 25px;
     text-align: center;
     transition: all 0.4s ease;
-    box-shadow: 0 10px 35px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 35px rgba(183, 65, 14, 0.2);
     position: relative;
     overflow: hidden;
     animation: fadeInUp 0.6s ease backwards;
-    border: 1px solid rgba(0, 212, 255, 0.3);
+    border: 1px solid rgba(204, 139, 60, 0.3);
 }
 
 .quick-stat:nth-child(1) {
@@ -277,7 +277,7 @@ body.admin-dashboard-page::after {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+    background: radial-gradient(circle, rgba(227, 183, 120, 0.1), transparent);
     transform: scale(0);
     transition: transform 0.6s ease;
 }
@@ -288,24 +288,24 @@ body.admin-dashboard-page::after {
 
 .quick-stat:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
-    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 20px 50px rgba(183, 65, 14, 0.4);
+    border-color: rgba(204, 139, 60, 0.6);
 }
 
 .quick-stat:nth-child(1):hover {
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 50px rgba(204, 139, 60, 0.4);
 }
 
 .quick-stat:nth-child(2):hover {
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 50px rgba(183, 65, 14, 0.4);
 }
 
 .quick-stat:nth-child(3):hover {
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 50px rgba(193, 80, 47, 0.4);
 }
 
 .quick-stat:nth-child(4):hover {
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 50px rgba(227, 183, 120, 0.4);
 }
 
 .quick-stat-number {
@@ -317,28 +317,28 @@ body.admin-dashboard-page::after {
 }
 
 .quick-stat:nth-child(1) .quick-stat-number {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(135deg, #CC8B3C, #E3B778);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .quick-stat:nth-child(2) .quick-stat-number {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(135deg, #B7410E, #C1502F);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .quick-stat:nth-child(3) .quick-stat-number {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(135deg, #C1502F, #CC8B3C);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .quick-stat:nth-child(4) .quick-stat-number {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(135deg, #E3B778, #B7410E);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -349,7 +349,7 @@ body.admin-dashboard-page::after {
 }
 
 .quick-stat-label {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 248, 231, 0.9);
     font-size: 1rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -366,7 +366,7 @@ body.admin-dashboard-page::after {
 
 .admin-actions h3 {
     font-size: 1.8rem;
-    color: white;
+    color: #FFF8E7;
     margin-bottom: 30px;
     text-align: center;
     position: relative;
@@ -381,7 +381,7 @@ body.admin-dashboard-page::after {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(90deg, #CC8B3C, #B7410E);
     border-radius: 2px;
 }
 
@@ -392,13 +392,13 @@ body.admin-dashboard-page::after {
 }
 
 .action-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 248, 231, 0.1);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
+    border: 1px solid rgba(204, 139, 60, 0.3);
     border-radius: 20px;
     padding: 35px 30px;
     transition: all 0.4s ease;
-    box-shadow: 0 10px 35px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 35px rgba(183, 65, 14, 0.2);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -423,10 +423,10 @@ body.admin-dashboard-page::after {
     transition: transform 0.4s ease;
 }
 
-.action-card:nth-child(1) { color: #00d4ff; }
-.action-card:nth-child(2) { color: #00d4ff; }
-.action-card:nth-child(3) { color: #00d4ff; }
-.action-card:nth-child(4) { color: #00d4ff; }
+.action-card:nth-child(1) { color: #CC8B3C; }
+.action-card:nth-child(2) { color: #B7410E; }
+.action-card:nth-child(3) { color: #C1502F; }
+.action-card:nth-child(4) { color: #E3B778; }
 
 .action-card:hover::before {
     transform: scaleX(1);
@@ -434,8 +434,8 @@ body.admin-dashboard-page::after {
 
 .action-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 50px rgba(0, 212, 255, 0.4);
-    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 20px 50px rgba(183, 65, 14, 0.4);
+    border-color: rgba(204, 139, 60, 0.6);
 }
 
 .action-icon {
@@ -452,23 +452,23 @@ body.admin-dashboard-page::after {
 }
 
 .action-card:nth-child(1) .action-icon {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(107, 92, 231, 0.2));
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, rgba(204, 139, 60, 0.2), rgba(227, 183, 120, 0.2));
+    box-shadow: 0 8px 20px rgba(204, 139, 60, 0.3);
 }
 
 .action-card:nth-child(2) .action-icon {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(107, 92, 231, 0.2));
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, rgba(183, 65, 14, 0.2), rgba(193, 80, 47, 0.2));
+    box-shadow: 0 8px 20px rgba(183, 65, 14, 0.3);
 }
 
 .action-card:nth-child(3) .action-icon {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(107, 92, 231, 0.2));
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, rgba(193, 80, 47, 0.2), rgba(204, 139, 60, 0.2));
+    box-shadow: 0 8px 20px rgba(193, 80, 47, 0.3);
 }
 
 .action-card:nth-child(4) .action-icon {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(107, 92, 231, 0.2));
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, rgba(227, 183, 120, 0.2), rgba(155, 107, 79, 0.2));
+    box-shadow: 0 8px 20px rgba(227, 183, 120, 0.3);
 }
 
 .action-card:hover .action-icon {
@@ -478,12 +478,12 @@ body.admin-dashboard-page::after {
 .action-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: white;
+    color: #FFF8E7;
     margin-bottom: 15px;
 }
 
 .action-description {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 248, 231, 0.9);
     line-height: 1.7;
     margin-bottom: 25px;
     flex: 1;
@@ -506,23 +506,23 @@ body.admin-dashboard-page::after {
 }
 
 .action-card:nth-child(1) .action-button {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(135deg, #CC8B3C, #B7410E);
+    box-shadow: 0 8px 20px rgba(204, 139, 60, 0.5);
 }
 
 .action-card:nth-child(2) .action-button {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(135deg, #B7410E, #C1502F);
+    box-shadow: 0 8px 20px rgba(183, 65, 14, 0.5);
 }
 
 .action-card:nth-child(3) .action-button {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(135deg, #C1502F, #CC8B3C);
+    box-shadow: 0 8px 20px rgba(193, 80, 47, 0.5);
 }
 
 .action-card:nth-child(4) .action-button {
-    background: linear-gradient(135deg, #00d4ff, #6b5ce7);
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(135deg, #E3B778, #9B6B4F);
+    box-shadow: 0 8px 20px rgba(227, 183, 120, 0.5);
 }
 
 .action-button::before {
@@ -533,7 +533,7 @@ body.admin-dashboard-page::after {
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 248, 231, 0.3);
     transform: translate(-50%, -50%);
     transition: width 0.6s, height 0.6s;
 }
@@ -548,19 +548,19 @@ body.admin-dashboard-page::after {
 }
 
 .action-card:nth-child(1) .action-button:hover {
-    box-shadow: 0 12px 30px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 12px 30px rgba(204, 139, 60, 0.6);
 }
 
 .action-card:nth-child(2) .action-button:hover {
-    box-shadow: 0 12px 30px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 12px 30px rgba(183, 65, 14, 0.6);
 }
 
 .action-card:nth-child(3) .action-button:hover {
-    box-shadow: 0 12px 30px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 12px 30px rgba(193, 80, 47, 0.6);
 }
 
 .action-card:nth-child(4) .action-button:hover {
-    box-shadow: 0 12px 30px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 12px 30px rgba(227, 183, 120, 0.6);
 }
 
 .action-button i {
@@ -715,7 +715,7 @@ body.admin-dashboard-page::after {
     left: -100%;
     width: 50%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 248, 231, 0.3), transparent);
     animation: shine 3s infinite;
 }
 
@@ -724,7 +724,7 @@ body.admin-dashboard-page::after {
    ================================ */
 
 .action-button:focus-visible {
-    outline: 3px solid rgba(0, 0, 0, 0.3);
+    outline: 3px solid rgba(227, 183, 120, 0.5);
     outline-offset: 3px;
 }
 
@@ -761,15 +761,15 @@ body.admin-dashboard-page::after {
 }
 
 .admin-dashboard-container::-webkit-scrollbar-track {
-    background: rgba(199, 125, 255, 0.05);
+    background: rgba(204, 139, 60, 0.05);
     border-radius: 5px;
 }
 
 .admin-dashboard-container::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #00d4ff, #6b5ce7);
+    background: linear-gradient(180deg, #CC8B3C, #B7410E);
     border-radius: 5px;
 }
 
 .admin-dashboard-container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #00a8cc, #5a4cd6);
+    background: linear-gradient(180deg, #E3B778, #9B6B4F);
 }

@@ -1,0 +1,318 @@
+// ============================================
+// ADINKRA CURSOR WITH TRAIL EFFECT
+// Blue Glowing Gradient Theme
+// ============================================
+
+// Configuration
+const ADINKRA_SYMBOLS = ['✦', '◈', '❖', '✤', '◆', '❋', '✶', '※'];
+const TRAIL_DELAY = 30; // milliseconds between trail dots
+const CURSOR_COLORS = {
+  primary: '#00d4ff',    // Cyan
+  secondary: '#6b5ce7',  // Purple
+  dark: '#1e1e3f'        // Dark Blue
+};
+
+// Initialize cursor elements
+function initAdinkraCursor() {
+  // Disable on mobile/touch devices
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    return; // Exit function - don't initialize cursor on touch devices
+  }
+
+  // Create cursor HTML
+  const cursorHTML = `
+    <div class="adinkra-cursor">✦</div>
+    <div class="custom-cursor"></div>
+    <div class="cursor-ring"></div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', cursorHTML);
+  
+  // Add styles
+  const style = document.createElement('style');
+  style.textContent = `
+    body {
+      cursor: none !important;
+    }
+    
+    * {
+      cursor: none !important;
+    }
+
+    .custom-cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: ${CURSOR_COLORS.primary};
+      pointer-events: none;
+      z-index: 10000;
+      transition: all 0.15s ease-out;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: difference;
+      box-shadow: 0 0 20px ${CURSOR_COLORS.primary};
+    }
+
+    .cursor-ring {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      border: 2px solid ${CURSOR_COLORS.secondary};
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transition: all 0.2s ease-out;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px rgba(107, 92, 231, 0.5);
+    }
+
+    .adinkra-cursor {
+      position: fixed;
+      font-size: 32px;
+      pointer-events: none;
+      z-index: 10001;
+      transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      color: ${CURSOR_COLORS.secondary};
+      filter: drop-shadow(0 2px 8px rgba(0, 212, 255, 0.5));
+      text-shadow: 0 0 10px ${CURSOR_COLORS.primary};
+    }
+
+    .adinkra-cursor.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .adinkra-cursor.active ~ .custom-cursor,
+    .adinkra-cursor.active ~ .cursor-ring {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+    }
+
+    .cursor-trail {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, ${CURSOR_COLORS.primary}, ${CURSOR_COLORS.secondary});
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0;
+      animation: trail-fade 0.6s ease-out forwards;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+    }
+
+    @keyframes trail-fade {
+      0% {
+        opacity: 0.8;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.3);
+      }
+    }
+
+    .custom-cursor.hover {
+      width: 60px;
+      height: 60px;
+      background: rgba(0, 212, 255, 0.2);
+      border: 2px solid ${CURSOR_COLORS.primary};
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+    }
+
+    .cursor-ring.hover {
+      width: 80px;
+      height: 80px;
+      border-color: ${CURSOR_COLORS.secondary};
+      border-width: 3px;
+      box-shadow: 0 0 25px rgba(107, 92, 231, 0.7);
+    }
+
+    @keyframes adinkra-rotate {
+      from {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) scale(1) rotate(360deg);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Main cursor logic
+function setupAdinkraCursor() {
+  // Disable on mobile/touch devices
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    return; // Exit function - don't setup cursor on touch devices
+  }
+
+  let currentSymbolIndex = 0;
+  let mouseX = 0;
+  let mouseY = 0;
+  let ringX = 0;
+  let ringY = 0;
+  let lastTrailTime = 0;
+
+  const cursor = document.querySelector('.custom-cursor');
+  const cursorRing = document.querySelector('.cursor-ring');
+  const adinkraCursor = document.querySelector('.adinkra-cursor');
+
+  // Check if cursor elements exist
+  if (!cursor || !cursorRing || !adinkraCursor) {
+    return; // Exit if elements don't exist (mobile device)
+  }
+
+  // Update cursor position on mouse move
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+    // Update main cursor immediately
+    cursor.style.left = mouseX + 'px';
+    cursor.style.top = mouseY + 'px';
+    adinkraCursor.style.left = mouseX + 'px';
+    adinkraCursor.style.top = mouseY + 'px';
+
+    // Create trail effect
+    const currentTime = Date.now();
+    if (currentTime - lastTrailTime > TRAIL_DELAY) {
+      createTrail(mouseX, mouseY);
+      lastTrailTime = currentTime;
+    }
+  });
+
+  // Smooth ring follow with slight delay
+  function animateRing() {
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+
+    cursorRing.style.left = ringX + 'px';
+    cursorRing.style.top = ringY + 'px';
+
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Create trail dot
+  function createTrail(x, y) {
+    const trail = document.createElement('div');
+    trail.className = 'cursor-trail';
+    trail.style.left = x + 'px';
+    trail.style.top = y + 'px';
+    document.body.appendChild(trail);
+
+    setTimeout(() => trail.remove(), 600);
+  }
+
+  // Track elements that already have hover effects
+  const hoveredElements = new WeakSet();
+
+  // Set up hover effects
+  function addHoverEffects() {
+    // Select all interactive elements
+    const selectors = [
+      'a', 'button', 
+      '.product-card', '.warm-card', '.heritage-card',
+      '.impact-card', '.feature-card', '.testimonial-card',
+      '.designer-card', '.recommendation-card', '.education-card',
+      '.action-card', '.quick-stat', '.brand-card',
+      'input', 'textarea', 'select',
+      '[role="button"]', '[onclick]',
+      '.btn', '.card', '.sidebar-link',
+      '.top-navbar-link', '.footer-link', '.social-link'
+    ];
+    
+    const hoverElements = document.querySelectorAll(selectors.join(', '));
+
+    hoverElements.forEach(element => {
+      // Skip if already has hover effects
+      if (hoveredElements.has(element)) {
+        return;
+      }
+
+      // Mark as processed
+      hoveredElements.add(element);
+      
+      element.addEventListener('mouseenter', () => {
+        adinkraCursor.classList.add('active');
+        cursor.classList.add('hover');
+        cursorRing.classList.add('hover');
+
+        // Change to next Adinkra symbol
+        currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
+        adinkraCursor.textContent = ADINKRA_SYMBOLS[currentSymbolIndex];
+        
+        // Add rotation animation
+        adinkraCursor.style.animation = 'adinkra-rotate 0.4s ease-out';
+      });
+
+      element.addEventListener('mouseleave', () => {
+        adinkraCursor.classList.remove('active');
+        cursor.classList.remove('hover');
+        cursorRing.classList.remove('hover');
+      });
+    });
+  }
+
+  // Initial setup
+  addHoverEffects();
+
+  // Re-apply to dynamically added elements
+  const observer = new MutationObserver(() => {
+    addHoverEffects();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  // Hide cursor when leaving window
+  document.addEventListener('mouseleave', () => {
+    cursor.style.opacity = '0';
+    cursorRing.style.opacity = '0';
+    adinkraCursor.style.opacity = '0';
+  });
+
+  document.addEventListener('mouseenter', () => {
+    cursor.style.opacity = '1';
+    cursorRing.style.opacity = '1';
+  });
+
+  // Click effect
+  document.addEventListener('mousedown', () => {
+    cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+    cursorRing.style.transform = 'translate(-50%, -50%) scale(0.9)';
+    if (adinkraCursor.classList.contains('active')) {
+      adinkraCursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+    cursorRing.style.transform = 'translate(-50%, -50%) scale(1)';
+    if (adinkraCursor.classList.contains('active')) {
+      adinkraCursor.style.transform = 'translate(-50%, -50%) scale(1)';
+    }
+  });
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initAdinkraCursor();
+    setupAdinkraCursor();
+  });
+} else {
+  initAdinkraCursor();
+  setupAdinkraCursor();
+}
+
+// Export for module usage
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { initAdinkraCursor, setupAdinkraCursor };
+}
+

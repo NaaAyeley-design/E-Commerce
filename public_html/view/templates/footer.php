@@ -107,6 +107,8 @@
     <!-- JavaScript Files -->
     <script src="<?php echo ASSETS_URL; ?>/js/toast.js?v=<?php echo get_js_version('toast.js'); ?>"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/script.js?v=<?php echo get_js_version('script.js'); ?>"></script>
+    <!-- Adinkra Cursor - Blue Glowing Gradient Theme -->
+    <script src="<?php echo ASSETS_URL; ?>/js/adinkra-cursor.js?v=<?php echo get_js_version('adinkra-cursor.js'); ?>"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
         <?php foreach ($additional_js as $js_file): ?>
             <script src="<?php echo ASSETS_URL; ?>/js/<?php echo $js_file; ?>?v=<?php echo get_js_version($js_file); ?>"></script>
