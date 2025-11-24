@@ -16,7 +16,7 @@ if (!function_exists('get_cart_items_ctr')) {
 $page_title = 'Shopping Cart';
 $page_description = 'View and manage your shopping cart';
 $body_class = 'cart-page';
-$additional_css = ['products-display.css?v=' . time()];
+$additional_css = ['cart.css'];
 
 // Check if user is logged in
 if (!is_logged_in()) {
@@ -159,7 +159,7 @@ include __DIR__ . '/../templates/header.php';
                                 }
                             ?>
                                 <tr data-cart-id="<?php echo $item['cart_id']; ?>" data-product-id="<?php echo $item['product_id']; ?>">
-                                    <td class="product-cell">
+                                    <td class="product-cell" data-label="Product">
                                         <div class="cart-product">
                                             <div class="cart-product-image">
                                                 <img src="<?php echo $image_url; ?>" 
@@ -183,10 +183,10 @@ include __DIR__ . '/../templates/header.php';
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="price-cell">
+                                    <td class="price-cell" data-label="Price">
                                         <span class="product-price">$<?php echo number_format($item['product_price'], 2); ?></span>
                                     </td>
-                                    <td class="quantity-cell">
+                                    <td class="quantity-cell" data-label="Quantity">
                                         <div class="quantity-controls">
                                             <button class="quantity-btn decrease-qty" 
                                                     data-cart-id="<?php echo $item['cart_id']; ?>"
@@ -205,10 +205,10 @@ include __DIR__ . '/../templates/header.php';
                                             </button>
                                         </div>
                                     </td>
-                                    <td class="subtotal-cell">
+                                    <td class="subtotal-cell" data-label="Subtotal">
                                         <span class="item-subtotal">$<?php echo number_format($item_total, 2); ?></span>
                                     </td>
-                                    <td class="action-cell">
+                                    <td class="action-cell" data-label="Action">
                                         <button class="remove-cart-item" 
                                                 data-cart-id="<?php echo $item['cart_id']; ?>"
                                                 title="Remove from cart"

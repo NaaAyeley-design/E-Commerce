@@ -1,7 +1,7 @@
 ﻿    </main>
     
-    <!-- Footer (if not a standalone page) -->
-    <?php if (!isset($standalone_page) || !$standalone_page): ?>
+    <!-- Footer (only on homepage) -->
+    <?php if ((!isset($standalone_page) || !$standalone_page) && (isset($body_class) && $body_class === 'home-page')): ?>
         <footer class="footer" role="contentinfo">
             <div class="container">
                 <div class="footer-content">
