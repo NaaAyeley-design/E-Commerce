@@ -418,7 +418,7 @@ body.cultural-dashboard::after {
 
 .designer-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 45px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 45px rgba(255, 154, 86, 0.4);
     border-color: rgba(204, 139, 60, 0.6);
 }
 
@@ -490,7 +490,7 @@ body.cultural-dashboard::after {
 
 .badge-region {
     background: rgba(204, 139, 60, 0.2);
-    border-color: rgba(0, 212, 255, 0.4);
+    border-color: rgba(255, 154, 86, 0.4);
     color: #CC8B3C;
 }
 
@@ -509,7 +509,7 @@ body.cultural-dashboard::after {
     gap: 8px;
     background: linear-gradient(135deg, #CC8B3C, #B7410E);
     color: #FFF8E7;
-    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 154, 86, 0.5);
 }
 
 .btn-follow:hover {
@@ -565,8 +565,8 @@ body.cultural-dashboard::after {
 
 .region-badge:hover {
     transform: translateY(-3px);
-    border-color: #00d4ff;
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    border-color: #FF9A56;
+    box-shadow: 0 8px 20px rgba(255, 154, 86, 0.4);
 }
 
 .region-badge i {
@@ -597,8 +597,8 @@ body.cultural-dashboard::after {
 
 .achievement-badge:hover {
     transform: scale(1.05);
-    border-color: #00d4ff;
-    box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+    border-color: #FF9A56;
+    box-shadow: 0 10px 25px rgba(255, 154, 86, 0.4);
 }
 
 .badge-icon {
@@ -646,7 +646,7 @@ body.cultural-dashboard::after {
 
 .recommendation-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 45px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 45px rgba(255, 154, 86, 0.4);
 }
 
 .recommendation-image {
@@ -703,7 +703,7 @@ body.cultural-dashboard::after {
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 154, 86, 0.5);
 }
 
 .btn-learn:hover {
@@ -736,7 +736,7 @@ body.cultural-dashboard::after {
 }
 
 .order-card:hover {
-    border-color: #00d4ff;
+    border-color: #FF9A56;
     box-shadow: 0 8px 25px rgba(183, 65, 14, 0.3);
 }
 
@@ -842,7 +842,7 @@ body.cultural-dashboard::after {
 
 .education-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 45px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 20px 45px rgba(255, 154, 86, 0.4);
 }
 
 .education-icon {
@@ -902,7 +902,7 @@ body.cultural-dashboard::after {
 }
 
 .feed-item:hover {
-    border-color: #00d4ff;
+    border-color: #FF9A56;
     box-shadow: 0 6px 20px rgba(183, 65, 14, 0.3);
 }
 
@@ -962,12 +962,12 @@ body.cultural-dashboard::after {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 6px 20px rgba(255, 154, 86, 0.2);
 }
 
 .action-btn:hover {
     transform: translateY(-6px);
-    border-color: #00d4ff;
+    border-color: #FF9A56;
     box-shadow: 0 12px 30px rgba(183, 65, 14, 0.4);
 }
 

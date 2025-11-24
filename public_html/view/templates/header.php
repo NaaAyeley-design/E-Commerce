@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css?v=<?php echo get_css_version('header_footer.css'); ?>">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sidebar.css?v=<?php echo get_css_version('sidebar.css'); ?>">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/toast.css?v=<?php echo get_css_version('toast.css'); ?>">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/african-savanna-theme.css?v=<?php echo get_css_version('african-savanna-theme.css'); ?>">
     
     <!-- Additional CSS Files -->
     <?php if (isset($additional_css) && is_array($additional_css)): ?>
@@ -29,7 +30,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Meta Tags -->
     <meta name="description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'KenteKart - Modern e-commerce platform with secure authentication'; ?>">
@@ -58,6 +59,27 @@
     <?php endif; ?>
 </head>
 <body class="no-js <?php echo isset($body_class) ? escape_html($body_class) : ''; ?>">
+    
+    <!-- Floating Bubbles Container -->
+    <div class="bubble-container">
+        <?php for ($i = 1; $i <= 25; $i++): ?>
+            <div class="bubble"></div>
+        <?php endfor; ?>
+    </div>
+    
+    <!-- Particles Container -->
+    <div class="particle-container">
+        <?php for ($i = 1; $i <= 40; $i++): ?>
+            <div class="particle"></div>
+        <?php endfor; ?>
+    </div>
+    
+    <!-- Sparkles Container -->
+    <div class="sparkle-container">
+        <?php for ($i = 1; $i <= 15; $i++): ?>
+            <div class="sparkle"></div>
+        <?php endfor; ?>
+    </div>
     
     <!-- Flash Messages -->
     <?php $flash_messages = get_flash_messages(); ?>

@@ -117,7 +117,7 @@ body.register-page .wave-overlay {
     background: rgba(204, 139, 60, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.4);
+    border: 1px solid rgba(255, 154, 86, 0.4);
     border-radius: 25px;
     color: #FFF8E7;
     font-size: 0.9rem;
@@ -161,15 +161,15 @@ body.register-page .wave-overlay {
     background: rgba(204, 139, 60, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.4);
+    border: 1px solid rgba(255, 154, 86, 0.4);
     z-index: 100;
 }
 
 .back-home:hover {
-    background: rgba(0, 212, 255, 0.3);
+    background: rgba(255, 154, 86, 0.3);
     transform: translateX(-5px);
     color: #FFF8E7;
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 8px 20px rgba(255, 154, 86, 0.4);
 }
 
 .back-home i {
@@ -190,7 +190,7 @@ body.register-page .wave-overlay {
     -webkit-backdrop-filter: blur(20px);
     border-radius: 30px;
     border: 1px solid rgba(204, 139, 60, 0.3);
-    box-shadow: 0 20px 80px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 20px 80px rgba(255, 154, 86, 0.2);
 }
 
 /* Cyan gradient border */
@@ -201,7 +201,7 @@ body.register-page .wave-overlay {
     left: 0;
     right: 0;
     height: 8px;
-    background: linear-gradient(90deg, #00d4ff, #6b5ce7, #00d4ff);
+    background: linear-gradient(90deg, #FF9A56, #B7410E, #FF9A56);
     background-size: 200% 100%;
     animation: gradient-shift 4s linear infinite;
     border-radius: 30px 30px 0 0;
@@ -365,7 +365,7 @@ select.form-input {
 }
 
 select.form-input option {
-    background: #1e1e3f;
+    background: rgba(255, 255, 255, 0.85);
     color: #FFF8E7;
     padding: 10px;
 }
@@ -410,7 +410,7 @@ select.form-input option {
 
 .password-strength.medium .strength-bar::after {
     width: 66%;
-    background: linear-gradient(90deg, #ffd93d, #00d4ff);
+    background: linear-gradient(90deg, #ffd93d, #FF9A56);
 }
 
 .password-strength.strong .strength-bar::after {
@@ -460,7 +460,7 @@ select.form-input option {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    accent-color: #00d4ff;
+    accent-color: #FF9A56;
     margin-top: 2px;
     flex-shrink: 0;
 }
@@ -472,8 +472,8 @@ select.form-input option {
 }
 
 .checkbox-wrapper a:hover {
-    color: #6b5ce7;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    color: #B7410E;
+    text-shadow: 0 0 10px rgba(255, 154, 86, 0.5);
 }
 
 /* Submit Button */
@@ -488,7 +488,7 @@ select.form-input option {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 10px 25px rgba(0, 212, 255, 0.5);
+    box-shadow: 0 10px 25px rgba(255, 154, 86, 0.5);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -518,7 +518,7 @@ select.form-input option {
 
 .btn-secondary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 15px 35px rgba(255, 154, 86, 0.6);
 }
 
 .btn-secondary:disabled {
@@ -597,7 +597,7 @@ select.form-input option {
 
 .response.info {
     background: rgba(204, 139, 60, 0.2);
-    border-left-color: #00d4ff;
+    border-left-color: #FF9A56;
     color: #FFF8E7;
 }
 
@@ -618,13 +618,13 @@ select.form-input option {
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    text-shadow: 0 0 10px rgba(255, 154, 86, 0.3);
 }
 
 .auth-links a:hover {
-    color: #6b5ce7;
+    color: #B7410E;
     text-decoration: underline;
-    text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+    text-shadow: 0 0 15px rgba(255, 154, 86, 0.6);
 }
 
 /* Validation States */

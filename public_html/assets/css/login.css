@@ -117,7 +117,7 @@ body.login-page .wave-overlay {
     -webkit-backdrop-filter: blur(20px);
     border-radius: 30px;
     border: 1px solid rgba(204, 139, 60, 0.3);
-    box-shadow: 0 20px 80px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 20px 80px rgba(255, 154, 86, 0.2);
 }
 
 /* Cyan gradient border */
@@ -128,7 +128,7 @@ body.login-page .wave-overlay {
     left: 0;
     right: 0;
     height: 8px;
-    background: linear-gradient(90deg, #00d4ff, #6b5ce7, #00d4ff);
+    background: linear-gradient(90deg, #FF9A56, #B7410E, #FF9A56);
     background-size: 200% 100%;
     animation: gradient-shift 4s linear infinite;
     border-radius: 30px 30px 0 0;
@@ -156,14 +156,14 @@ body.login-page .wave-overlay {
     border-radius: 20px;
     background: rgba(204, 139, 60, 0.2);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 212, 255, 0.4);
+    border: 1px solid rgba(255, 154, 86, 0.4);
 }
 
 .back-home:hover {
-    background: rgba(0, 212, 255, 0.3);
+    background: rgba(255, 154, 86, 0.3);
     transform: translateX(-5px);
     color: #FFF8E7;
-    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 8px 20px rgba(255, 154, 86, 0.4);
 }
 
 .back-home i {
@@ -182,12 +182,12 @@ body.login-page .wave-overlay {
     height: 100px;
     margin: 0 auto 25px;
     background: linear-gradient(135deg, #CC8B3C, #B7410E);
-    border: 3px solid rgba(0, 212, 255, 0.5);
+    border: 3px solid rgba(255, 154, 86, 0.5);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 20px 60px rgba(0, 212, 255, 0.5);
+    box-shadow: 0 20px 60px rgba(255, 154, 86, 0.5);
     animation: pulse-glow 3s ease-in-out infinite;
     position: relative;
 }
@@ -195,11 +195,11 @@ body.login-page .wave-overlay {
 @keyframes pulse-glow {
     0%, 100% {
         transform: scale(1);
-        box-shadow: 0 20px 60px rgba(0, 212, 255, 0.5);
+        box-shadow: 0 20px 60px rgba(255, 154, 86, 0.5);
     }
     50% {
         transform: scale(1.1);
-        box-shadow: 0 25px 80px rgba(0, 212, 255, 0.7);
+        box-shadow: 0 25px 80px rgba(255, 154, 86, 0.7);
     }
 }
 
@@ -270,7 +270,7 @@ body.login-page .wave-overlay {
 
 .response.info {
     background: rgba(204, 139, 60, 0.2);
-    border-left-color: #00d4ff;
+    border-left-color: #FF9A56;
     color: #FFF8E7;
 }
 
@@ -346,7 +346,7 @@ body.login-page .wave-overlay {
     width: 18px;
     height: 18px;
     cursor: pointer;
-    accent-color: #00d4ff;
+    accent-color: #FF9A56;
 }
 
 .forgot-link {
@@ -359,7 +359,7 @@ body.login-page .wave-overlay {
 .forgot-link:hover {
     color: #CC8B3C;
     text-decoration: underline;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    text-shadow: 0 0 10px rgba(255, 154, 86, 0.5);
 }
 
 /* Submit Button */
@@ -455,7 +455,7 @@ body.login-page .wave-overlay {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 154, 86, 0.4), transparent);
 }
 
 .divider span {
@@ -479,13 +479,13 @@ body.login-page .wave-overlay {
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    text-shadow: 0 0 10px rgba(255, 154, 86, 0.3);
 }
 
 .auth-links a:hover {
-    color: #6b5ce7;
+    color: #B7410E;
     text-decoration: underline;
-    text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+    text-shadow: 0 0 15px rgba(255, 154, 86, 0.6);
 }
 
 /* Validation States */

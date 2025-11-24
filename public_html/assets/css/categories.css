@@ -203,7 +203,7 @@ body.categories-page .floating-bubble {
     border: 1px solid rgba(204, 139, 60, 0.3);
     border-radius: 20px;
     margin-bottom: 30px;
-    box-shadow: 0 10px 40px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(255, 154, 86, 0.2);
     transition: all 0.3s ease;
     overflow: hidden;
     animation: fadeInUp 0.6s ease backwards;
@@ -233,7 +233,7 @@ body.categories-page .floating-bubble {
 .card-header {
     padding: 25px 30px;
     background: linear-gradient(135deg, rgba(204, 139, 60, 0.15), rgba(183, 65, 14, 0.15));
-    border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 154, 86, 0.3);
 }
 
 .card-header h3 {
@@ -420,7 +420,7 @@ body.categories-page .floating-bubble {
 }
 
 .table thead {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(107, 92, 231, 0.2));
+    background: linear-gradient(135deg, rgba(255, 154, 86, 0.2), rgba(183, 65, 14, 0.2));
 }
 
 .table thead th {
@@ -494,7 +494,7 @@ body.categories-page .floating-bubble {
 
 .empty-state i {
     font-size: 4rem;
-    color: rgba(0, 212, 255, 0.5);
+    color: rgba(255, 154, 86, 0.5);
     margin-bottom: 20px;
     display: block;
 }
