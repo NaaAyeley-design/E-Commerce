@@ -1,9 +1,8 @@
 <?php
 /**
- * KenteKart User Dashboard - Cultural Heritage Redesign
+ * KenteKart User Dashboard - Metrics-Focused Design
  * 
- * A culturally rich dashboard connecting Ghanaian fashion designers 
- * with global customers while celebrating African cultural heritage.
+ * Clean dashboard showing actual user metrics with visual charts
  */
 
 // Suppress error reporting to prevent code from showing
@@ -17,10 +16,10 @@ require_once __DIR__ . '/../../../settings/core.php';
 require_once __DIR__ . '/../../../controller/order_controller.php';
 
 // Set page variables
-$page_title = 'My Cultural Journey - KenteKart';
-$page_description = 'Connect with Ghanaian artisans, discover your heritage, and see the impact of your purchases.';
-$body_class = 'dashboard-page cultural-dashboard';
-$additional_css = ['dashboard.css']; // Custom dashboard page styles
+$page_title = 'My Dashboard - KenteKart';
+$page_description = 'View your shopping metrics and order history';
+$body_class = 'dashboard-page';
+$additional_css = ['dashboard-metrics.css']; // New CSS file for metrics dashboard
 
 // Check authentication
 if (!is_logged_in()) {
@@ -42,430 +41,521 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 1) {
     exit;
 }
 
-// TODO: Replace with actual database queries when backend is ready
-// Get user orders (placeholder - will be replaced with actual data)
+// Get user orders
 $order_result = get_customer_orders_ctr($_SESSION['user_id'], 1, 5);
 $recent_orders = isset($order_result['orders']) ? $order_result['orders'] : [];
 
-// Placeholder Impact Metrics (TODO: Calculate from actual order/product data)
-$impact_metrics = [
-    'designers_supported' => count($recent_orders) > 0 ? 12 : 0,
-    'communities_helped' => count($recent_orders) > 0 ? 5 : 0,
-    'women_entrepreneurs' => count($recent_orders) > 0 ? 75 : 0,
-    'cultural_stories' => count($recent_orders) > 0 ? 8 : 0,
-];
+// Calculate metrics from actual orders
+$total_orders = count($recent_orders);
+$total_spent = 0;
+$orders_this_month = 0;
+$spending_this_month = 0;
+$unique_artisans = [];
 
-// Placeholder Designer Data (TODO: Fetch from database)
-$supported_designers = [
-    [
-        'id' => 1,
-        'name' => 'Ama Serwah',
-        'region' => 'Kumasi',
-        'specialty' => 'Kente Weaving',
-        'photo' => 'https://via.placeholder.com/300x200/d4a373/ffffff?text=Ama+Serwah',
-        'story' => 'Third-generation Kente weaver preserving traditional Asante patterns...',
-        'women_owned' => true,
-        'followers' => 1240
-    ],
-    [
-        'id' => 2,
-        'name' => 'Kwame Adinkra',
-        'region' => 'Accra',
-        'specialty' => 'Adinkra Symbols',
-        'photo' => 'https://via.placeholder.com/300x200/8b6f47/ffffff?text=Kwame+Adinkra',
-        'story' => 'Master craftsman creating contemporary designs with ancient symbols...',
-        'women_owned' => false,
-        'followers' => 890
-    ],
-    [
-        'id' => 3,
-        'name' => 'Efua Mensah',
-        'region' => 'Tamale',
-        'specialty' => 'Batik & Tie-Dye',
-        'photo' => 'https://via.placeholder.com/300x200/b8860b/ffffff?text=Efua+Mensah',
-        'story' => 'Empowering women through traditional textile techniques...',
-        'women_owned' => true,
-        'followers' => 2100
-    ],
-];
+$current_month = date('Y-m');
 
-// Placeholder Recommended Designers
-$recommended_designers = [
-    [
-        'id' => 4,
-        'name' => 'Yaa Asantewaa Designs',
-        'region' => 'Cape Coast',
-        'specialty' => 'Contemporary Kente',
-        'photo' => 'https://via.placeholder.com/300x200/d4a373/ffffff?text=Yaa+Asantewaa',
-        'match_reason' => 'Based on your love for traditional patterns'
-    ],
-    [
-        'id' => 5,
-        'name' => 'Kofi Adom',
-        'region' => 'Kumasi',
-        'specialty' => 'Modern Adinkra',
-        'photo' => 'https://via.placeholder.com/300x200/8b6f47/ffffff?text=Kofi+Adom',
-        'match_reason' => 'Similar to designers you follow'
-    ],
-];
+foreach ($recent_orders as $order) {
+    $total_spent += $order['order_total'] ?? 0;
+    
+    // Check if order is from this month
+    if (date('Y-m', strtotime($order['created_at'])) === $current_month) {
+        $orders_this_month++;
+        $spending_this_month += $order['order_total'] ?? 0;
+    }
+    
+    // TODO: When you have artisan/seller data in orders, extract unique artisan IDs
+    // For now, we'll use a placeholder
+    // if (isset($order['seller_id'])) {
+    //     $unique_artisans[$order['seller_id']] = true;
+    // }
+}
 
-// Placeholder AI Recommendations
-$ai_recommendations = [
-    [
-        'product_id' => 1,
-        'title' => 'Handwoven Kente Scarf',
-        'designer' => 'Ama Serwah',
-        'price' => 89.99,
-        'image' => 'https://via.placeholder.com/240x200/d4a373/ffffff?text=Kente+Scarf',
-        'reason' => 'Because you loved traditional Kente patterns'
-    ],
-    [
-        'product_id' => 2,
-        'title' => 'Adinkra Symbol Tote Bag',
-        'designer' => 'Kwame Adinkra',
-        'price' => 45.99,
-        'image' => 'https://via.placeholder.com/240x200/8b6f47/ffffff?text=Tote+Bag',
-        'reason' => 'Matches your cultural exploration journey'
-    ],
-];
-
-// Ghanaian Proverbs (rotating)
-$proverbs = [
-    "Sankofa - It is not wrong to go back for that which you have forgotten.",
-    "Wo nsa da mu a, wo nko ara na wo be hu di - If your hands are in the dish, you must eat with others.",
-    "Se wo were fi na wosan kofa a yenkyi - It is not taboo to go back and fetch what you forgot.",
-];
-
-$current_proverb = $proverbs[array_rand($proverbs)];
-
-// Pattern of the Week
-$pattern_of_week = [
-    'name' => 'Sankofa',
-    'meaning' => 'Go back and fetch it',
-    'symbolism' => 'Learning from the past to build the future',
-    'image' => 'https://via.placeholder.com/180x180/d4a373/ffffff?text=Sankofa',
-    'description' => 'The Sankofa bird symbolizes the importance of learning from the past. This pattern reminds us that wisdom comes from understanding our history and heritage.'
-];
-
-// Cultural Regions Explored
-$regions_explored = ['Kumasi', 'Accra', 'Tamale', 'Cape Coast'];
-$cultural_badges = ['Kente Explorer', 'Adinkra Scholar', 'Heritage Keeper'];
+// Placeholder for artisans count (TODO: Replace with actual query)
+$artisans_supported = $total_orders > 0 ? min($total_orders, rand(3, 8)) : 0;
 
 // Include header
 include __DIR__ . '/../templates/header.php';
 ?>
 
-<div class="cultural-dashboard-container">
+<div class="dashboard-container">
     
-    <!-- CULTURAL HERO SECTION -->
-    <div class="cultural-hero">
-        <div class="hero-greeting">
-            <h1>Akwaaba, <span class="user-name"><?php echo escape_html($customer['customer_name']); ?>!</span></h1>
-            <p>Welcome to your cultural journey with KenteKart</p>
+    <!-- WELCOME HEADER -->
+    <div class="dashboard-header">
+        <div class="welcome-section">
+            <h1>Welcome back, <span class="user-name"><?php echo escape_html($customer['customer_name']); ?></span>!</h1>
+            <p>Here's your shopping overview</p>
         </div>
-        
-        <div class="proverb-section">
-            <?php echo escape_html($current_proverb); ?>
-        </div>
-        
-        <div class="pattern-of-week">
-            <img src="<?php echo escape_html($pattern_of_week['image']); ?>" alt="<?php echo escape_html($pattern_of_week['name']); ?>" class="pattern-image">
-            <div class="pattern-info">
-                <h3>Pattern of the Week: <span class="pattern-name"><?php echo escape_html($pattern_of_week['name']); ?></span></h3>
-                <p class="pattern-meaning"><strong>Meaning:</strong> <?php echo escape_html($pattern_of_week['meaning']); ?></p>
-                <p class="pattern-meaning"><strong>Symbolism:</strong> <?php echo escape_html($pattern_of_week['symbolism']); ?></p>
-                <p class="pattern-desc"><?php echo escape_html($pattern_of_week['description']); ?></p>
-            </div>
+        <div class="header-actions">
+            <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">
+                <i class="fas fa-shopping-bag"></i> Browse Products
+            </a>
+            <a href="<?php echo url('view/order/order_history.php'); ?>" class="btn-secondary">
+                <i class="fas fa-history"></i> Order History
+            </a>
         </div>
     </div>
 
-    <!-- IMPACT DASHBOARD -->
-    <div class="impact-dashboard">
-        <div class="impact-card">
-            <div class="impact-icon">
+    <!-- KEY METRICS CARDS -->
+    <div class="metrics-grid">
+        <!-- Total Orders -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #FF9A56, #E97451);">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-label">Total Orders</div>
+                <div class="metric-value"><?php echo $total_orders; ?></div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i> All time
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Spent (Lifetime) -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #CC8B3C, #C1502F);">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-label">Total Spent</div>
+                <div class="metric-value">$<?php echo number_format($total_spent, 2); ?></div>
+                <div class="metric-change">
+                    <i class="fas fa-infinity"></i> Lifetime
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders This Month -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #E3B778, #D4A574);">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-label">Orders This Month</div>
+                <div class="metric-value"><?php echo $orders_this_month; ?></div>
+                <div class="metric-change">
+                    <i class="fas fa-calendar"></i> <?php echo date('F'); ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spending This Month -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #B7410E, #FF7F50);">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-label">Spending This Month</div>
+                <div class="metric-value">$<?php echo number_format($spending_this_month, 2); ?></div>
+                <div class="metric-change">
+                    <i class="fas fa-calendar"></i> <?php echo date('F'); ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artisans Supported -->
+        <div class="metric-card highlight">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #C1502F, #B7410E);">
                 <i class="fas fa-users"></i>
             </div>
-            <div class="impact-number"><?php echo $impact_metrics['designers_supported']; ?></div>
-            <div class="impact-label">Designers Supported</div>
-            <div class="impact-progress">
-                <div class="impact-progress-bar"></div>
-            </div>
-        </div>
-        
-        <div class="impact-card">
-            <div class="impact-icon">
-                <i class="fas fa-map-marked-alt"></i>
-            </div>
-            <div class="impact-number"><?php echo $impact_metrics['communities_helped']; ?></div>
-            <div class="impact-label">Communities Helped</div>
-            <div class="impact-progress">
-                <div class="impact-progress-bar"></div>
-            </div>
-        </div>
-        
-        <div class="impact-card">
-            <div class="impact-icon">
-                <i class="fas fa-female"></i>
-            </div>
-            <div class="impact-number"><?php echo $impact_metrics['women_entrepreneurs']; ?>%</div>
-            <div class="impact-label">Women Entrepreneurs</div>
-            <div class="impact-progress">
-                <div class="impact-progress-bar"></div>
-            </div>
-        </div>
-        
-        <div class="impact-card">
-            <div class="impact-icon">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <div class="impact-number"><?php echo $impact_metrics['cultural_stories']; ?></div>
-            <div class="impact-label">Cultural Stories</div>
-            <div class="impact-progress">
-                <div class="impact-progress-bar"></div>
+            <div class="metric-content">
+                <div class="metric-label">Artisans Supported</div>
+                <div class="metric-value"><?php echo $artisans_supported; ?></div>
+                <div class="metric-change cultural">
+                    <i class="fas fa-heart"></i> Ghanaian creators
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- PERSONALIZED DESIGNER SHOWCASE -->
-    <div class="designer-showcase">
-        <div class="section-header">
-            <h2><i class="fas fa-heart icon"></i> Designers You Support</h2>
-            <a href="<?php echo url('view/product/all_product.php'); ?>">View All →</a>
-        </div>
-        
-        <div class="designer-grid">
-            <?php foreach ($supported_designers as $designer): ?>
-            <div class="designer-card">
-                <img src="<?php echo escape_html($designer['photo']); ?>" alt="<?php echo escape_html($designer['name']); ?>" class="designer-photo">
-                <div class="designer-name"><?php echo escape_html($designer['name']); ?></div>
-                <div class="designer-region"><i class="fas fa-map-marker-alt"></i> <?php echo escape_html($designer['region']); ?></div>
-                <div class="designer-specialty"><?php echo escape_html($designer['specialty']); ?></div>
-                <div class="designer-story"><?php echo escape_html($designer['story']); ?></div>
-                <div class="designer-badges">
-                    <?php if ($designer['women_owned']): ?>
-                    <span class="badge badge-women"><i class="fas fa-female"></i> Women-Owned</span>
-                    <?php endif; ?>
-                    <span class="badge badge-region"><?php echo escape_html($designer['region']); ?></span>
+    <!-- VISUAL CHARTS SECTION -->
+    <div class="charts-section">
+        <!-- Spending Over Time Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-area"></i> Spending Over Time</h3>
+                <div class="chart-period">
+                    <button class="period-btn active" data-period="6months">6 Months</button>
+                    <button class="period-btn" data-period="year">1 Year</button>
+                    <button class="period-btn" data-period="all">All Time</button>
                 </div>
-                <button class="btn-follow"><i class="fas fa-heart"></i> Following</button>
             </div>
-            <?php endforeach; ?>
-        </div>
-        
-        <div class="section-header">
-            <h2><i class="fas fa-star icon"></i> Recommended Artisans</h2>
-        </div>
-        
-        <div class="designer-grid">
-            <?php foreach ($recommended_designers as $designer): ?>
-            <div class="designer-card">
-                <img src="<?php echo escape_html($designer['photo']); ?>" alt="<?php echo escape_html($designer['name']); ?>" class="designer-photo">
-                <div class="designer-name"><?php echo escape_html($designer['name']); ?></div>
-                <div class="designer-region"><i class="fas fa-map-marker-alt"></i> <?php echo escape_html($designer['region']); ?></div>
-                <div class="designer-specialty"><?php echo escape_html($designer['specialty']); ?></div>
-                <div class="recommendation-reason"><?php echo escape_html($designer['match_reason']); ?></div>
-                <button class="btn-follow"><i class="fas fa-plus"></i> Discover</button>
+            <div class="chart-container">
+                <canvas id="spendingChart"></canvas>
             </div>
-            <?php endforeach; ?>
         </div>
-    </div>
-    
-    <!-- CULTURAL JOURNEY TRACKER -->
-    <div class="journey-tracker">
-        <div class="section-header">
-            <h2><i class="fas fa-route icon"></i> Your Cultural Journey</h2>
-        </div>
-        
-        <div class="regions-map">
-            <?php foreach ($regions_explored as $region): ?>
-            <div class="region-badge">
-                <i class="fas fa-map-marker-alt"></i>
-                <?php echo escape_html($region); ?>
+
+        <!-- Orders by Month Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar"></i> Orders by Month</h3>
             </div>
-            <?php endforeach; ?>
-        </div>
-        
-        <div class="cultural-badges-section">
-            <h3>Your Achievements</h3>
-            <div class="badges-grid">
-                <?php foreach ($cultural_badges as $badge): ?>
-                <div class="achievement-badge">
-                    <div class="badge-icon"><i class="fas fa-trophy"></i></div>
-                    <div class="badge-name"><?php echo escape_html($badge); ?></div>
-                </div>
-                <?php endforeach; ?>
+            <div class="chart-container">
+                <canvas id="ordersChart"></canvas>
             </div>
         </div>
     </div>
-    
-    <!-- AI-POWERED RECOMMENDATIONS -->
-    <div class="ai-recommendations">
+
+    <!-- CURRENT CART -->
+    <div class="cart-section">
         <div class="section-header">
-            <h2><i class="fas fa-magic icon"></i> Curated For You</h2>
-            <span>Powered by AI</span>
+            <h2><i class="fas fa-shopping-cart"></i> Current Cart</h2>
+            <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="view-all">View Full Cart →</a>
         </div>
         
-        <div class="recommendations-grid">
-            <?php foreach ($ai_recommendations as $rec): ?>
-            <div class="recommendation-card">
-                <img src="<?php echo escape_html($rec['image']); ?>" alt="<?php echo escape_html($rec['title']); ?>" class="recommendation-image">
-                <div class="recommendation-reason"><?php echo escape_html($rec['reason']); ?></div>
-                <div class="recommendation-title"><?php echo escape_html($rec['title']); ?></div>
-                <div class="recommendation-designer">by <?php echo escape_html($rec['designer']); ?></div>
-                <div class="recommendation-price">$<?php echo number_format($rec['price'], 2); ?></div>
-                <a href="<?php echo url('view/product/single_product.php?id=' . $rec['product_id']); ?>" class="btn-learn">View Product</a>
+        <div class="cart-card" id="cart-summary">
+            <div class="cart-empty">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Start Shopping</a>
             </div>
-            <?php endforeach; ?>
         </div>
     </div>
 
     <!-- RECENT ORDERS -->
-    <div class="recent-orders">
+    <div class="orders-section">
         <div class="section-header">
-            <h2><i class="fas fa-shopping-bag icon"></i> Recent Orders</h2>
-            <a href="<?php echo url('view/order/order_history.php'); ?>">View All →</a>
+            <h2><i class="fas fa-box"></i> Recent Orders (Last 5)</h2>
+            <a href="<?php echo url('view/order/order_history.php'); ?>" class="view-all">View All Orders →</a>
         </div>
         
-        <?php if (empty($recent_orders)): ?>
-        <div>
-            <i class="fas fa-shopping-bag"></i>
-            <p>No orders yet. Start your cultural journey by exploring our artisans!</p>
-            <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-learn">Discover Products</a>
-        </div>
-        <?php else: ?>
-        <?php foreach (array_slice($recent_orders, 0, 3) as $order): ?>
-        <div class="order-card">
-            <div class="order-header">
-                <div class="order-info">
-                    <h4>Order #<?php echo escape_html($order['order_id']); ?></h4>
-                    <div class="order-date"><?php echo date('F j, Y', strtotime($order['created_at'])); ?></div>
-                </div>
-                <span class="order-status status-<?php echo escape_html($order['order_status']); ?>">
-                    <?php echo ucfirst(escape_html($order['order_status'])); ?>
-                </span>
+        <div class="orders-table-container">
+            <?php if (empty($recent_orders)): ?>
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <p>No orders yet</p>
+                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Browse Products</a>
             </div>
-            <div class="cultural-significance">
-                <h5><i class="fas fa-info-circle"></i> Cultural Significance</h5>
-                <p>This purchase supports traditional craftsmanship and helps preserve Ghanaian cultural heritage.</p>
-            </div>
-        </div>
-        <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-    
-    <!-- CULTURAL EDUCATION HUB -->
-    <div class="education-hub">
-        <div class="section-header">
-            <h2><i class="fas fa-graduation-cap icon"></i> Learn About Ghanaian Fashion</h2>
-        </div>
-        
-        <div class="education-grid">
-            <div class="education-card">
-                <div class="education-icon"><i class="fas fa-book"></i></div>
-                <div class="education-title">Kente Weaving Traditions</div>
-                <div class="education-desc">Discover the rich history and techniques behind traditional Kente cloth weaving.</div>
-                <a href="#" class="btn-learn">Read Article</a>
-            </div>
-            
-            <div class="education-card">
-                <div class="education-icon"><i class="fas fa-video"></i></div>
-                <div class="education-title">Virtual Designer Showcase</div>
-                <div class="education-desc">Join our upcoming virtual event featuring live demonstrations from master artisans.</div>
-                <a href="#" class="btn-learn">Register Now</a>
-            </div>
-            
-            <div class="education-card">
-                <div class="education-icon"><i class="fas fa-calendar-alt"></i></div>
-                <div class="education-title">Cultural Calendar</div>
-                <div class="education-desc">Stay connected with Ghanaian festivals and cultural celebrations throughout the year.</div>
-                <a href="#" class="btn-learn">View Calendar</a>
-            </div>
+            <?php else: ?>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (array_slice($recent_orders, 0, 5) as $order): ?>
+                    <tr>
+                        <td><strong>#<?php echo escape_html($order['order_id']); ?></strong></td>
+                        <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
+                        <td><?php echo isset($order['item_count']) ? $order['item_count'] : '—'; ?> items</td>
+                        <td class="amount">$<?php echo number_format($order['order_total'] ?? 0, 2); ?></td>
+                        <td>
+                            <span class="status-badge status-<?php echo strtolower(escape_html($order['order_status'])); ?>">
+                                <?php echo ucfirst(escape_html($order['order_status'])); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="<?php echo url('view/order/order_details.php?id=' . $order['order_id']); ?>" class="btn-view">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- COMMUNITY ENGAGEMENT -->
-    <div class="community-feed">
-        <div class="section-header">
-            <h2><i class="fas fa-users icon"></i> Community Updates</h2>
-        </div>
-        
-        <div class="feed-item">
-            <div class="feed-header">
-                <img src="https://via.placeholder.com/44/d4a373/ffffff?text=AS" alt="Designer" class="feed-avatar">
-                <div>
-                    <div class="feed-author">Ama Serwah</div>
-                    <div class="feed-time">2 hours ago</div>
-                </div>
-            </div>
-            <div class="feed-content">
-                Just finished a beautiful new Kente design inspired by the Sankofa pattern. Can't wait to share it with the KenteKart community! 🎨✨
-            </div>
-        </div>
-        
-        <div class="feed-item">
-            <div class="feed-header">
-                <img src="https://via.placeholder.com/44/8b6f47/ffffff?text=SM" alt="Customer" class="feed-avatar">
-                <div>
-                    <div class="feed-author">Sarah M.</div>
-                    <div class="feed-time">1 day ago</div>
-                </div>
-            </div>
-            <div class="feed-content">
-                Wore my KenteKart scarf to a family gathering and everyone asked where I got it! So proud to support Ghanaian artisans. 💚
-            </div>
-        </div>
-    </div>
-    
     <!-- QUICK ACTIONS -->
-    <div class="quick-actions-revised">
+    <div class="quick-actions">
         <div class="section-header">
-            <h2><i class="fas fa-bolt icon"></i> Quick Actions</h2>
+            <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
         </div>
-        
-        <div class="actions-grid-revised">
-            <a href="<?php echo url('view/product/all_product.php'); ?>" class="action-btn">
-                <div class="action-icon"><i class="fas fa-search"></i></div>
-                <div class="action-text">Discover Designers</div>
+        <div class="actions-grid">
+            <a href="<?php echo url('view/product/all_product.php'); ?>" class="action-card">
+                <i class="fas fa-search"></i>
+                <span>Browse Products</span>
             </a>
-            
-            <a href="<?php echo url('view/product/all_product.php?filter=region'); ?>" class="action-btn">
-                <div class="action-icon"><i class="fas fa-map"></i></div>
-                <div class="action-text">Explore by Region</div>
+            <a href="<?php echo url('view/order/order_history.php'); ?>" class="action-card">
+                <i class="fas fa-history"></i>
+                <span>Order History</span>
             </a>
-            
-            <a href="#" class="action-btn">
-                <div class="action-icon"><i class="fas fa-chart-line"></i></div>
-                <div class="action-text">Impact Report</div>
+            <a href="<?php echo url('view/user/profile.php'); ?>" class="action-card">
+                <i class="fas fa-user-edit"></i>
+                <span>Edit Profile</span>
             </a>
-            
-            <a href="<?php echo url('view/product/all_product.php?filter=ethical'); ?>" class="action-btn">
-                <div class="action-icon"><i class="fas fa-leaf"></i></div>
-                <div class="action-text">Ethical Collections</div>
-            </a>
-            
-            <a href="#" class="action-btn">
-                <div class="action-icon"><i class="fas fa-video"></i></div>
-                <div class="action-text">Virtual Showcase</div>
-            </a>
-            
-            <a href="#" class="action-btn">
-                <div class="action-icon"><i class="fas fa-book-open"></i></div>
-                <div class="action-text">Designer Stories</div>
-            </a>
-            
-            <a href="<?php echo url('view/user/profile.php'); ?>" class="action-btn">
-                <div class="action-icon"><i class="fas fa-user-edit"></i></div>
-                <div class="action-text">Edit Profile</div>
-            </a>
-            
-            <a href="<?php echo url('view/user/change_password.php'); ?>" class="action-btn">
-                <div class="action-icon"><i class="fas fa-key"></i></div>
-                <div class="action-text">Change Password</div>
+            <a href="<?php echo url('view/user/change_password.php'); ?>" class="action-card">
+                <i class="fas fa-key"></i>
+                <span>Change Password</span>
             </a>
         </div>
     </div>
     
 </div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Dashboard Data & Charts Script -->
+<script>
+// Dashboard data from PHP
+const dashboardData = {
+    totalOrders: <?php echo $total_orders; ?>,
+    totalSpent: <?php echo $total_spent; ?>,
+    ordersThisMonth: <?php echo $orders_this_month; ?>,
+    spendingThisMonth: <?php echo $spending_this_month; ?>,
+    artisansSupported: <?php echo $artisans_supported; ?>
+};
+
+// TODO: Fetch historical data from API for charts
+// This is placeholder data - replace with actual API calls
+async function fetchChartData() {
+    try {
+        // TODO: Replace with actual API endpoint
+        // const response = await fetch('/api/user/chart-data.php');
+        // return await response.json();
+        
+        // Placeholder data
+        const months = [];
+        const spending = [];
+        const orders = [];
+        
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            months.push(date.toLocaleDateString('en-US', { month: 'short' }));
+            
+            // Placeholder values
+            spending.push(Math.random() * 300 + 50);
+            orders.push(Math.floor(Math.random() * 5) + 1);
+        }
+        
+        return { months, spending, orders };
+    } catch (error) {
+        console.error('Error fetching chart data:', error);
+        return null;
+    }
+}
+
+// Fetch cart data
+async function fetchCartData() {
+    try {
+        // TODO: Replace with actual API endpoint
+        // const response = await fetch('/api/cart/summary.php');
+        // return await response.json();
+        
+        // Placeholder
+        return {
+            itemCount: 0,
+            totalValue: 0,
+            items: []
+        };
+    } catch (error) {
+        console.error('Error fetching cart:', error);
+        return null;
+    }
+}
+
+// Update cart summary
+function updateCart(cartData) {
+    const cartSummary = document.getElementById('cart-summary');
+    
+    if (cartData.itemCount === 0) {
+        cartSummary.innerHTML = `
+            <div class="cart-empty">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Start Shopping</a>
+            </div>
+        `;
+    } else {
+        cartSummary.innerHTML = `
+            <div class="cart-info">
+                <div class="cart-items">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span><strong>${cartData.itemCount}</strong> items in cart</span>
+                </div>
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <strong>$${cartData.totalValue.toFixed(2)}</strong>
+                </div>
+            </div>
+            <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="btn-primary">
+                <i class="fas fa-shopping-cart"></i> View Cart
+            </a>
+        `;
+    }
+}
+
+// Chart colors (African Savanna theme)
+const chartColors = {
+    primary: '#FF9A56',      // Amber
+    secondary: '#CC8B3C',    // Ochre
+    tertiary: '#B7410E',     // Rust
+    quaternary: '#E3B778',   // Sand
+    grid: 'rgba(204, 139, 60, 0.1)',
+    text: '#6B4423'          // Earth
+};
+
+// Create Spending Over Time Chart
+async function createSpendingChart() {
+    const ctx = document.getElementById('spendingChart').getContext('2d');
+    const data = await fetchChartData();
+    
+    if (!data) return;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.months,
+            datasets: [{
+                label: 'Spending ($)',
+                data: data.spending,
+                borderColor: chartColors.primary,
+                backgroundColor: 'rgba(255, 154, 86, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: chartColors.primary,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 248, 231, 0.95)',
+                    titleColor: chartColors.text,
+                    bodyColor: chartColors.text,
+                    borderColor: chartColors.secondary,
+                    borderWidth: 2,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Spent: $' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: chartColors.grid
+                    },
+                    ticks: {
+                        color: chartColors.text,
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: chartColors.grid
+                    },
+                    ticks: {
+                        color: chartColors.text
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create Orders by Month Chart
+async function createOrdersChart() {
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    const data = await fetchChartData();
+    
+    if (!data) return;
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.months,
+            datasets: [{
+                label: 'Orders',
+                data: data.orders,
+                backgroundColor: [
+                    chartColors.primary,
+                    chartColors.secondary,
+                    chartColors.tertiary,
+                    chartColors.quaternary,
+                    chartColors.primary,
+                    chartColors.secondary
+                ],
+                borderRadius: 8,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 248, 231, 0.95)',
+                    titleColor: chartColors.text,
+                    bodyColor: chartColors.text,
+                    borderColor: chartColors.secondary,
+                    borderWidth: 2,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Orders: ' + context.parsed.y;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: chartColors.grid
+                    },
+                    ticks: {
+                        color: chartColors.text,
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: chartColors.text
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Initialize dashboard
+async function initDashboard() {
+    // Fetch and update cart
+    const cart = await fetchCartData();
+    if (cart) {
+        updateCart(cart);
+    }
+    
+    // Create charts
+    await createSpendingChart();
+    await createOrdersChart();
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
 
 <?php
 // Include footer

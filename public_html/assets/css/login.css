@@ -110,7 +110,7 @@ body.login-page .wave-overlay {
     z-index: 10;
     width: 100%;
     max-width: 480px;
-    margin: 20px;
+    margin: 0 auto;
     padding: 60px 50px;
     background: rgba(255, 248, 231, 0.1);
     backdrop-filter: blur(20px);
@@ -514,7 +514,7 @@ body.login-page .wave-overlay {
 @media (max-width: 576px) {
     .auth-container {
         padding: 40px 30px;
-        margin: 15px;
+        margin: 0 auto;
         border-radius: 20px;
     }
 
