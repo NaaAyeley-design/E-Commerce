@@ -60,27 +60,6 @@
 </head>
 <body class="no-js <?php echo isset($body_class) ? escape_html($body_class) : ''; ?>">
     
-    <!-- Floating Bubbles Container -->
-    <div class="bubble-container">
-        <?php for ($i = 1; $i <= 25; $i++): ?>
-            <div class="bubble"></div>
-        <?php endfor; ?>
-    </div>
-    
-    <!-- Particles Container -->
-    <div class="particle-container">
-        <?php for ($i = 1; $i <= 40; $i++): ?>
-            <div class="particle"></div>
-        <?php endfor; ?>
-    </div>
-    
-    <!-- Sparkles Container -->
-    <div class="sparkle-container">
-        <?php for ($i = 1; $i <= 15; $i++): ?>
-            <div class="sparkle"></div>
-        <?php endfor; ?>
-    </div>
-    
     <!-- Flash Messages -->
     <?php $flash_messages = get_flash_messages(); ?>
     <?php if (!empty($flash_messages)): ?>
@@ -196,7 +175,7 @@
                         <?php endif; ?>
                         
                         <li class="top-navbar-item">
-                            <a href="<?php echo str_replace('/public_html', '', BASE_URL) . '/actions/logout_action.php'; ?>" class="top-navbar-link">
+                            <a href="<?php echo url('actions/logout_action.php'); ?>" class="top-navbar-link">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>Logout</span>
                             </a>

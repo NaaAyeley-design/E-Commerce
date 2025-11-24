@@ -7,9 +7,9 @@
 const ADINKRA_SYMBOLS = ['✦', '◈', '❖', '✤', '◆', '❋', '✶', '※'];
 const TRAIL_DELAY = 30; // milliseconds between trail dots
 const CURSOR_COLORS = {
-  primary: '#00d4ff',    // Cyan
-  secondary: '#6b5ce7',  // Purple
-  dark: '#1e1e3f'        // Dark Blue
+  primary: '#FF9A56',    // Amber
+  secondary: '#B7410E',  // Rust
+  dark: '#6B4423'        // Earth Brown
 };
 
 // Initialize cursor elements
@@ -63,7 +63,7 @@ function initAdinkraCursor() {
       z-index: 9999;
       transition: all 0.2s ease-out;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 15px rgba(107, 92, 231, 0.5);
+      box-shadow: 0 0 15px rgba(183, 65, 14, 0.5);
     }
 
     .adinkra-cursor {
@@ -75,7 +75,7 @@ function initAdinkraCursor() {
       transform: translate(-50%, -50%) scale(0);
       opacity: 0;
       color: ${CURSOR_COLORS.secondary};
-      filter: drop-shadow(0 2px 8px rgba(0, 212, 255, 0.5));
+      filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.5));
       text-shadow: 0 0 10px ${CURSOR_COLORS.primary};
     }
 
@@ -100,7 +100,7 @@ function initAdinkraCursor() {
       z-index: 9998;
       opacity: 0;
       animation: trail-fade 0.6s ease-out forwards;
-      box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+      box-shadow: 0 0 10px rgba(255, 154, 86, 0.6);
     }
 
     @keyframes trail-fade {
@@ -117,9 +117,9 @@ function initAdinkraCursor() {
     .custom-cursor.hover {
       width: 60px;
       height: 60px;
-      background: rgba(0, 212, 255, 0.2);
+      background: rgba(255, 154, 86, 0.2);
       border: 2px solid ${CURSOR_COLORS.primary};
-      box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+      box-shadow: 0 0 30px rgba(255, 154, 86, 0.6);
     }
 
     .cursor-ring.hover {
@@ -127,7 +127,7 @@ function initAdinkraCursor() {
       height: 80px;
       border-color: ${CURSOR_COLORS.secondary};
       border-width: 3px;
-      box-shadow: 0 0 25px rgba(107, 92, 231, 0.7);
+      box-shadow: 0 0 25px rgba(183, 65, 14, 0.7);
     }
 
     @keyframes adinkra-rotate {
@@ -150,10 +150,10 @@ function setupAdinkraCursor() {
   }
 
   let currentSymbolIndex = 0;
-  let mouseX = 0;
-  let mouseY = 0;
-  let ringX = 0;
-  let ringY = 0;
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let ringX = mouseX;
+  let ringY = mouseY;
   let lastTrailTime = 0;
 
   const cursor = document.querySelector('.custom-cursor');
@@ -165,6 +165,16 @@ function setupAdinkraCursor() {
     return; // Exit if elements don't exist (mobile device)
   }
 
+  // Set initial position and make visible
+  cursor.style.left = mouseX + 'px';
+  cursor.style.top = mouseY + 'px';
+  cursor.style.opacity = '1';
+  cursorRing.style.left = ringX + 'px';
+  cursorRing.style.top = ringY + 'px';
+  cursorRing.style.opacity = '1';
+  adinkraCursor.style.left = mouseX + 'px';
+  adinkraCursor.style.top = mouseY + 'px';
+
   // Update cursor position on mouse move
   document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
@@ -173,6 +183,7 @@ function setupAdinkraCursor() {
     // Update main cursor immediately
     cursor.style.left = mouseX + 'px';
     cursor.style.top = mouseY + 'px';
+    cursor.style.opacity = '1';
     adinkraCursor.style.left = mouseX + 'px';
     adinkraCursor.style.top = mouseY + 'px';
 
@@ -301,14 +312,24 @@ function setupAdinkraCursor() {
 }
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initAdinkraCursor();
-    setupAdinkraCursor();
-  });
-} else {
+function initializeCursor() {
+  // Wait for body to exist
+  if (!document.body) {
+    setTimeout(initializeCursor, 10);
+    return;
+  }
+  
   initAdinkraCursor();
-  setupAdinkraCursor();
+  // Small delay to ensure elements are created before setup
+  setTimeout(() => {
+    setupAdinkraCursor();
+  }, 50);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeCursor);
+} else {
+  initializeCursor();
 }
 
 // Export for module usage

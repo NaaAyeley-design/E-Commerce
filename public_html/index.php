@@ -19,6 +19,27 @@ include __DIR__ . '/view/templates/header.php';
 
 <!-- Hero Section -->
 <div class="hero-section">
+    <!-- Floating Bubbles Container (Hero Section Only) -->
+    <div class="bubble-container hero-bubbles">
+        <?php for ($i = 1; $i <= 8; $i++): ?>
+            <div class="bubble"></div>
+        <?php endfor; ?>
+    </div>
+    
+    <!-- Particles Container (Hero Section Only) -->
+    <div class="particle-container hero-particles">
+        <?php for ($i = 1; $i <= 15; $i++): ?>
+            <div class="particle"></div>
+        <?php endfor; ?>
+    </div>
+    
+    <!-- Sparkles Container (Hero Section Only) -->
+    <div class="sparkle-container hero-sparkles">
+        <?php for ($i = 1; $i <= 6; $i++): ?>
+            <div class="sparkle"></div>
+        <?php endfor; ?>
+    </div>
+    
     <div class="hero-overlay"></div>
     <div class="container">
         <div class="hero-content">
