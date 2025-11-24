@@ -387,8 +387,8 @@ body.admin-dashboard-page::after {
 
 .actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
 }
 
 .action-card {
@@ -575,13 +575,64 @@ body.admin-dashboard-page::after {
    RESPONSIVE DESIGN
    ================================ */
 
+@media (max-width: 1400px) {
+    .actions-grid {
+        gap: 20px;
+    }
+    
+    .action-card {
+        padding: 30px 20px;
+    }
+    
+    .action-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2.2rem;
+    }
+    
+    .action-title {
+        font-size: 1.3rem;
+    }
+    
+    .action-description {
+        font-size: 0.9rem;
+    }
+}
+
 @media (max-width: 1200px) {
     .quick-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
     .actions-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+    
+    .action-card {
+        padding: 25px 15px;
+    }
+    
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    
+    .action-title {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    
+    .action-description {
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+    }
+    
+    .action-button {
+        padding: 12px 20px;
+        font-size: 0.85rem;
     }
 }
 
@@ -616,18 +667,37 @@ body.admin-dashboard-page::after {
     }
 }
 
+@media (max-width: 968px) {
+    .quick-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .action-card {
+        padding: 30px 25px;
+    }
+
+    .admin-header h2 {
+        font-size: 2rem;
+    }
+}
+
 @media (max-width: 768px) {
     .quick-stats-grid {
         grid-template-columns: 1fr;
     }
 
     .actions-grid {
-        grid-template-columns: 1fr;
-        gap: 25px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 
     .action-card {
-        padding: 30px 25px;
+        padding: 25px 20px;
     }
 
     .admin-header h2 {

@@ -261,14 +261,32 @@ class product_class extends db_class {
      */
     public function count_all_products() {
         try {
-            if (!isset($this->conn) || $this->conn === null) {
+            // Ensure database connection is established
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("count_all_products error: Database connection is null");
                 return 0;
             }
+            
             $sql = "SELECT COUNT(*) as total FROM products";
             $result = $this->fetchRow($sql);
-            return $result ? (int)$result['total'] : 0;
+            
+            if ($result === false) {
+                error_log("count_all_products error: fetchRow returned false");
+                return 0;
+            }
+            
+            $count = isset($result['total']) ? (int)$result['total'] : 0;
+            error_log("count_all_products - Successfully counted " . $count . " products");
+            return $count;
+            
+        } catch (PDOException $e) {
+            error_log("count_all_products PDO error: " . $e->getMessage());
+            error_log("count_all_products PDO trace: " . $e->getTraceAsString());
+            return 0;
         } catch (Exception $e) {
             error_log("count_all_products error: " . $e->getMessage());
+            error_log("count_all_products trace: " . $e->getTraceAsString());
             return 0;
         }
     }

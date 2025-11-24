@@ -287,15 +287,19 @@ function get_all_users_ctr($admin_user_id) {
         $user = new user_class();
         $users = $user->get_all_customers();
         
-        if ($users === false) {
-            return "Failed to retrieve users.";
+        // get_all_customers now returns an array (empty array if no users, or array of users)
+        // It never returns false anymore - it returns [] on error
+        if (!is_array($users)) {
+            error_log("get_all_users_ctr: get_all_customers returned non-array: " . gettype($users));
+            return "Failed to retrieve users. Invalid data type returned.";
         }
         
         return $users;
         
     } catch (Exception $e) {
         error_log("Get all users error: " . $e->getMessage());
-        return "An error occurred while retrieving users.";
+        error_log("Get all users trace: " . $e->getTraceAsString());
+        return "An error occurred while retrieving users: " . $e->getMessage();
     }
 }
 

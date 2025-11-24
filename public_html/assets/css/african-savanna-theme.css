@@ -36,6 +36,8 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   background: linear-gradient(180deg, #FFF8E7 0%, #FFE8CC 30%, #FFD7B5 60%, #FFC299 100%);
 }
 

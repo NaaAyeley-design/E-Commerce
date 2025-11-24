@@ -55,6 +55,13 @@ if (is_string($users)) {
     $users = [];
 }
 
+// Get total user count from database
+$user_obj = new user_class();
+$total_users_count = $user_obj->count_customers();
+if (!is_numeric($total_users_count)) {
+    $total_users_count = count($users); // Fallback to array count
+}
+
 // Include header
 include __DIR__ . '/../templates/header.php';
 ?>
@@ -83,7 +90,7 @@ include __DIR__ . '/../templates/header.php';
     <div class="card">
         <div class="card-header">
             <h3>All Users</h3>
-            <p class="text-muted">Total: <?php echo count($users); ?> users</p>
+            <p class="text-muted">Total: <?php echo number_format($total_users_count); ?> users</p>
         </div>
         <div class="card-body">
             <?php if (empty($users)): ?>

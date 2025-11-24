@@ -48,20 +48,41 @@ require_once __DIR__ . '/../../../class/order_class.php';
 try {
     // Count total users
     $total_users = $user->count_customers();
+    if (!is_numeric($total_users)) {
+        error_log("Dashboard: Invalid total_users value: " . var_export($total_users, true));
+        $total_users = 0;
+    }
     
     // Count total categories
     $category = new category_class();
     $total_categories = $category->count_all_categories();
+    if (!is_numeric($total_categories)) {
+        error_log("Dashboard: Invalid total_categories value: " . var_export($total_categories, true));
+        $total_categories = 0;
+    }
     
     // Count total products
     $product = new product_class();
     $total_products = $product->count_all_products();
+    if (!is_numeric($total_products)) {
+        error_log("Dashboard: Invalid total_products value: " . var_export($total_products, true));
+        $total_products = 0;
+    }
     
     // Count total orders
     $order = new order_class();
     $total_orders = $order->count_all_orders();
+    if (!is_numeric($total_orders)) {
+        error_log("Dashboard: Invalid total_orders value: " . var_export($total_orders, true));
+        $total_orders = 0;
+    }
+    
+    // Log the counts for debugging
+    error_log("Dashboard stats - Users: $total_users, Categories: $total_categories, Products: $total_products, Orders: $total_orders");
+    
 } catch (Exception $e) {
     error_log("Dashboard stats error: " . $e->getMessage());
+    error_log("Dashboard stats trace: " . $e->getTraceAsString());
     // Set defaults if error occurs
     $total_users = 0;
     $total_categories = 0;

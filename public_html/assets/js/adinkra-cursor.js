@@ -49,8 +49,12 @@ function initAdinkraCursor() {
       z-index: 10000;
       transition: all 0.15s ease-out;
       transform: translate(-50%, -50%);
-      mix-blend-mode: difference;
-      box-shadow: 0 0 20px ${CURSOR_COLORS.primary};
+      box-shadow: 0 0 20px ${CURSOR_COLORS.primary}, 0 0 40px rgba(255, 154, 86, 0.5);
+      opacity: 1;
+      left: 50%;
+      top: 50%;
+      display: block !important;
+      visibility: visible !important;
     }
 
     .cursor-ring {
@@ -63,7 +67,12 @@ function initAdinkraCursor() {
       z-index: 9999;
       transition: all 0.2s ease-out;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 15px rgba(183, 65, 14, 0.5);
+      box-shadow: 0 0 15px rgba(183, 65, 14, 0.5), 0 0 30px rgba(183, 65, 14, 0.3);
+      opacity: 1;
+      left: 50%;
+      top: 50%;
+      display: block !important;
+      visibility: visible !important;
     }
 
     .adinkra-cursor {
@@ -77,6 +86,8 @@ function initAdinkraCursor() {
       color: ${CURSOR_COLORS.secondary};
       filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.5));
       text-shadow: 0 0 10px ${CURSOR_COLORS.primary};
+      left: 50%;
+      top: 50%;
     }
 
     .adinkra-cursor.active {
@@ -169,11 +180,23 @@ function setupAdinkraCursor() {
   cursor.style.left = mouseX + 'px';
   cursor.style.top = mouseY + 'px';
   cursor.style.opacity = '1';
+  cursor.style.display = 'block';
   cursorRing.style.left = ringX + 'px';
   cursorRing.style.top = ringY + 'px';
   cursorRing.style.opacity = '1';
+  cursorRing.style.display = 'block';
   adinkraCursor.style.left = mouseX + 'px';
   adinkraCursor.style.top = mouseY + 'px';
+  adinkraCursor.style.display = 'block';
+  
+  // Debug: Log cursor initialization
+  console.log('Adinkra cursor initialized', {
+    cursor: cursor,
+    cursorRing: cursorRing,
+    adinkraCursor: adinkraCursor,
+    mouseX: mouseX,
+    mouseY: mouseY
+  });
 
   // Update cursor position on mouse move
   document.addEventListener('mousemove', (e) => {
@@ -184,8 +207,16 @@ function setupAdinkraCursor() {
     cursor.style.left = mouseX + 'px';
     cursor.style.top = mouseY + 'px';
     cursor.style.opacity = '1';
+    cursor.style.display = 'block';
+    cursor.style.visibility = 'visible';
+    
+    cursorRing.style.opacity = '1';
+    cursorRing.style.display = 'block';
+    cursorRing.style.visibility = 'visible';
+    
     adinkraCursor.style.left = mouseX + 'px';
     adinkraCursor.style.top = mouseY + 'px';
+    adinkraCursor.style.display = 'block';
 
     // Create trail effect
     const currentTime = Date.now();
@@ -319,18 +350,50 @@ function initializeCursor() {
     return;
   }
   
+  // Check if already initialized
+  if (document.querySelector('.custom-cursor')) {
+    console.log('Cursor already initialized, skipping...');
+    return;
+  }
+  
+  console.log('Initializing Adinkra cursor...');
   initAdinkraCursor();
+  
   // Small delay to ensure elements are created before setup
   setTimeout(() => {
+    const cursor = document.querySelector('.custom-cursor');
+    const cursorRing = document.querySelector('.cursor-ring');
+    const adinkraCursor = document.querySelector('.adinkra-cursor');
+    
+    if (!cursor || !cursorRing || !adinkraCursor) {
+      console.error('Cursor elements not found after initialization!', {
+        cursor: !!cursor,
+        cursorRing: !!cursorRing,
+        adinkraCursor: !!adinkraCursor
+      });
+      return;
+    }
+    
+    console.log('Setting up Adinkra cursor...');
     setupAdinkraCursor();
-  }, 50);
+  }, 100);
 }
 
+// Try multiple initialization methods
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeCursor);
 } else {
+  // DOM already loaded
   initializeCursor();
 }
+
+// Also try after window load as fallback
+window.addEventListener('load', () => {
+  if (!document.querySelector('.custom-cursor')) {
+    console.log('Retrying cursor initialization after window load...');
+    initializeCursor();
+  }
+});
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {

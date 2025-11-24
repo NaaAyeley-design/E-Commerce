@@ -219,30 +219,79 @@ class user_class extends db_class {
      * Get all customers (admin function)
      */
     public function get_all_customers($limit = 50, $offset = 0) {
-        $columns = $this->check_customer_columns();
-        
-        $select_fields = "customer_id, customer_name, customer_email, customer_country, 
-                customer_city, customer_contact, user_role,
-                (user_role = 1) as is_admin";
-        
-        if ($columns['is_active']) {
-            $select_fields .= ", is_active";
-        } else {
-            $select_fields .= ", 1 as is_active";
+        try {
+            $columns = $this->check_customer_columns();
+            
+            $select_fields = "customer_id, customer_name, customer_email, customer_country, 
+                    customer_city, customer_contact, user_role,
+                    (user_role = 1) as is_admin";
+            
+            if ($columns['is_active']) {
+                $select_fields .= ", is_active";
+            } else {
+                $select_fields .= ", 1 as is_active";
+            }
+            
+            if ($columns['created_at']) {
+                $select_fields .= ", created_at";
+            } else {
+                $select_fields .= ", '1970-01-01 00:00:00' as created_at";
+            }
+            
+            // Cast limit and offset to integers
+            $limit = (int)$limit;
+            $offset = (int)$offset;
+            
+            // Ensure database connection is established
+            $conn = $this->getConnection();
+            if ($conn === null) {
+                error_log("get_all_customers error: Database connection is null");
+                return [];
+            }
+            
+            $sql = "SELECT $select_fields 
+                    FROM customer 
+                    ORDER BY customer_id DESC 
+                    LIMIT ? OFFSET ?";
+            
+            // Use explicit binding for LIMIT and OFFSET
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                $error = $conn->errorInfo();
+                error_log("get_all_customers - Prepare failed: " . print_r($error, true));
+                return [];
+            }
+            
+            $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+            $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+            
+            $executed = $stmt->execute();
+            if (!$executed) {
+                $error = $stmt->errorInfo();
+                error_log("get_all_customers - Execute failed: " . print_r($error, true));
+                return [];
+            }
+            
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Return empty array if no users found (not false)
+            if ($result === false) {
+                error_log("get_all_customers - fetchAll returned false");
+                return [];
+            }
+            
+            error_log("get_all_customers - Successfully retrieved " . count($result) . " users");
+            return $result;
+            
+        } catch (PDOException $e) {
+            error_log("get_all_customers PDO error: " . $e->getMessage());
+            error_log("get_all_customers PDO trace: " . $e->getTraceAsString());
+            return [];
+        } catch (Exception $e) {
+            error_log("get_all_customers error: " . $e->getMessage());
+            error_log("get_all_customers trace: " . $e->getTraceAsString());
+            return [];
         }
-        
-        if ($columns['created_at']) {
-            $select_fields .= ", created_at";
-        } else {
-            $select_fields .= ", '1970-01-01 00:00:00' as created_at";
-        }
-        
-        $sql = "SELECT $select_fields 
-                FROM customer 
-                ORDER BY customer_id DESC 
-                LIMIT ? OFFSET ?";
-        
-        return $this->fetchAll($sql, [$limit, $offset]);
     }
 
     /**
