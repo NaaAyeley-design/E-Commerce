@@ -561,5 +561,96 @@ class product_class extends db_class {
     public function view_single_product($product_id) {
         return $this->get_product_by_id($product_id);
     }
+    
+    /**
+     * Add a product image to the product_images table.
+     *
+     * @param int $product_id The product ID.
+     * @param string $image_url The image file path/URL.
+     * @param bool $is_primary Whether this is the primary image.
+     * @param string|null $image_alt Optional alt text for the image.
+     * @param string|null $image_title Optional title for the image.
+     * @param int $sort_order Sort order for displaying images.
+     * @return array Result array with success status and message.
+     */
+    public function add_product_image($product_id, $image_url, $is_primary = false, $image_alt = null, $image_title = null, $sort_order = 0) {
+        try {
+            // Validate input
+            if (empty($product_id) || !is_numeric($product_id)) {
+                return ['success' => false, 'message' => 'Invalid product ID.'];
+            }
+            
+            if (empty($image_url)) {
+                return ['success' => false, 'message' => 'Image URL is required.'];
+            }
+            
+            // Check if product exists
+            $product = $this->get_product_by_id($product_id);
+            if (!$product) {
+                return ['success' => false, 'message' => 'Product not found.'];
+            }
+            
+            // If this is set as primary, unset other primary images
+            if ($is_primary) {
+                $sql_unset = "UPDATE product_images SET is_primary = 0 WHERE product_id = ?";
+                $this->execute($sql_unset, [$product_id]);
+            }
+            
+            // Insert the new image
+            $sql = "INSERT INTO product_images (product_id, image_url, image_alt, image_title, sort_order, is_primary)
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $this->execute($sql, [
+                $product_id,
+                $image_url,
+                $image_alt,
+                $image_title,
+                (int)$sort_order,
+                $is_primary ? 1 : 0
+            ]);
+            
+            if ($stmt && $stmt->rowCount() > 0) {
+                // Also update the main product_image field if this is the primary image
+                if ($is_primary) {
+                    $update_sql = "UPDATE products SET product_image = ? WHERE product_id = ?";
+                    $this->execute($update_sql, [$image_url, $product_id]);
+                }
+                
+                return ['success' => true, 'message' => 'Product image added successfully.'];
+            } else {
+                return ['success' => false, 'message' => 'Failed to add product image.'];
+            }
+            
+        } catch (Exception $e) {
+            error_log("add_product_image error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'An error occurred while adding the product image: ' . $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Get all images for a product.
+     *
+     * @param int $product_id The product ID.
+     * @return array|false Array of product images or false on error.
+     */
+    public function get_product_images($product_id) {
+        try {
+            if (empty($product_id) || !is_numeric($product_id)) {
+                return false;
+            }
+            
+            $sql = "SELECT image_id, product_id, image_url, image_alt, image_title, sort_order, is_primary, 
+                           file_size, mime_type, created_at, updated_at
+                    FROM product_images
+                    WHERE product_id = ?
+                    ORDER BY is_primary DESC, sort_order ASC, created_at ASC";
+            
+            return $this->fetchAll($sql, [$product_id]);
+            
+        } catch (Exception $e) {
+            error_log("get_product_images error: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

@@ -102,22 +102,23 @@ body.products-page {
 }
 
 .container.center-content > h1 {
+    font-family: var(--font-heading);
     font-size: 2.5rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 30px;
     text-align: center;
     position: relative;
-    text-shadow: 2px 2px 20px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.01em;
 }
 
 .container.center-content > h1::after {
     content: '';
     display: block;
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(90deg, #CC8B3C, #B7410E);
-    margin: 15px auto 0;
-    border-radius: 2px;
+    width: 60px;
+    height: 1px;
+    background: var(--terracotta);
+    margin: 20px auto 0;
 }
 
 /* ================================
@@ -443,7 +444,7 @@ input[type="file"].form-input:hover {
 
 .btn-danger {
     background: linear-gradient(135deg, #ff6b9d, #ff5585);
-    color: #FFF8E7;
+    color: var(--white);
     box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
 }
 
@@ -479,8 +480,10 @@ input[type="file"].form-input:hover {
 }
 
 .category-title {
+    font-family: var(--font-heading);
     font-size: 1.6rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 25px;
     display: flex;
     align-items: center;
@@ -491,14 +494,15 @@ input[type="file"].form-input:hover {
     content: '';
     width: 6px;
     height: 35px;
-    background: linear-gradient(180deg, #CC8B3C, #B7410E);
+    background: var(--terracotta);
     border-radius: 3px;
 }
 
 .product-count {
+    font-family: var(--font-body);
     font-size: 1rem;
-    color: rgba(255, 248, 231, 0.7);
-    font-weight: 400;
+    color: var(--text-light);
+    font-weight: 300;
 }
 
 .brand-section {
@@ -511,8 +515,10 @@ input[type="file"].form-input:hover {
 }
 
 .brand-title {
+    font-family: var(--font-heading);
     font-size: 1.3rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -523,25 +529,26 @@ input[type="file"].form-input:hover {
     content: '';
     width: 4px;
     height: 25px;
-    background: linear-gradient(180deg, #CC8B3C, #B7410E);
+    background: var(--terracotta);
     border-radius: 2px;
 }
 
 .brand-product-count {
+    font-family: var(--font-body);
     font-size: 0.9rem;
-    color: rgba(255, 248, 231, 0.7);
-    font-weight: 400;
+    color: var(--text-light);
+    font-weight: 300;
 }
 
 .no-products {
-    color: rgba(255, 248, 231, 0.7);
+    font-family: var(--font-body);
+    color: var(--text-light);
     font-style: italic;
     padding: 40px 20px;
     text-align: center;
-    background: rgba(255, 248, 231, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    border: 1px dashed rgba(204, 139, 60, 0.3);
+    background: var(--warm-beige);
+    border-radius: var(--radius-md);
+    border: 1px dashed rgba(198, 125, 92, 0.3);
 }
 
 .no-products p {
@@ -636,48 +643,48 @@ input[type="file"].form-input:hover {
 }
 
 .product-card {
-    background: rgba(255, 248, 231, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(204, 139, 60, 0.3);
-    border-radius: 15px;
+    background: var(--white);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 20px rgba(183, 65, 14, 0.2);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-subtle);
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(183, 65, 14, 0.4);
-    border-color: rgba(204, 139, 60, 0.5);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-card);
+    border-color: var(--terracotta);
 }
 
 .product-header {
     padding: 20px;
-    background: linear-gradient(135deg, rgba(204, 139, 60, 0.15), rgba(183, 65, 14, 0.15));
+    background: var(--white);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 15px;
+    border-bottom: var(--border-thin);
 }
 
 .product-title {
+    font-family: var(--font-heading);
     font-size: 1.1rem;
-    color: #FFF8E7;
-    font-weight: 600;
+    font-weight: 400;
+    color: var(--text-dark);
     margin: 0;
     flex: 1;
     line-height: 1.4;
 }
 
 .product-title a {
-    color: #CC8B3C;
+    color: var(--text-dark);
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .product-title a:hover {
-    color: #FF9A56;
-    text-shadow: 0 0 10px rgba(255, 154, 86, 0.5);
+    color: var(--terracotta);
 }
 
 .product-actions {
@@ -716,23 +723,18 @@ input[type="file"].form-input:hover {
 }
 
 .product-price {
+    font-family: var(--font-heading);
     font-size: 1.8rem;
-    font-weight: 700;
-    color: #CC8B3C;
+    font-weight: 600;
+    color: var(--terracotta);
     margin-bottom: 15px;
-    background: linear-gradient(135deg, #CC8B3C, #B7410E);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .current-price {
+    font-family: var(--font-heading);
     font-size: 1.8rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #CC8B3C, #B7410E);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-weight: 600;
+    color: var(--terracotta);
 }
 
 .product-meta {
@@ -744,12 +746,14 @@ input[type="file"].form-input:hover {
 
 .product-category,
 .product-brand {
+    font-family: var(--font-body);
     font-size: 0.85rem;
-    color: rgba(255, 248, 231, 0.7);
+    font-weight: 300;
+    color: var(--text-light);
     padding: 5px 12px;
-    background: rgba(204, 139, 60, 0.15);
+    background: var(--warm-beige);
     border-radius: 20px;
-    border: 1px solid rgba(204, 139, 60, 0.3);
+    border: 1px solid rgba(198, 125, 92, 0.2);
 }
 
 .product-actions {
@@ -765,24 +769,30 @@ input[type="file"].form-input:hover {
 }
 
 .product-description {
-    color: rgba(255, 248, 231, 0.9);
-    line-height: 1.6;
+    font-family: var(--font-body);
+    color: var(--text-dark);
+    line-height: 1.8;
     margin-bottom: 15px;
     font-size: 0.95rem;
+    font-weight: 300;
 }
 
 .product-keywords {
     padding-top: 15px;
-    border-top: 1px solid rgba(255, 248, 231, 0.1);
+    border-top: var(--border-thin);
 }
 
 .product-keywords small {
-    color: rgba(255, 248, 231, 0.7);
+    font-family: var(--font-body);
+    color: var(--text-light);
     font-size: 0.85rem;
+    font-weight: 300;
 }
 
 .product-keywords strong {
-    color: rgba(255, 248, 231, 0.9);
+    font-family: var(--font-body);
+    color: var(--text-dark);
+    font-weight: 400;
 }
 
 /* ================================
@@ -989,14 +999,18 @@ input[type="file"].form-input:hover {
 }
 
 .empty-state h3 {
+    font-family: var(--font-heading);
     font-size: 1.5rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 10px;
 }
 
 .empty-state p {
-    color: rgba(255, 248, 231, 0.8);
+    font-family: var(--font-body);
+    color: var(--text-light);
     margin-bottom: 25px;
+    font-weight: 300;
 }
 
 /* ================================
@@ -1018,14 +1032,14 @@ input[type="file"].form-input:hover {
 }
 
 .page-info {
-    color: rgba(255, 248, 231, 0.9);
+    font-family: var(--font-body);
+    color: var(--text-dark);
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 300;
     padding: 10px 20px;
-    background: rgba(255, 248, 231, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    border: 1px solid rgba(204, 139, 60, 0.3);
+    background: var(--warm-beige);
+    border-radius: var(--radius-md);
+    border: var(--border-thin);
 }
 
 /* ================================

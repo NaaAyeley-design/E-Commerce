@@ -403,8 +403,9 @@ body.categories-page {
 }
 
 .table tbody td:first-child {
+    font-family: var(--font-body);
     font-weight: 600;
-    color: #CC8B3C;
+    color: var(--deep-brown);
 }
 
 /* Action buttons in table */
@@ -419,8 +420,9 @@ body.categories-page {
 
 /* Category name cell */
 .table tbody td:nth-child(2) {
-    font-weight: 500;
-    color: #FFF8E7;
+    font-family: var(--font-body);
+    font-weight: 400;
+    color: var(--text-dark);
 }
 
 /* ================================
@@ -430,25 +432,29 @@ body.categories-page {
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: rgba(255, 248, 231, 0.8);
+    color: var(--text-light);
 }
 
 .empty-state i {
     font-size: 4rem;
-    color: rgba(255, 154, 86, 0.5);
+    color: var(--text-light);
     margin-bottom: 20px;
     display: block;
 }
 
 .empty-state h4 {
+    font-family: var(--font-heading);
     font-size: 1.5rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 10px;
 }
 
 .empty-state p {
+    font-family: var(--font-body);
     font-size: 1rem;
-    color: rgba(255, 248, 231, 0.8);
+    font-weight: 300;
+    color: var(--text-light);
 }
 
 /* ================================

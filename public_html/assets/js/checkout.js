@@ -61,10 +61,24 @@ function displayCheckoutItems(items, total) {
     container.innerHTML = '';
     
     items.forEach((item, index) => {
-        const imagePath = item.product_image ? 
-            (item.product_image.startsWith('http') ? item.product_image : 
-             (typeof BASE_URL !== 'undefined' ? BASE_URL + '/' + item.product_image : item.product_image)) :
-            (typeof BASE_URL !== 'undefined' ? BASE_URL + '/assets/images/placeholder-product.png' : '/assets/images/placeholder-product.png');
+        // Build image path - handle both relative and absolute paths
+        let imagePath;
+        if (item.product_image) {
+            if (item.product_image.startsWith('http')) {
+                imagePath = item.product_image;
+            } else if (item.product_image.startsWith('/')) {
+                imagePath = item.product_image;
+            } else {
+                imagePath = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/' + item.product_image;
+            }
+        } else {
+            // Use placeholder - try to get correct path
+            const baseUrl = typeof BASE_URL !== 'undefined' ? BASE_URL : '';
+            imagePath = baseUrl + '/assets/images/placeholder-product.png';
+        }
+        
+        // Fallback placeholder path
+        const placeholderPath = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/assets/images/placeholder-product.png';
         
         const itemDiv = document.createElement('div');
         itemDiv.style.cssText = 'display: flex; gap: 20px; padding: 20px 0; border-bottom: 1px solid rgba(198, 125, 92, 0.15); align-items: center;';
@@ -72,8 +86,8 @@ function displayCheckoutItems(items, total) {
         itemDiv.innerHTML = `
             <img src="${escapeHtml(imagePath)}" 
                  alt="${escapeHtml(item.product_title)}" 
-                 style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;"
-                 onerror="this.src='${typeof BASE_URL !== 'undefined' ? BASE_URL : ''}/assets/images/placeholder-product.png'">
+                 style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0; background: var(--warm-beige);"
+                 onerror="this.onerror=null; this.src='${escapeHtml(placeholderPath)}'; this.style.background='var(--warm-beige)';">
             <div style="flex: 1;">
                 <div style="font-family: \'Cormorant Garamond\', serif; font-size: 1.125rem; font-weight: 400; color: var(--text-dark); margin-bottom: 8px;">
                     ${escapeHtml(item.product_title)}

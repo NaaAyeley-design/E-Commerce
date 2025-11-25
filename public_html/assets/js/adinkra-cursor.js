@@ -162,8 +162,19 @@ function initAdinkraCursor() {
     }
   `;
   
+  // Insert cursor HTML into body - ensure body exists
+  if (!document.body) {
+    console.error('Cannot initialize cursor: document.body does not exist');
+    return;
+  }
+  
   // Insert cursor HTML
-  document.body.insertAdjacentHTML('beforeend', cursorHTML);
+  try {
+    document.body.insertAdjacentHTML('beforeend', cursorHTML);
+    console.log('Cursor HTML inserted successfully');
+  } catch (e) {
+    console.error('Error inserting cursor HTML:', e);
+  }
 }
 
 // Main cursor logic
@@ -380,9 +391,18 @@ function initializeCursor() {
   }
   
   console.log('Initializing Adinkra cursor...');
+  
+  // Ensure body exists before inserting HTML
+  if (!document.body) {
+    console.log('Body not ready, retrying in 50ms...');
+    setTimeout(initializeCursor, 50);
+    return;
+  }
+  
+  // Initialize cursor elements
   initAdinkraCursor();
   
-  // Small delay to ensure elements are created before setup
+  // Wait a bit longer to ensure DOM is fully ready
   setTimeout(() => {
     const cursor = document.querySelector('.custom-cursor');
     const cursorRing = document.querySelector('.cursor-ring');
@@ -393,26 +413,34 @@ function initializeCursor() {
         cursor: !!cursor,
         cursorRing: !!cursorRing,
         adinkraCursor: !!adinkraCursor,
-        body: !!document.body
+        body: !!document.body,
+        bodyChildren: document.body ? document.body.children.length : 0
       });
-      // Retry once more
+      
+      // Try one more time with a fresh initialization
       setTimeout(() => {
-        if (!document.querySelector('.custom-cursor')) {
+        if (!document.querySelector('.custom-cursor') && document.body) {
           console.log('Retrying cursor initialization...');
           initAdinkraCursor();
-          setTimeout(() => setupAdinkraCursor(), 50);
+          setTimeout(() => {
+            const retryCursor = document.querySelector('.custom-cursor');
+            const retryRing = document.querySelector('.cursor-ring');
+            const retryAdinkra = document.querySelector('.adinkra-cursor');
+            if (retryCursor && retryRing && retryAdinkra) {
+              console.log('Retry successful, setting up cursor...');
+              setupAdinkraCursor();
+            } else {
+              console.error('Retry failed - cursor elements still not found');
+            }
+          }, 200);
         }
-      }, 200);
+      }, 500);
       return;
     }
     
-    console.log('Setting up Adinkra cursor...', {
-      cursor: cursor,
-      cursorRing: cursorRing,
-      adinkraCursor: adinkraCursor
-    });
+    console.log('Setting up Adinkra cursor...');
     setupAdinkraCursor();
-  }, 100);
+  }, 200);
 }
 
 // Try multiple initialization methods

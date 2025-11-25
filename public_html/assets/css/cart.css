@@ -388,6 +388,8 @@ body.cart-page {
     border-radius: var(--radius-md);
     padding: 40px 30px;
     box-shadow: var(--shadow-subtle);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .summary-card h2 {
@@ -435,10 +437,14 @@ body.cart-page {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .btn-block {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     justify-content: center;
 }
 
@@ -461,6 +467,8 @@ body.cart-page {
     position: relative;
     overflow: hidden;
     text-decoration: none;
+    box-sizing: border-box;
+    max-width: 100%;
 }
 
 .btn::before {
@@ -512,6 +520,18 @@ body.cart-page {
     color: var(--white);
     transform: translateY(-2px);
     box-shadow: var(--shadow-subtle);
+}
+
+/* Ensure buttons in summary cards don't overflow */
+.summary-card .btn,
+.summary-card .btn-block {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.summary-card .summary-actions .btn {
+    width: 100%;
+    max-width: 100%;
 }
 
 /* ================================
@@ -645,6 +665,18 @@ body.cart-page {
 
     .summary-card {
         padding: 20px;
+        overflow: hidden;
+    }
+    
+    .summary-actions {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .btn-block {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .summary-card h2 {
