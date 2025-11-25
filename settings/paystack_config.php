@@ -8,10 +8,39 @@
 require_once __DIR__ . '/db_cred.php';
 require_once __DIR__ . '/core.php';
 
-// Paystack API Keys - REPLACE WITH YOUR ACTUAL KEYS
-// Get these from: https://dashboard.paystack.com/#/settings/developer
-define('PAYSTACK_SECRET_KEY', 'sk_test_YOUR_SECRET_KEY_HERE'); // Replace with your secret key
-define('PAYSTACK_PUBLIC_KEY', 'pk_test_YOUR_PUBLIC_KEY_HERE'); // Replace with your public key
+// ============================================
+// PAYSTACK API KEYS CONFIGURATION
+// ============================================
+// 
+// IMPORTANT: You MUST replace these placeholder values with your actual Paystack API keys!
+// 
+// How to get your keys:
+// 1. Log in to Paystack Dashboard: https://dashboard.paystack.com
+// 2. Navigate to: Settings → API Keys & Webhooks
+// 3. Copy your keys:
+//    - Public Key: Starts with "pk_test_" (for test) or "pk_live_" (for production)
+//    - Secret Key: Starts with "sk_test_" (for test) or "sk_live_" (for production)
+// 
+// Test Mode Keys (for development):
+//    - Use keys starting with "pk_test_" and "sk_test_"
+//    - These are safe to use for testing
+// 
+// Live Mode Keys (for production):
+//    - Use keys starting with "pk_live_" and "sk_live_"
+//    - Only use these when your site is live and ready for real payments
+//    - NEVER commit live keys to version control!
+// 
+// ============================================
+
+// Paystack Secret Key (used for server-side API calls)
+// ✅ CONFIGURED: Your secret key has been set
+// Get this from: https://dashboard.paystack.com/#/settings/developer
+define('PAYSTACK_SECRET_KEY', 'sk_test_3d244acd2567f1b7fe4fd8b4874c85bddf6c704b');
+
+// Paystack Public Key (used for client-side payment initialization)
+// ✅ CONFIGURED: Your public key has been set
+// This key is safe to expose in JavaScript (it's public by design)
+define('PAYSTACK_PUBLIC_KEY', 'pk_test_03eb6cd9268039c31ccb85fda2821e31171ba1dc');
 
 // Paystack API URLs
 define('PAYSTACK_API_URL', 'https://api.paystack.co');
