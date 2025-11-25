@@ -159,11 +159,70 @@ include __DIR__ . '/../templates/header.php';
     </div>
 </div>
 
+<!-- Paystack JavaScript Library -->
+<!-- Load Paystack script for Inline (popup) method -->
+<?php
+// Get Paystack public key from config
+require_once __DIR__ . '/../../../settings/paystack_config.php';
+$paystack_public_key = defined('PAYSTACK_PUBLIC_KEY') ? PAYSTACK_PUBLIC_KEY : '';
+?>
+<script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
 // Store checkout data globally
 window.checkoutTotal = <?php echo json_encode($cart_total); ?>;
 window.customerEmail = <?php echo json_encode($customer_email); ?>;
 window.cartItems = <?php echo json_encode($cart_items); ?>;
+
+// Store Paystack public key
+window.PAYSTACK_PUBLIC_KEY = <?php echo json_encode($paystack_public_key); ?>;
+
+// Function to check if PaystackPop is loaded
+function checkPaystackLoaded() {
+    if (typeof PaystackPop !== 'undefined') {
+        console.log('PaystackPop is loaded and ready');
+        return true;
+    } else {
+        console.warn('PaystackPop is not loaded yet');
+        return false;
+    }
+}
+
+// Wait for Paystack script to load
+function waitForPaystack(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof PaystackPop !== 'undefined') {
+            clearInterval(checkInterval);
+            console.log('PaystackPop loaded after ' + attempts + ' attempts');
+            if (callback) callback();
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.error('PaystackPop failed to load after ' + maxAttempts + ' attempts');
+            if (callback) callback(false);
+        }
+    }, 100);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Paystack is loaded
+    waitForPaystack(function(success) {
+        if (success) {
+            // Set Paystack public key if using Inline method
+            if (window.PAYSTACK_PUBLIC_KEY && window.PAYSTACK_PUBLIC_KEY !== 'pk_test_YOUR_PUBLIC_KEY_HERE') {
+                try {
+                    PaystackPop.setPublicKey(window.PAYSTACK_PUBLIC_KEY);
+                    console.log('Paystack public key set successfully');
+                } catch (e) {
+                    console.error('Error setting Paystack public key:', e);
+                }
+            }
+        } else {
+            console.warn('Paystack script may not have loaded. Using Standard (redirect) method as fallback.');
+        }
+    });
+});
 </script>
 <script src="<?php echo ASSETS_URL; ?>/js/checkout.js?v=<?php echo time(); ?>"></script>
 

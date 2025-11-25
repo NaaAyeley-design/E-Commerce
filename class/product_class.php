@@ -577,52 +577,96 @@ class product_class extends db_class {
         try {
             // Validate input
             if (empty($product_id) || !is_numeric($product_id)) {
+                error_log("add_product_image: Invalid product ID: " . var_export($product_id, true));
                 return ['success' => false, 'message' => 'Invalid product ID.'];
             }
             
             if (empty($image_url)) {
+                error_log("add_product_image: Empty image URL for product ID: $product_id");
                 return ['success' => false, 'message' => 'Image URL is required.'];
             }
             
             // Check if product exists
             $product = $this->get_product_by_id($product_id);
             if (!$product) {
+                error_log("add_product_image: Product not found. ID: $product_id");
                 return ['success' => false, 'message' => 'Product not found.'];
             }
             
             // If this is set as primary, unset other primary images
             if ($is_primary) {
                 $sql_unset = "UPDATE product_images SET is_primary = 0 WHERE product_id = ?";
-                $this->execute($sql_unset, [$product_id]);
+                $unset_result = $this->execute($sql_unset, [$product_id]);
+                if ($unset_result === false) {
+                    error_log("add_product_image: Failed to unset other primary images for product ID: $product_id");
+                }
             }
             
             // Insert the new image
             $sql = "INSERT INTO product_images (product_id, image_url, image_alt, image_title, sort_order, is_primary)
                     VALUES (?, ?, ?, ?, ?, ?)";
             
-            $stmt = $this->execute($sql, [
-                $product_id,
+            $params = [
+                (int)$product_id,
                 $image_url,
                 $image_alt,
                 $image_title,
                 (int)$sort_order,
                 $is_primary ? 1 : 0
-            ]);
+            ];
             
-            if ($stmt && $stmt->rowCount() > 0) {
+            error_log("add_product_image: Attempting to insert image. Product ID: $product_id, Image URL: $image_url, Is Primary: " . ($is_primary ? 'yes' : 'no'));
+            error_log("add_product_image: SQL: $sql");
+            error_log("add_product_image: Params: " . json_encode($params));
+            
+            $stmt = $this->execute($sql, $params);
+            
+            if ($stmt === false) {
+                error_log("add_product_image: execute() returned false. Check database connection and SQL syntax.");
+                return ['success' => false, 'message' => 'Database error: Failed to execute insert query.'];
+            }
+            
+            // Check if insert was successful using lastInsertId (more reliable than rowCount for INSERT)
+            $image_id = $this->lastInsertId();
+            $row_count = $stmt->rowCount();
+            
+            error_log("add_product_image: Insert result - rowCount: $row_count, lastInsertId: $image_id");
+            
+            if ($image_id > 0) {
+                // Insert was successful
+                error_log("add_product_image: Image inserted successfully. Image ID: $image_id");
+                
                 // Also update the main product_image field if this is the primary image
                 if ($is_primary) {
                     $update_sql = "UPDATE products SET product_image = ? WHERE product_id = ?";
-                    $this->execute($update_sql, [$image_url, $product_id]);
+                    $update_result = $this->execute($update_sql, [$image_url, $product_id]);
+                    if ($update_result === false) {
+                        error_log("add_product_image: Warning - Failed to update main product_image field, but image was inserted.");
+                    }
                 }
                 
-                return ['success' => true, 'message' => 'Product image added successfully.'];
+                return ['success' => true, 'message' => 'Product image added successfully.', 'image_id' => $image_id];
             } else {
-                return ['success' => false, 'message' => 'Failed to add product image.'];
+                // Insert failed - check for specific error
+                error_log("add_product_image: Insert failed - lastInsertId is 0, rowCount: $row_count");
+                
+                // Try to get more detailed error info
+                $conn = $this->getConnection();
+                if ($conn) {
+                    $error_info = $conn->errorInfo();
+                    error_log("add_product_image: PDO error info: " . json_encode($error_info));
+                }
+                
+                return ['success' => false, 'message' => 'Failed to add product image. No rows were inserted.'];
             }
             
         } catch (Exception $e) {
-            error_log("add_product_image error: " . $e->getMessage());
+            error_log("add_product_image exception: " . $e->getMessage());
+            error_log("add_product_image exception trace: " . $e->getTraceAsString());
+            return ['success' => false, 'message' => 'An error occurred while adding the product image: ' . $e->getMessage()];
+        } catch (Throwable $e) {
+            error_log("add_product_image throwable: " . $e->getMessage());
+            error_log("add_product_image throwable trace: " . $e->getTraceAsString());
             return ['success' => false, 'message' => 'An error occurred while adding the product image: ' . $e->getMessage()];
         }
     }

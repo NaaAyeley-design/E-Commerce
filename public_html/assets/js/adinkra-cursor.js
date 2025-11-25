@@ -102,14 +102,22 @@ function initAdinkraCursor() {
     }
 
     .adinkra-cursor.active {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
+      transform: translate(-50%, -50%) scale(1) !important;
+      opacity: 1 !important;
+      display: block !important;
+      visibility: visible !important;
     }
 
     .adinkra-cursor.active ~ .custom-cursor,
     .adinkra-cursor.active ~ .cursor-ring {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0);
+      opacity: 0 !important;
+      transform: translate(-50%, -50%) scale(0) !important;
+    }
+    
+    /* Ensure cursor is visible when hovering interactive elements */
+    .custom-cursor.hover,
+    .cursor-ring.hover {
+      opacity: 0 !important;
     }
 
     .cursor-trail {
@@ -220,12 +228,22 @@ function setupAdinkraCursor() {
   
   // Debug: Log cursor initialization
   console.log('Adinkra cursor initialized', {
-    cursor: cursor,
-    cursorRing: cursorRing,
-    adinkraCursor: adinkraCursor,
+    cursor: !!cursor,
+    cursorRing: !!cursorRing,
+    adinkraCursor: !!adinkraCursor,
     mouseX: mouseX,
-    mouseY: mouseY
+    mouseY: mouseY,
+    cursorStyle: {
+      display: cursor.style.display,
+      visibility: cursor.style.visibility,
+      opacity: cursor.style.opacity,
+      left: cursor.style.left,
+      top: cursor.style.top
+    }
   });
+  
+  // Test: Log when hovering over any button
+  console.log('Cursor setup complete. Try hovering over a button to see the Adinkra symbol appear.');
 
   // Update cursor position on mouse move
   document.addEventListener('mousemove', (e) => {
@@ -283,68 +301,74 @@ function setupAdinkraCursor() {
     setTimeout(() => trail.remove(), 600);
   }
 
-  // Track elements that already have hover effects
-  const hoveredElements = new WeakSet();
-
-  // Set up hover effects
-  function addHoverEffects() {
-    // Select all interactive elements
-    const selectors = [
-      'a', 'button', 
-      '.product-card', '.warm-card', '.heritage-card',
-      '.impact-card', '.feature-card', '.testimonial-card',
-      '.designer-card', '.recommendation-card', '.education-card',
-      '.action-card', '.quick-stat', '.brand-card',
-      'input', 'textarea', 'select',
-      '[role="button"]', '[onclick]',
-      '.btn', '.card', '.sidebar-link',
-      '.top-navbar-link', '.footer-link', '.social-link'
-    ];
+  // Use event delegation for hover effects (more reliable)
+  // mouseover/mouseout bubble, so we can use event delegation
+  function handleMouseOver(e) {
+    const target = e.target;
     
-    const hoverElements = document.querySelectorAll(selectors.join(', '));
-
-    hoverElements.forEach(element => {
-      // Skip if already has hover effects
-      if (hoveredElements.has(element)) {
-        return;
-      }
-
-      // Mark as processed
-      hoveredElements.add(element);
+    // Check if target or any parent is an interactive element
+    const interactiveSelectors = 'a, button, input, textarea, select, [role="button"], [onclick], .btn, .card, .sidebar-link, .top-navbar-link, .footer-link, .social-link, .product-card, .warm-card, .heritage-card, .impact-card, .feature-card, .testimonial-card, .designer-card, .recommendation-card, .education-card, .action-card, .quick-stat, .brand-card';
+    
+    const isInteractive = target.matches(interactiveSelectors) || target.closest(interactiveSelectors);
+    
+    if (isInteractive && !adinkraCursor.classList.contains('active')) {
+      console.log('Hover detected on interactive element:', target.tagName, target.className);
       
-      element.addEventListener('mouseenter', () => {
-        adinkraCursor.classList.add('active');
-        cursor.classList.add('hover');
-        cursorRing.classList.add('hover');
+      adinkraCursor.classList.add('active');
+      cursor.classList.add('hover');
+      cursorRing.classList.add('hover');
 
-        // Change to next Adinkra symbol
-        currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
-        adinkraCursor.textContent = ADINKRA_SYMBOLS[currentSymbolIndex];
-        
-        // Add rotation animation
-        adinkraCursor.style.animation = 'adinkra-rotate 0.4s ease-out';
-      });
-
-      element.addEventListener('mouseleave', () => {
-        adinkraCursor.classList.remove('active');
-        cursor.classList.remove('hover');
-        cursorRing.classList.remove('hover');
-      });
-    });
+      // Change to next Adinkra symbol
+      currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
+      adinkraCursor.textContent = ADINKRA_SYMBOLS[currentSymbolIndex];
+      
+      // Ensure cursor is visible
+      adinkraCursor.style.opacity = '1';
+      adinkraCursor.style.display = 'block';
+      adinkraCursor.style.visibility = 'visible';
+      adinkraCursor.style.transform = 'translate(-50%, -50%) scale(1)';
+      adinkraCursor.style.zIndex = '100000';
+      
+      // Add rotation animation
+      adinkraCursor.style.animation = 'adinkra-rotate 0.4s ease-out';
+      
+      // Hide main cursor and ring
+      cursor.style.opacity = '0';
+      cursorRing.style.opacity = '0';
+    }
   }
 
-  // Initial setup
-  addHoverEffects();
+  function handleMouseOut(e) {
+    const target = e.target;
+    const relatedTarget = e.relatedTarget;
+    
+    const interactiveSelectors = 'a, button, input, textarea, select, [role="button"], [onclick], .btn, .card, .sidebar-link, .top-navbar-link, .footer-link, .social-link, .product-card, .warm-card, .heritage-card, .impact-card, .feature-card, .testimonial-card, .designer-card, .recommendation-card, .education-card, .action-card, .quick-stat, .brand-card';
+    
+    const isInteractive = target.matches(interactiveSelectors) || target.closest(interactiveSelectors);
+    const isStillOnInteractive = relatedTarget && (relatedTarget.matches(interactiveSelectors) || relatedTarget.closest(interactiveSelectors));
+    
+    // Only hide if we're leaving an interactive element and not entering another one
+    if (isInteractive && !isStillOnInteractive && adinkraCursor.classList.contains('active')) {
+      console.log('Mouse leave from interactive element:', target.tagName, target.className);
+      
+      adinkraCursor.classList.remove('active');
+      cursor.classList.remove('hover');
+      cursorRing.classList.remove('hover');
+      
+      // Show main cursor and ring again
+      cursor.style.opacity = '1';
+      cursorRing.style.opacity = '1';
+      
+      // Hide adinkra cursor
+      adinkraCursor.style.opacity = '0';
+      adinkraCursor.style.transform = 'translate(-50%, -50%) scale(0)';
+    }
+  }
 
-  // Re-apply to dynamically added elements
-  const observer = new MutationObserver(() => {
-    addHoverEffects();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // Use event delegation on document body (works for all elements, including dynamically added ones)
+  // mouseover/mouseout bubble, so we can capture them on document
+  document.addEventListener('mouseover', handleMouseOver, true);
+  document.addEventListener('mouseout', handleMouseOut, true);
 
   // Hide cursor when leaving window
   document.addEventListener('mouseleave', () => {

@@ -323,9 +323,12 @@ try {
             // Only add to database if product exists (product_id > 0)
             // For new products, just save the file and return the path
             if ($product_id > 0) {
+                error_log("Upload action: Calling add_product_image_ctr with product_id: $product_id, relative_path: $relative_path");
                 $result = add_product_image_ctr($product_id, $relative_path, $is_primary, $image_alt, $image_title, $sort_order);
+                error_log("Upload action: add_product_image_ctr returned: " . var_export($result, true));
             } else {
                 // For new products, just mark as success (file is saved, will be moved when product is created)
+                error_log("Upload action: product_id is 0, skipping database insert (temporary upload)");
                 $result = "success";
             }
             
@@ -340,12 +343,15 @@ try {
                 
                 $uploaded_files[] = $file_result;
                 $success_count++;
+                error_log("Upload action: File uploaded successfully - $new_filename");
             } else {
                 // If database insert failed, remove the uploaded file
+                error_log("Upload action: Database insert failed. Result: " . var_export($result, true));
                 if (file_exists($file_path)) {
-                    unlink($file_path);
+                    $unlink_result = @unlink($file_path);
+                    error_log("Upload action: Attempted to remove uploaded file. Success: " . ($unlink_result ? 'yes' : 'no'));
                 }
-                $file_result['error'] = $result;
+                $file_result['error'] = is_string($result) ? $result : 'Failed to add product image.';
                 $error_count++;
             }
             

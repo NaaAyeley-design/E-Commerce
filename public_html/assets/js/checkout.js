@@ -160,6 +160,7 @@ function closePaymentModal() {
 
 /**
  * Process checkout via Paystack
+ * Supports both Inline (popup) and Standard (redirect) methods
  */
 function processCheckout() {
     const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -169,7 +170,7 @@ function processCheckout() {
     
     // Disable button and show loading
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Redirecting to Paystack...';
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Initializing Payment...';
     
     // Get customer email
     let customerEmail = window.customerEmail || '';
@@ -204,8 +205,34 @@ function processCheckout() {
         return;
     }
     
-    // Initialize Paystack transaction
+    // Check which Paystack method to use
+    // Option 1: Use Inline (popup) if PaystackPop is available
+    // Option 2: Use Standard (redirect) as fallback
+    
+    const useInline = typeof PaystackPop !== 'undefined' && 
+                      window.PAYSTACK_PUBLIC_KEY && 
+                      window.PAYSTACK_PUBLIC_KEY !== 'pk_test_YOUR_PUBLIC_KEY_HERE' &&
+                      window.PAYSTACK_PUBLIC_KEY !== '';
+    
+    if (useInline) {
+        // Use Paystack Inline (popup) method
+        processCheckoutInline(amount, customerEmail, confirmBtn, originalText);
+    } else {
+        // Use Paystack Standard (redirect) method
+        processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
+    }
+}
+
+/**
+ * Process checkout using Paystack Inline (popup) method
+ */
+function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) {
+    console.log('Using Paystack Inline (popup) method');
+    
+    // Initialize Paystack transaction to get reference
     const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_init_transaction.php';
+    
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Preparing Payment...';
     
     fetch(actionUrl, {
         method: 'POST',
@@ -222,7 +249,94 @@ function processCheckout() {
     .then(data => {
         console.log('Paystack init response:', data);
         
-        if (data.status === 'success') {
+        if (data.status === 'success' && data.reference) {
+            // Convert amount to pesewas (kobo) for Paystack
+            const amountInPesewas = Math.round(amount * 100);
+            
+            // Close modal
+            closePaymentModal();
+            
+            // Initialize Paystack popup
+            try {
+                const handler = PaystackPop.setup({
+                    key: window.PAYSTACK_PUBLIC_KEY,
+                    email: customerEmail,
+                    amount: amountInPesewas,
+                    ref: data.reference,
+                    currency: 'GHS',
+                    callback: function(response) {
+                        // Payment successful
+                        console.log('Payment successful:', response);
+                        
+                        // Verify payment on backend
+                        verifyPaymentAfterInline(response.reference, amount);
+                    },
+                    onClose: function() {
+                        // User closed popup
+                        console.log('Payment popup closed');
+                        if (typeof Toast !== 'undefined') {
+                            Toast.info('Payment cancelled');
+                        }
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = originalText;
+                    }
+                });
+                
+                // Open Paystack popup
+                handler.openIframe();
+                
+            } catch (error) {
+                console.error('Error initializing Paystack popup:', error);
+                // Fallback to Standard method
+                console.log('Falling back to Standard (redirect) method');
+                processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
+            }
+        } else {
+            const errorMsg = data.message || 'Failed to initialize payment';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Fallback to Standard method
+        console.log('Falling back to Standard (redirect) method');
+        processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
+    });
+}
+
+/**
+ * Process checkout using Paystack Standard (redirect) method
+ */
+function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText) {
+    console.log('Using Paystack Standard (redirect) method');
+    
+    // Initialize Paystack transaction
+    const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_init_transaction.php';
+    
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Redirecting to Paystack...';
+    
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            amount: amount,
+            email: customerEmail
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Paystack init response:', data);
+        
+        if (data.status === 'success' && data.authorization_url) {
             // Store data for verification after payment
             window.paymentReference = data.reference;
             window.cartItems = window.cartItems || null;
@@ -261,6 +375,61 @@ function processCheckout() {
         }
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = originalText;
+    });
+}
+
+/**
+ * Verify payment after Inline popup payment
+ */
+function verifyPaymentAfterInline(reference, amount) {
+    const verifyUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_verify_payment.php';
+    
+    fetch(verifyUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            reference: reference,
+            total_amount: amount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Payment verification response:', data);
+        
+        if (data.status === 'success' && data.verified) {
+            // Redirect to success page
+            const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
+                             '/view/payment/payment_success.php?reference=' + 
+                             encodeURIComponent(reference) + 
+                             '&invoice=' + encodeURIComponent(data.invoice_no || '');
+            
+            window.location.href = successUrl;
+        } else {
+            // Payment verification failed
+            const errorMsg = data.message || 'Payment verification failed';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
+            
+            // Redirect to checkout with error
+            setTimeout(() => {
+                window.location.href = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
+                                     '/view/payment/checkout.php?error=verification_failed';
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Verification error:', error);
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Payment verification error. Please contact support.');
+        } else {
+            alert('Payment verification error. Please contact support.');
+        }
     });
 }
 
