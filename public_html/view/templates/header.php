@@ -33,6 +33,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Spectral:wght@300;400&display=swap" rel="stylesheet">
     
+    <!-- Paystack JavaScript Library - Load early for Inline payment method -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    
     <!-- Meta Tags -->
     <meta name="description" content="<?php echo isset($page_description) ? escape_html($page_description) : 'KenteKart - Modern e-commerce platform with secure authentication'; ?>">
     <meta name="keywords" content="<?php echo isset($page_keywords) ? escape_html($page_keywords) : 'kentekart, ecommerce, shopping, online store, authentication'; ?>">
