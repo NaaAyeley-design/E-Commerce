@@ -60,23 +60,53 @@ try {
     $customer_id = get_user_id();
     $reference = 'KENTE-' . $customer_id . '-' . time();
     
-    error_log("Initializing Paystack transaction - Customer: $customer_id, Amount: $amount GHS, Email: $customer_email");
+    error_log("=== PAYSTACK INIT TRANSACTION ===");
+    error_log("Customer ID: $customer_id");
+    error_log("Amount: $amount GHS");
+    error_log("Email: $customer_email");
+    error_log("Reference: $reference");
+    
+    // Check if Paystack secret key is configured
+    if (!defined('PAYSTACK_SECRET_KEY') || 
+        PAYSTACK_SECRET_KEY === 'sk_test_YOUR_SECRET_KEY_HERE' || 
+        empty(PAYSTACK_SECRET_KEY)) {
+        error_log("ERROR: Paystack secret key not configured!");
+        ob_clean();
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Payment gateway not configured. Please contact support.',
+            'debug' => 'Paystack secret key is missing or not set'
+        ]);
+        ob_end_flush();
+        exit;
+    }
     
     // Initialize Paystack transaction
+    error_log("Calling paystack_initialize_transaction()...");
     $paystack_response = paystack_initialize_transaction($amount, $customer_email, $reference);
     
+    error_log("Paystack API Response: " . json_encode($paystack_response));
+    
     if (!$paystack_response) {
-        throw new Exception("No response from Paystack API");
+        error_log("ERROR: No response from Paystack API");
+        throw new Exception("No response from Paystack API. Please check your API keys and network connection.");
     }
     
     // Check Paystack response structure
     if (isset($paystack_response['status']) && $paystack_response['status'] === true) {
+        // Verify we have the authorization URL
+        if (!isset($paystack_response['data']['authorization_url'])) {
+            error_log("ERROR: Authorization URL missing from Paystack response");
+            throw new Exception("Payment gateway response incomplete. Missing authorization URL.");
+        }
+        
         // Store transaction reference in session for verification later
         $_SESSION['paystack_ref'] = $reference;
         $_SESSION['paystack_amount'] = $amount;
         $_SESSION['paystack_timestamp'] = time();
         
-        error_log("Paystack transaction initialized successfully - Reference: $reference");
+        error_log("SUCCESS: Paystack transaction initialized - Reference: $reference");
+        error_log("Authorization URL: " . $paystack_response['data']['authorization_url']);
         
         ob_clean();
         echo json_encode([
@@ -89,19 +119,42 @@ try {
         ob_end_flush();
         exit;
     } else {
-        error_log("Paystack API error: " . json_encode($paystack_response));
+        error_log("ERROR: Paystack API returned failure");
+        error_log("Response: " . json_encode($paystack_response));
         
         $error_message = $paystack_response['message'] ?? 'Payment gateway error';
+        
+        // Provide more helpful error messages
+        if (strpos($error_message, 'Invalid') !== false || strpos($error_message, 'key') !== false) {
+            $error_message = 'Payment gateway configuration error. Please contact support.';
+        }
+        
         throw new Exception($error_message);
     }
     
 } catch (Exception $e) {
-    error_log("Error initializing Paystack transaction: " . $e->getMessage());
+    error_log("EXCEPTION: Error initializing Paystack transaction");
+    error_log("Exception message: " . $e->getMessage());
+    error_log("Exception trace: " . $e->getTraceAsString());
     
     ob_clean();
     echo json_encode([
         'status' => 'error',
-        'message' => 'Failed to initialize payment: ' . $e->getMessage()
+        'message' => 'Failed to initialize payment: ' . $e->getMessage(),
+        'debug' => (APP_ENV === 'development' ? $e->getMessage() : null)
+    ]);
+    ob_end_flush();
+    exit;
+} catch (Throwable $e) {
+    error_log("THROWABLE: Error initializing Paystack transaction");
+    error_log("Error message: " . $e->getMessage());
+    error_log("Error trace: " . $e->getTraceAsString());
+    
+    ob_clean();
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'An unexpected error occurred. Please try again.',
+        'debug' => (APP_ENV === 'development' ? $e->getMessage() : null)
     ]);
     ob_end_flush();
     exit;

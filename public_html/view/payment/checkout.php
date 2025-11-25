@@ -174,6 +174,12 @@ window.cartItems = <?php echo json_encode($cart_items); ?>;
 // Store Paystack public key
 window.PAYSTACK_PUBLIC_KEY = <?php echo json_encode($paystack_public_key); ?>;
 
+// Ensure BASE_URL is available for JavaScript
+if (typeof BASE_URL === 'undefined') {
+    window.BASE_URL = <?php echo json_encode(BASE_URL); ?>;
+    console.log('BASE_URL set to:', window.BASE_URL);
+}
+
 // Function to check if PaystackPop is loaded
 function checkPaystackLoaded() {
     if (typeof PaystackPop !== 'undefined') {

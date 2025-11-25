@@ -227,17 +227,25 @@ function processCheckout() {
  * Process checkout using Paystack Inline (popup) method
  */
 function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) {
-    console.log('Using Paystack Inline (popup) method');
+    console.log('=== PAYSTACK INLINE INITIALIZATION ===');
+    console.log('Amount:', amount);
+    console.log('Email:', customerEmail);
+    console.log('Public Key:', window.PAYSTACK_PUBLIC_KEY ? window.PAYSTACK_PUBLIC_KEY.substring(0, 20) + '...' : 'NOT SET');
     
     // Initialize Paystack transaction to get reference
     const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_init_transaction.php';
+    console.log('Initialization URL:', actionUrl);
     
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Preparing Payment...';
+    
+    console.log('Sending request to:', actionUrl);
+    console.log('Request payload:', { amount: amount, email: customerEmail });
     
     fetch(actionUrl, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         credentials: 'same-origin',
         body: JSON.stringify({
@@ -245,19 +253,50 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
             email: customerEmail
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response received. Status:', response.status);
+        console.log('Response OK:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('Non-JSON response received:', text);
+                throw new Error('Server returned non-JSON response: ' + text.substring(0, 200));
+            });
+        }
+        
+        return response.json();
+    })
     .then(data => {
-        console.log('Paystack init response:', data);
+        console.log('=== PAYSTACK INIT RESPONSE ===');
+        console.log('Full response:', JSON.stringify(data, null, 2));
         
         if (data.status === 'success' && data.reference) {
+            console.log('✓ Transaction initialized successfully');
+            console.log('Reference:', data.reference);
+            console.log('Authorization URL:', data.authorization_url);
+            
             // Convert amount to pesewas (kobo) for Paystack
             const amountInPesewas = Math.round(amount * 100);
+            console.log('Amount in pesewas:', amountInPesewas);
             
             // Close modal
             closePaymentModal();
             
             // Initialize Paystack popup
+            console.log('Initializing Paystack popup...');
+            console.log('Using public key:', window.PAYSTACK_PUBLIC_KEY ? window.PAYSTACK_PUBLIC_KEY.substring(0, 20) + '...' : 'NOT SET');
+            
             try {
+                if (typeof PaystackPop === 'undefined') {
+                    throw new Error('PaystackPop is not defined. Script may not have loaded.');
+                }
+                
                 const handler = PaystackPop.setup({
                     key: window.PAYSTACK_PUBLIC_KEY,
                     email: customerEmail,
@@ -266,14 +305,15 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
                     currency: 'GHS',
                     callback: function(response) {
                         // Payment successful
-                        console.log('Payment successful:', response);
+                        console.log('=== PAYMENT SUCCESSFUL ===');
+                        console.log('Payment response:', response);
                         
                         // Verify payment on backend
                         verifyPaymentAfterInline(response.reference, amount);
                     },
                     onClose: function() {
                         // User closed popup
-                        console.log('Payment popup closed');
+                        console.log('Payment popup closed by user');
                         if (typeof Toast !== 'undefined') {
                             Toast.info('Payment cancelled');
                         }
@@ -282,28 +322,48 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
                     }
                 });
                 
+                console.log('Paystack handler created:', handler);
+                console.log('Opening Paystack popup...');
+                
                 // Open Paystack popup
                 handler.openIframe();
                 
+                console.log('✓ Paystack popup should be opening now');
+                
             } catch (error) {
-                console.error('Error initializing Paystack popup:', error);
+                console.error('=== ERROR INITIALIZING PAYSTACK POPUP ===');
+                console.error('Error type:', error.constructor.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                console.error('PaystackPop available:', typeof PaystackPop !== 'undefined');
+                console.error('Public key available:', !!window.PAYSTACK_PUBLIC_KEY);
+                
                 // Fallback to Standard method
                 console.log('Falling back to Standard (redirect) method');
                 processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
             }
         } else {
+            console.error('=== PAYMENT INITIALIZATION FAILED ===');
+            console.error('Response status:', data.status);
+            console.error('Response message:', data.message);
+            console.error('Full response:', data);
+            
             const errorMsg = data.message || 'Failed to initialize payment';
             if (typeof Toast !== 'undefined') {
                 Toast.error(errorMsg);
             } else {
-                alert(errorMsg);
+                alert('Payment Error: ' + errorMsg);
             }
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = originalText;
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('=== FETCH ERROR ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
         // Fallback to Standard method
         console.log('Falling back to Standard (redirect) method');
         processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
@@ -314,17 +374,24 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
  * Process checkout using Paystack Standard (redirect) method
  */
 function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText) {
-    console.log('Using Paystack Standard (redirect) method');
+    console.log('=== PAYSTACK STANDARD (REDIRECT) INITIALIZATION ===');
+    console.log('Amount:', amount);
+    console.log('Email:', customerEmail);
     
     // Initialize Paystack transaction
     const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_init_transaction.php';
+    console.log('Initialization URL:', actionUrl);
     
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Redirecting to Paystack...';
+    
+    console.log('Sending request to:', actionUrl);
+    console.log('Request payload:', { amount: amount, email: customerEmail });
     
     fetch(actionUrl, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         credentials: 'same-origin',
         body: JSON.stringify({
@@ -332,9 +399,28 @@ function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText
             email: customerEmail
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response received. Status:', response.status);
+        console.log('Response OK:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('Non-JSON response received:', text);
+                throw new Error('Server returned non-JSON response: ' + text.substring(0, 200));
+            });
+        }
+        
+        return response.json();
+    })
     .then(data => {
-        console.log('Paystack init response:', data);
+        console.log('=== PAYSTACK INIT RESPONSE ===');
+        console.log('Full response:', JSON.stringify(data, null, 2));
         
         if (data.status === 'success' && data.authorization_url) {
             // Store data for verification after payment
