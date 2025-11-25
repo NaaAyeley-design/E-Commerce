@@ -196,6 +196,88 @@ class order_class extends db_class {
     }
     
     /**
+     * Record payment for an order
+     * Supports Paystack payment fields
+     */
+    public function record_payment($amount, $customer_id, $order_id, $currency, $payment_date, $payment_method = 'direct', $transaction_ref = null, $authorization_code = null, $payment_channel = null) {
+        try {
+            // Validate inputs
+            if (empty($amount) || !is_numeric($amount) || $amount <= 0) {
+                error_log("Invalid amount: " . $amount);
+                return false;
+            }
+            
+            if (empty($customer_id) || !is_numeric($customer_id)) {
+                error_log("Invalid customer_id: " . $customer_id);
+                return false;
+            }
+            
+            if (empty($order_id) || !is_numeric($order_id)) {
+                error_log("Invalid order_id: " . $order_id);
+                return false;
+            }
+            
+            // Build SQL with optional Paystack fields
+            $columns = ["amt", "customer_id", "order_id", "currency", "payment_date"];
+            $placeholders = ["?", "?", "?", "?", "?"];
+            $params = [(float)$amount, (int)$customer_id, (int)$order_id, $currency, $payment_date];
+            
+            // Add optional fields if provided
+            if ($payment_method !== null) {
+                $columns[] = "payment_method";
+                $placeholders[] = "?";
+                $params[] = $payment_method;
+            }
+            
+            if ($transaction_ref !== null) {
+                $columns[] = "transaction_ref";
+                $placeholders[] = "?";
+                $params[] = $transaction_ref;
+            }
+            
+            if ($authorization_code !== null) {
+                $columns[] = "authorization_code";
+                $placeholders[] = "?";
+                $params[] = $authorization_code;
+            }
+            
+            if ($payment_channel !== null) {
+                $columns[] = "payment_channel";
+                $placeholders[] = "?";
+                $params[] = $payment_channel;
+            }
+            
+            $sql = "INSERT INTO payment (" . implode(", ", $columns) . ") 
+                    VALUES (" . implode(", ", $placeholders) . ")";
+            
+            error_log("Recording payment: amount=$amount, order_id=$order_id, method=$payment_method, ref=$transaction_ref");
+            
+            $stmt = $this->execute($sql, $params);
+            
+            if ($stmt === false) {
+                error_log("Execute returned false for payment recording");
+                return false;
+            }
+            
+            $payment_id = $this->lastInsertId();
+            if ($payment_id && $payment_id > 0) {
+                error_log("Payment recorded successfully with ID: " . $payment_id);
+                return (int)$payment_id;
+            }
+            
+            error_log("Failed to record payment - lastInsertId: " . var_export($payment_id, true));
+            return false;
+            
+        } catch (PDOException $e) {
+            error_log("Record payment PDO error: " . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log("Record payment error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Get order by ID
      */
     public function get_order_by_id($order_id) {

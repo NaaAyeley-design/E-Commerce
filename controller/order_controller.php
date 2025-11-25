@@ -395,6 +395,76 @@ function get_all_orders_ctr($page = 1, $limit = 20, $status = null) {
 }
 
 /**
+ * Record payment for an order (supports Paystack)
+ */
+function record_payment_ctr($amount, $customer_id, $order_id, $currency, $payment_date, $payment_method = 'direct', $transaction_ref = null, $authorization_code = null, $payment_channel = null) {
+    try {
+        $order = new order_class();
+        $payment_id = $order->record_payment($amount, $customer_id, $order_id, $currency, $payment_date, $payment_method, $transaction_ref, $authorization_code, $payment_channel);
+        
+        if ($payment_id) {
+            return $payment_id;
+        }
+        
+        return false;
+    } catch (Exception $e) {
+        error_log("Record payment error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Add order details (products) to an order
+ */
+function add_order_details_ctr($order_id, $product_id, $quantity) {
+    try {
+        // Get product price
+        $product = new product_class();
+        $product_data = $product->get_product_by_id($product_id);
+        
+        if (!$product_data) {
+            error_log("Product not found: $product_id");
+            return false;
+        }
+        
+        $price = $product_data['product_price'];
+        
+        $order = new order_class();
+        return $order->add_order_item($order_id, $product_id, $quantity, $price);
+    } catch (Exception $e) {
+        error_log("Add order details error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Create order with invoice (for Paystack integration)
+ */
+function create_order_with_invoice_ctr($customer_id, $invoice_no, $order_date, $order_status) {
+    try {
+        // This function matches the payment_sample structure
+        // Note: This is a simplified version - you may need to adapt based on your schema
+        $order = new order_class();
+        
+        // For now, we'll use the existing create_order method
+        // You may need to modify this based on your actual orders table structure
+        $shipping_address = "N/A"; // Will be updated from customer data
+        $order_id = $order->create_order($customer_id, 0, $shipping_address, $order_status);
+        
+        if ($order_id) {
+            // Update invoice_no if your schema supports it
+            // This is a placeholder - adjust based on your actual schema
+            return $order_id;
+        }
+        
+        return false;
+    } catch (Exception $e) {
+        error_log("Create order with invoice error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Process payment (placeholder for future implementation)
  */
 function process_payment_ctr($order_id, $payment_method, $payment_data) {

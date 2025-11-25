@@ -90,10 +90,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeProductManagement() {
-    // Product form submission
+    // Product form submission - use specific form ID to avoid conflicts
     const productForm = document.getElementById('product-form');
     if (productForm) {
-        productForm.addEventListener('submit', handleProductSubmit);
+        productForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleProductSubmit(e);
+        }, true); // Use capture phase to ensure it runs first
     }
     
     // Cancel button
@@ -224,10 +228,25 @@ function initializeProductManagement() {
         console.error('Brand dropdown element not found!');
     }
     
-    // Edit product buttons
+    // Edit product buttons - use event delegation to handle dynamically added buttons
+    document.addEventListener('click', function(e) {
+        // Check if the clicked element is an edit product button
+        const editBtn = e.target.closest('.edit-product-btn');
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleEditProduct(e);
+        }
+    });
+    
+    // Also attach directly to existing buttons
     const editButtons = document.querySelectorAll('.edit-product-btn');
     editButtons.forEach(button => {
-        button.addEventListener('click', handleEditProduct);
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleEditProduct(e);
+        });
     });
     
     // Delete product buttons
@@ -390,8 +409,15 @@ function clearFieldError(e) {
 
 function handleProductSubmit(e) {
     e.preventDefault();
+    e.stopPropagation();
     
+    // Ensure we're handling the product form, not any other form
     const form = e.target;
+    if (!form || form.id !== 'product-form') {
+        console.error('Form submission handler called for wrong form:', form);
+        return;
+    }
+    
     const formData = new FormData(form);
     
     // Debug: Check if file is in FormData
@@ -401,13 +427,42 @@ function handleProductSubmit(e) {
         console.log('First file:', imageFiles[0].name, imageFiles[0].size, 'bytes');
     }
     
-    // Verify file is in FormData
-    if (imageFiles.length > 0) {
+    const isEdit = currentProductId !== null;
+    
+    // Handle image uploads
+    if (imageFiles && imageFiles.length > 0) {
         // Ensure file is in FormData (sometimes FormData from form doesn't include files properly)
         if (!formData.has('product_image')) {
             formData.append('product_image', imageFiles[0]);
             console.log('Added product_image to FormData');
         }
+        
+        // For editing existing products, upload image separately first
+        if (isEdit) {
+            // Editing existing product - upload image first
+            uploadProductImages(imageFiles, isEdit)
+                .then(imagePaths => {
+                    if (imagePaths && imagePaths.length > 0) {
+                        // Create new FormData with the uploaded image path
+                        const updateFormData = new FormData(form);
+                        updateFormData.set('image_path', imagePaths[0]);
+                        updateFormData.append('ajax', '1');
+                        
+                        // Remove the file from FormData since we already uploaded it
+                        updateFormData.delete('product_image');
+                        
+                        submitProductForm(updateFormData, isEdit);
+                    } else {
+                        showModal('Error', 'Failed to upload images. Please try again.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Image upload error:', error);
+                    showModal('Error', 'Failed to upload images: ' + (error.message || 'Unknown error'), 'error');
+                });
+            return; // Exit early, will continue after image upload
+        }
+        // For new products, image will be included in the form submission
     }
     
     // Validate form data
@@ -420,31 +475,9 @@ function handleProductSubmit(e) {
     // Add AJAX flag
     formData.append('ajax', '1');
     
-    const isEdit = currentProductId !== null;
-    
-    // For new products, upload image directly with the form
-    // For editing, if there's a new image, upload it first then update product
-    if (imageFiles && imageFiles.length > 0 && isEdit) {
-        // Editing existing product - upload image first
-        uploadProductImages(imageFiles, isEdit)
-            .then(imagePaths => {
-                if (imagePaths && imagePaths.length > 0) {
-                    // Set the first image as primary
-                    formData.set('image_path', imagePaths[0]);
-                    submitProductForm(formData, isEdit);
-                } else {
-                    showModal('Error', 'Failed to upload images. Please try again.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Image upload error:', error);
-                showModal('Error', 'Failed to upload images. Please try again.', 'error');
-            });
-    } else {
-        // New product or no new image - submit form directly (image will be handled server-side)
-        console.log('Submitting form with FormData. Has product_image:', formData.has('product_image'));
-        submitProductForm(formData, isEdit);
-    }
+    // New product or no new image - submit form directly (image will be handled server-side)
+    console.log('Submitting form with FormData. Has product_image:', formData.has('product_image'));
+    submitProductForm(formData, isEdit);
 }
 
 function uploadProductImages(imageFiles, isEdit) {
@@ -494,9 +527,13 @@ function uploadProductImages(imageFiles, isEdit) {
             uploadActionUrl = '../../actions/upload_product_image_action.php';
         }
         
+        console.log('Uploading images. FormData entries:', Array.from(formData.entries()).map(([key, val]) => [key, val instanceof File ? val.name : val]));
+        
         fetch(uploadActionUrl, {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+            credentials: 'same-origin'
         })
         .then(response => {
             // Try to parse JSON even if status is not OK to get error message
@@ -587,9 +624,13 @@ function uploadProductImage(imageFile, isEdit) {
             uploadActionUrl = '../../actions/upload_product_image_action.php';
         }
         
+        console.log('Uploading single image. FormData entries:', Array.from(formData.entries()).map(([key, val]) => [key, val instanceof File ? val.name : val]));
+        
         fetch(uploadActionUrl, {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+            credentials: 'same-origin'
         })
         .then(response => {
             // Try to parse JSON even if status is not OK to get error message
@@ -654,11 +695,14 @@ function submitProductForm(formData, isEdit) {
     }
     
     console.log('Submitting to:', actionUrl);
+    console.log('FormData entries:', Array.from(formData.entries()).map(([key, val]) => [key, val instanceof File ? val.name : val]));
     showLoading();
     
     fetch(actionUrl, {
         method: 'POST',
-        body: formData
+        body: formData,
+        // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+        credentials: 'same-origin'
     })
     .then(response => {
         // Try to parse JSON even if status is not OK
@@ -692,7 +736,25 @@ function submitProductForm(formData, isEdit) {
 }
 
 function handleEditProduct(e) {
-    const productId = e.target.getAttribute('data-product-id');
+    // Prevent any default behavior and stop propagation
+    if (e && e.preventDefault) {
+        e.preventDefault();
+    }
+    if (e && e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    // Get the button element (could be e.target or e.currentTarget)
+    const button = e.target.closest('.edit-product-btn') || e.target;
+    const productId = button.getAttribute('data-product-id');
+    
+    if (!productId) {
+        console.error('No product ID found on edit button');
+        showModal('Error', 'Product ID not found. Please try again.', 'error');
+        return;
+    }
+    
+    console.log('Edit product clicked for product ID:', productId);
     currentProductId = productId;
     
     // Fetch complete product data from server
@@ -712,7 +774,7 @@ function handleEditProduct(e) {
         })
         .catch(error => {
             console.error('Error fetching product data:', error);
-            showModal('Error', 'Failed to load product data', 'error');
+            showModal('Error', 'Failed to load product data: ' + (error.message || 'Unknown error'), 'error');
         });
 }
 

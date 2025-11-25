@@ -239,11 +239,11 @@ include __DIR__ . '/../templates/header.php';
                                 <i class="fas fa-arrow-left"></i> Continue Shopping
                             </a>
                             <?php if ($cart_count > 0): ?>
-                                <button class="btn btn-primary btn-block" id="checkout-btn">
-                                    <i class="fas fa-lock"></i> Proceed to Checkout
-                                </button>
+                                <a href="<?php echo url('view/payment/checkout.php'); ?>" class="btn btn-primary btn-block" style="text-align: center; text-decoration: none; display: block;">
+                                    <i class="fas fa-lock"></i> Proceed to Secure Checkout
+                                </a>
                             <?php else: ?>
-                                <button class="btn btn-primary btn-block" id="checkout-btn" disabled>
+                                <button class="btn btn-primary btn-block" disabled>
                                     <i class="fas fa-lock"></i> Proceed to Checkout
                                 </button>
                             <?php endif; ?>
