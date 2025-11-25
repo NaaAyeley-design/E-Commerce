@@ -124,67 +124,6 @@ body::before {
 }
 
 /* ================================
-   FLOATING BUBBLES (Hero Section Only)
-   ================================ */
-.hero-section .bubble-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  overflow: hidden;
-}
-
-.hero-section .bubble {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: bubble-float-up linear infinite;
-  z-index: 1;
-}
-
-/* Generate 8 bubbles with varying properties (reduced for hero section) */
-.hero-section .bubble:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-duration: 15s; animation-delay: 0s; }
-.hero-section .bubble:nth-child(2) { width: 100px; height: 100px; left: 25%; animation-duration: 18s; animation-delay: 2s; }
-.hero-section .bubble:nth-child(3) { width: 70px; height: 70px; left: 40%; animation-duration: 12s; animation-delay: 4s; }
-.hero-section .bubble:nth-child(4) { width: 90px; height: 90px; left: 55%; animation-duration: 16s; animation-delay: 1s; }
-.hero-section .bubble:nth-child(5) { width: 85px; height: 85px; left: 70%; animation-duration: 14s; animation-delay: 3s; }
-.hero-section .bubble:nth-child(6) { width: 75px; height: 75px; left: 15%; animation-duration: 13s; animation-delay: 5s; }
-.hero-section .bubble:nth-child(7) { width: 95px; height: 95px; left: 60%; animation-duration: 17s; animation-delay: 2s; }
-.hero-section .bubble:nth-child(8) { width: 65px; height: 65px; left: 80%; animation-duration: 15s; animation-delay: 4s; }
-
-/* Bubble styling */
-.hero-section .bubble {
-  background: radial-gradient(circle at 30% 30%, 
-    rgba(255, 248, 231, 0.25), 
-    rgba(255, 154, 86, 0.15), 
-    rgba(204, 139, 60, 0.1));
-  border: 2px solid rgba(255, 154, 86, 0.12);
-  box-shadow: 
-    inset 0 0 20px rgba(255, 255, 255, 0.3),
-    0 0 25px rgba(255, 154, 86, 0.15);
-}
-
-@keyframes bubble-float-up {
-  0% {
-    transform: translateY(100%) scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.25;
-  }
-  90% {
-    opacity: 0.25;
-  }
-  100% {
-    transform: translateY(-20%) scale(1) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-/* ================================
    FLOATING PARTICLES (Hero Section Only)
    ================================ */
 .hero-section .particle-container {

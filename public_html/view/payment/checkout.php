@@ -38,7 +38,17 @@ if (empty($cart_items) || !is_array($cart_items) || count($cart_items) === 0) {
 require_once __DIR__ . '/../../../class/user_class.php';
 $user = new user_class();
 $customer_data = $user->get_customer_by_id($customer_id);
-$customer_email = $customer_data['customer_email'] ?? '';
+$customer_email = $customer_data['customer_email'] ?? $_SESSION['customer_email'] ?? '';
+
+// If still no email, try to get from session
+if (empty($customer_email) && isset($_SESSION['customer_email'])) {
+    $customer_email = $_SESSION['customer_email'];
+}
+
+// Final fallback - prompt user if email is still missing
+if (empty($customer_email)) {
+    error_log("Warning: Customer email not found for user ID: $customer_id");
+}
 
 // Set page variables
 $page_title = 'Checkout';

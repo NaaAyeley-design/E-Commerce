@@ -86,9 +86,10 @@ body.admin-dashboard-page {
 }
 
 .admin-header p {
-    color: rgba(255, 248, 231, 0.9);
+    color: var(--text-dark);
     font-size: 1.2rem;
     margin-bottom: 20px;
+    font-weight: 300;
 }
 
 .admin-badge {
@@ -411,7 +412,6 @@ body.admin-dashboard-page {
     border-color: var(--deep-brown);
     transform: translateX(5px);
     box-shadow: var(--shadow-card);
-}
 }
 
 .action-card:nth-child(3) .action-button:hover {

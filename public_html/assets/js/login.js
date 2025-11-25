@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
 
+    // Mark form as handled to prevent global handler from interfering
+    loginForm.setAttribute('data-handled', 'true');
+    
     // Form submission handler
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();

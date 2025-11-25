@@ -67,7 +67,7 @@ body.products-page {
     font-family: 'Spectral', serif;
     font-size: 1rem;
     font-weight: 300;
-    color: var(--text-light);
+    color: var(--text-dark);
     margin-bottom: 10px;
 }
 
@@ -80,7 +80,7 @@ body.products-page {
     font-family: 'Spectral', serif;
     font-size: 0.875rem;
     font-weight: 300;
-    color: var(--text-light);
+    color: var(--text-dark);
     font-style: italic;
     margin-top: 10px;
 }
@@ -287,7 +287,7 @@ select.form-input,
 .form-select {
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23CC8B3C' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C67D5C' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 15px center;
     padding-right: 40px;
@@ -554,21 +554,22 @@ input[type="file"].form-input:hover {
    ================================ */
 
 .filters-section {
-    background: rgba(255, 248, 231, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(204, 139, 60, 0.3);
-    border-radius: 20px;
-    padding: 30px;
+    background: var(--white);
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    padding: 40px;
     margin-bottom: 40px;
-    box-shadow: 0 10px 40px rgba(183, 65, 14, 0.2);
+    box-shadow: var(--shadow-subtle);
 }
 
 .filters-section h3 {
+    font-family: var(--font-heading);
     font-size: 1.5rem;
-    color: #FFF8E7;
+    font-weight: 400;
+    color: var(--text-dark);
     margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 2px solid rgba(255, 154, 86, 0.3);
+    border-bottom: var(--border-medium);
 }
 
 .filter-form {
@@ -585,20 +586,42 @@ input[type="file"].form-input:hover {
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
     min-width: 200px;
 }
 
 .filter-group label {
-    font-weight: 600;
-    color: rgba(255, 248, 231, 0.9);
+    font-family: var(--font-body);
+    font-weight: 400;
+    color: var(--text-dark);
     font-size: 0.95rem;
 }
 
 .filter-group .form-select,
 .filter-group .form-input {
     width: 100%;
+    padding: 12px 18px;
+    border: var(--border-medium);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 300;
+    background: var(--white);
+    color: var(--text-dark);
+    transition: all var(--transition-base);
+}
+
+.filter-group .form-select:focus,
+.filter-group .form-input:focus {
+    outline: none;
+    border-color: var(--terracotta);
+    box-shadow: 0 0 0 3px rgba(198, 125, 92, 0.1);
+}
+
+.filter-group .form-select::placeholder,
+.filter-group .form-input::placeholder {
+    color: var(--text-light);
 }
 
 /* ================================

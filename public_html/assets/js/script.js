@@ -28,8 +28,17 @@ const ECommerceApp = {
         });
 
         // Handle form submissions
+        // Only handle forms that don't already have their own submit handler
         document.addEventListener('submit', (e) => {
             if (e.target.matches('.ajax-form')) {
+                // Check if form already has a custom handler (like login.js or register.js)
+                // If the form has a data-handled attribute or a specific ID that we know has its own handler, skip
+                if (e.target.hasAttribute('data-handled') || 
+                    e.target.id === 'loginForm' || 
+                    e.target.id === 'registerForm') {
+                    // Let the form's own handler manage it
+                    return;
+                }
                 e.preventDefault();
                 this.handleAjaxForm(e.target);
             }
@@ -313,9 +322,17 @@ const ECommerceApp = {
         // Submit form via AJAX
         fetch(form.action, {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin'
         })
-        .then(response => response.text())
+        .then(response => {
+            // Check content type to determine if it's JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json().then(json => JSON.stringify(json));
+            }
+            return response.text();
+        })
         .then(data => {
             this.handleFormResponse(data, form, submitBtn, responseDiv, loadingOverlay);
         })
@@ -335,10 +352,36 @@ const ECommerceApp = {
             loadingOverlay.classList.remove('show');
         }
 
-        if (data === 'success') {
+        // Try to parse as JSON first
+        let parsedData;
+        try {
+            parsedData = JSON.parse(data);
+            // If it's valid JSON, extract the message
+            if (parsedData && typeof parsedData === 'object') {
+                const message = parsedData.message || (parsedData.success ? 'Operation successful!' : 'An error occurred.');
+                const type = parsedData.success ? 'success' : 'error';
+                this.showResponse(message, type, responseDiv);
+                
+                // Handle redirect if provided
+                if (parsedData.success && parsedData.redirect) {
+                    setTimeout(() => {
+                        window.location.href = parsedData.redirect;
+                    }, 1500);
+                }
+                return;
+            }
+        } catch (e) {
+            // Not JSON, treat as plain text
+        }
+
+        // Handle plain text responses
+        if (data === 'success' || data.trim() === 'success') {
             this.handleSuccessResponse(form, responseDiv);
         } else {
-            this.showResponse(data, 'error', responseDiv);
+            // Only show if it's not already a JSON string (which would be handled above)
+            if (!data.includes('"success"') && !data.includes('"message"')) {
+                this.showResponse(data, 'error', responseDiv);
+            }
         }
     },
 

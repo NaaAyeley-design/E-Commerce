@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const strengthBar = passwordStrength.querySelector('.strength-bar');
     const strengthText = passwordStrength.querySelector('.strength-text');
     
+    // Mark form as handled to prevent global handler from interfering
+    registerForm.setAttribute('data-handled', 'true');
+    
     // Form submission handler
     registerForm.addEventListener('submit', function(e) {
         e.preventDefault();
