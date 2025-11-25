@@ -53,42 +53,123 @@ if (!$reference) {
 
 try {
     error_log("=== PAYSTACK VERIFICATION START ===");
-    error_log("Verifying Paystack transaction - Reference: $reference");
+    error_log("Reference received: " . $reference);
     error_log("Customer ID: " . get_user_id());
+    error_log("Total amount expected: " . $total_amount . " GHS");
+    
+    // Check secret key configuration
+    $secret_key_configured = defined('PAYSTACK_SECRET_KEY') && 
+                            PAYSTACK_SECRET_KEY !== 'sk_test_YOUR_SECRET_KEY_HERE' && 
+                            PAYSTACK_SECRET_KEY !== '' &&
+                            !empty(PAYSTACK_SECRET_KEY);
+    
+    error_log("Secret key configured: " . ($secret_key_configured ? 'YES' : 'NO'));
+    if ($secret_key_configured) {
+        error_log("Secret key prefix: " . substr(PAYSTACK_SECRET_KEY, 0, 7) . "...");
+    }
+    
+    // Verify API endpoint
+    $verify_url = PAYSTACK_VERIFY_ENDPOINT . $reference;
+    error_log("API URL: " . $verify_url);
     
     // Verify transaction with Paystack
+    error_log("Calling paystack_verify_transaction()...");
     $verification_response = paystack_verify_transaction($reference);
     
     if (!$verification_response) {
         error_log("ERROR: No response from Paystack verification API");
-        throw new Exception("No response from Paystack verification API");
+        error_log("This could mean:");
+        error_log("  1. cURL is not available");
+        error_log("  2. Network connection failed");
+        error_log("  3. Paystack API is down");
+        error_log("  4. Secret key is invalid");
+        throw new Exception("No response from Paystack verification API. Please check server logs.");
     }
     
-    error_log("Paystack verification response status: " . (isset($verification_response['status']) ? ($verification_response['status'] ? 'true' : 'false') : 'not set'));
-    error_log("Paystack verification response message: " . ($verification_response['message'] ?? 'N/A'));
+    error_log("=== PAYSTACK API RESPONSE RECEIVED ===");
+    error_log("Response type: " . gettype($verification_response));
+    error_log("Response is array: " . (is_array($verification_response) ? 'YES' : 'NO'));
     
-    // Log full response in development mode
-    if (defined('APP_ENV') && APP_ENV === 'development') {
+    if (is_array($verification_response)) {
+        error_log("Response keys: " . implode(', ', array_keys($verification_response)));
+        error_log("Response status: " . (isset($verification_response['status']) ? var_export($verification_response['status'], true) : 'NOT SET'));
+        error_log("Response message: " . ($verification_response['message'] ?? 'N/A'));
+        
+        // Log full response (always log for debugging)
         error_log("Full Paystack verification response: " . json_encode($verification_response, JSON_PRETTY_PRINT));
+        
+        // Check if response has data
+        if (isset($verification_response['data'])) {
+            error_log("Response has 'data' key: YES");
+            if (is_array($verification_response['data'])) {
+                error_log("Data keys: " . implode(', ', array_keys($verification_response['data'])));
+                if (isset($verification_response['data']['status'])) {
+                    error_log("Transaction status in data: " . $verification_response['data']['status']);
+                }
+                if (isset($verification_response['data']['amount'])) {
+                    error_log("Transaction amount (pesewas): " . $verification_response['data']['amount']);
+                }
+            }
+        } else {
+            error_log("Response has 'data' key: NO");
+        }
+    } else {
+        error_log("ERROR: Response is not an array. Type: " . gettype($verification_response));
+        error_log("Response value: " . var_export($verification_response, true));
     }
     
     // Check if verification was successful
     // Paystack returns status: true when verification is successful
+    // Also check if response is an array (should always be)
+    if (!is_array($verification_response)) {
+        error_log("ERROR: Paystack response is not an array");
+        error_log("Response type: " . gettype($verification_response));
+        error_log("Response value: " . var_export($verification_response, true));
+        
+        ob_clean();
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid response from payment gateway. Please contact support.',
+            'verified' => false,
+            'reference' => $reference,
+            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? [
+                'response_type' => gettype($verification_response),
+                'response_value' => $verification_response
+            ] : null
+        ]);
+        ob_end_flush();
+        exit;
+    }
+    
+    // Check if status is set and equals true
+    $response_status = $verification_response['status'] ?? null;
+    error_log("Checking response status: " . var_export($response_status, true));
+    error_log("Status type: " . gettype($response_status));
+    error_log("Status === true: " . ($response_status === true ? 'YES' : 'NO'));
+    error_log("Status == true: " . ($response_status == true ? 'YES' : 'NO'));
+    
     if (!isset($verification_response['status']) || $verification_response['status'] !== true) {
         $error_msg = $verification_response['message'] ?? 'Payment verification failed';
         
         // Provide more specific error messages
         if (isset($verification_response['message'])) {
-            if (strpos(strtolower($verification_response['message']), 'not found') !== false || 
-                strpos(strtolower($verification_response['message']), 'invalid') !== false) {
+            $message_lower = strtolower($verification_response['message']);
+            if (strpos($message_lower, 'not found') !== false || 
+                strpos($message_lower, 'invalid') !== false ||
+                strpos($message_lower, 'reference') !== false) {
                 $error_msg = 'Transaction reference not found. The payment may not have been completed.';
-            } elseif (strpos(strtolower($verification_response['message']), 'key') !== false) {
+            } elseif (strpos($message_lower, 'key') !== false || 
+                      strpos($message_lower, 'authorization') !== false ||
+                      strpos($message_lower, 'unauthorized') !== false) {
                 $error_msg = 'Payment gateway configuration error. Please contact support.';
+            } elseif (strpos($message_lower, 'timeout') !== false) {
+                $error_msg = 'Payment gateway timeout. Please try again.';
             }
         }
         
         error_log("ERROR: Payment verification failed");
         error_log("Reference: $reference");
+        error_log("Response status: " . var_export($response_status, true));
         error_log("Error message: $error_msg");
         error_log("Full response: " . json_encode($verification_response, JSON_PRETTY_PRINT));
         
@@ -102,13 +183,18 @@ try {
             'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? [
                 'reference' => $reference,
                 'full_response' => $verification_response,
-                'response_status' => $verification_response['status'] ?? 'not set',
-                'response_message' => $verification_response['message'] ?? 'not set'
+                'response_status' => $response_status,
+                'response_status_type' => gettype($response_status),
+                'response_message' => $verification_response['message'] ?? 'not set',
+                'secret_key_configured' => $secret_key_configured,
+                'api_url' => $verify_url
             ] : null
         ]);
         ob_end_flush();
         exit;
     }
+    
+    error_log("✓ Paystack API verification successful (status: true)");
     
     // Extract transaction data
     $transaction_data = $verification_response['data'] ?? [];

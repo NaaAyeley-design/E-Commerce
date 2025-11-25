@@ -121,6 +121,17 @@ function paystack_verify_transaction($reference) {
  * @return array API response decoded as array
  */
 function paystack_api_request($method, $url, $data = null) {
+    // Check if secret key is configured
+    if (!defined('PAYSTACK_SECRET_KEY') || 
+        PAYSTACK_SECRET_KEY === 'sk_test_YOUR_SECRET_KEY_HERE' || 
+        empty(PAYSTACK_SECRET_KEY)) {
+        error_log("Paystack API Error: Secret key not configured");
+        return [
+            'status' => false,
+            'message' => 'Payment gateway not configured. Secret key is missing.'
+        ];
+    }
+    
     // Check if cURL is available
     if (!function_exists('curl_init')) {
         error_log("Paystack API Error: cURL is not available");
@@ -129,6 +140,11 @@ function paystack_api_request($method, $url, $data = null) {
             'message' => 'cURL is not available on this server'
         ];
     }
+    
+    error_log("=== PAYSTACK API REQUEST ===");
+    error_log("Method: $method");
+    error_log("URL: $url");
+    error_log("Secret key prefix: " . substr(PAYSTACK_SECRET_KEY, 0, 7) . "...");
     
     $ch = curl_init();
     
@@ -144,6 +160,7 @@ function paystack_api_request($method, $url, $data = null) {
         'Authorization: Bearer ' . PAYSTACK_SECRET_KEY,
         'Content-Type: application/json'
     ];
+    error_log("Request headers: Authorization: Bearer " . substr(PAYSTACK_SECRET_KEY, 0, 7) . "...");
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     
     // Send data for POST/PUT requests
@@ -152,39 +169,62 @@ function paystack_api_request($method, $url, $data = null) {
     }
     
     // Execute request
+    error_log("Executing cURL request...");
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
+    $curl_errno = curl_errno($ch);
     
     curl_close($ch);
     
+    error_log("=== PAYSTACK API RESPONSE ===");
+    error_log("HTTP Status Code: $http_code");
+    error_log("cURL Error Number: " . ($curl_errno ?: 'None'));
+    error_log("cURL Error Message: " . ($curl_error ?: 'None'));
+    error_log("Response length: " . strlen($response) . " bytes");
+    
     // Handle curl errors
     if ($curl_error) {
-        error_log("Paystack API CURL Error: $curl_error");
+        error_log("Paystack API CURL Error: $curl_error (Error #$curl_errno)");
         return [
             'status' => false,
             'message' => 'Connection error: ' . $curl_error
         ];
     }
     
+    // Log raw response (first 1000 chars)
+    error_log("Raw response (first 1000 chars): " . substr($response, 0, 1000));
+    
     // Decode response
     $result = json_decode($response, true);
     
     // Check if JSON decode failed
     if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log("Paystack API Error: Failed to decode JSON response. Error: " . json_last_error_msg());
-        error_log("Raw response: " . substr($response, 0, 500));
+        error_log("Paystack API Error: Failed to decode JSON response");
+        error_log("JSON Error: " . json_last_error_msg());
+        error_log("Raw response: " . substr($response, 0, 1000));
         return [
             'status' => false,
-            'message' => 'Invalid response from payment gateway'
+            'message' => 'Invalid response from payment gateway. JSON decode failed: ' . json_last_error_msg()
         ];
     }
     
+    // Always log the response structure
+    error_log("Response decoded successfully");
+    error_log("Response is array: " . (is_array($result) ? 'YES' : 'NO'));
+    if (is_array($result)) {
+        error_log("Response keys: " . implode(', ', array_keys($result)));
+        error_log("Response status: " . (isset($result['status']) ? var_export($result['status'], true) : 'NOT SET'));
+        error_log("Response message: " . ($result['message'] ?? 'N/A'));
+    }
+    
     // Always log errors, and log full response in development
-    if ($http_code !== 200 || (isset($result['status']) && $result['status'] === false)) {
-        error_log("Paystack API Error (HTTP $http_code): " . json_encode($result));
-    } elseif (APP_ENV === 'development') {
-        error_log("Paystack API Response (HTTP $http_code): " . json_encode($result));
+    if ($http_code !== 200) {
+        error_log("Paystack API Error (HTTP $http_code): " . json_encode($result, JSON_PRETTY_PRINT));
+    } elseif (isset($result['status']) && $result['status'] === false) {
+        error_log("Paystack API returned status=false: " . json_encode($result, JSON_PRETTY_PRINT));
+    } elseif (APP_ENV === 'development' || $http_code === 200) {
+        error_log("Paystack API Response (HTTP $http_code): " . json_encode($result, JSON_PRETTY_PRINT));
     }
     
     return $result;

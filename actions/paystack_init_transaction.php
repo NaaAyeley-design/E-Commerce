@@ -37,13 +37,40 @@ if (!is_logged_in()) {
 
 // Get POST data
 $input = json_decode(file_get_contents('php://input'), true);
+
+// Validate JSON input
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log("Invalid JSON input: " . json_last_error_msg());
+    ob_clean();
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request data']);
+    ob_end_flush();
+    exit;
+}
+
 $amount = isset($input['amount']) ? floatval($input['amount']) : 0;
 $customer_email = isset($input['email']) ? trim($input['email']) : '';
 
-// Validate inputs
-if (!$amount || $amount <= 0) {
+// Validate inputs with better error messages
+if (!isset($input['amount']) || $amount <= 0 || !is_numeric($input['amount'])) {
+    error_log("Invalid amount received: " . var_export($input['amount'] ?? 'not set', true));
     ob_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Invalid amount']);
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Invalid payment amount. Please refresh the page and try again.',
+        'debug' => (APP_ENV === 'development' ? 'Amount: ' . var_export($input['amount'] ?? null, true) : null)
+    ]);
+    ob_end_flush();
+    exit;
+}
+
+// Ensure minimum amount (1 GHS = 100 pesewas)
+if ($amount < 1) {
+    error_log("Amount too small: $amount GHS");
+    ob_clean();
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Minimum payment amount is ₵1.00']);
     ob_end_flush();
     exit;
 }

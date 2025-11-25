@@ -212,14 +212,50 @@ function processCheckout() {
         }
     }
     
-    // Get amount
-    const amount = parseFloat(window.checkoutTotal || 0);
+    // Get amount - ensure it's a valid number
+    let amount = parseFloat(window.checkoutTotal || 0);
     
-    if (amount <= 0 || isNaN(amount)) {
+    // If amount is invalid, try to recalculate from cart items
+    if (isNaN(amount) || amount <= 0) {
+        console.warn('Invalid checkout total, recalculating from cart items...');
+        if (window.cartItems && Array.isArray(window.cartItems) && window.cartItems.length > 0) {
+            let calculatedTotal = 0;
+            window.cartItems.forEach(item => {
+                const qty = parseFloat(item.quantity || item.qty || 1) || 1;
+                const price = parseFloat(item.product_price || item.price || 0) || 0;
+                calculatedTotal += qty * price;
+            });
+            amount = calculatedTotal;
+            window.checkoutTotal = calculatedTotal.toFixed(2);
+            console.log('Recalculated amount:', amount);
+        }
+    }
+    
+    // Final validation
+    if (isNaN(amount) || amount <= 0) {
+        const errorMsg = 'Invalid payment amount. Please refresh the page and try again.';
+        console.error('Payment amount validation failed:', {
+            checkoutTotal: window.checkoutTotal,
+            amount: amount,
+            cartItems: window.cartItems
+        });
         if (typeof Toast !== 'undefined') {
-            Toast.error('Invalid amount');
+            Toast.error(errorMsg);
         } else {
-            alert('Invalid amount');
+            alert(errorMsg);
+        }
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Ensure amount is at least 1 GHS (100 pesewas)
+    if (amount < 1) {
+        const errorMsg = 'Minimum payment amount is ₵1.00';
+        if (typeof Toast !== 'undefined') {
+            Toast.error(errorMsg);
+        } else {
+            alert(errorMsg);
         }
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = originalText;
@@ -307,14 +343,44 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
         console.log('=== PAYSTACK INIT RESPONSE ===');
         console.log('Full response:', JSON.stringify(data, null, 2));
         
+        // Check for errors first
+        if (data.status === 'error') {
+            console.error('Payment initialization error:', data.message);
+            const errorMsg = data.message || 'Failed to initialize payment. Please try again.';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert('Payment Error: ' + errorMsg);
+            }
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+            return;
+        }
+        
         if (data.status === 'success' && data.reference) {
             console.log('✓ Transaction initialized successfully');
             console.log('Reference:', data.reference);
             console.log('Authorization URL:', data.authorization_url);
             
             // Convert amount to pesewas (kobo) for Paystack
-            const amountInPesewas = Math.round(amount * 100);
+            // Ensure amount is a number and round properly
+            const amountInPesewas = Math.round(parseFloat(amount) * 100);
+            console.log('Amount in GHS:', amount);
             console.log('Amount in pesewas:', amountInPesewas);
+            
+            // Validate pesewas amount (minimum 100 pesewas = 1 GHS)
+            if (amountInPesewas < 100) {
+                console.error('Amount too small:', amountInPesewas, 'pesewas');
+                const errorMsg = 'Payment amount is too small. Minimum is ₵1.00';
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(errorMsg);
+                } else {
+                    alert(errorMsg);
+                }
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+                return;
+            }
             
             // Close modal
             closePaymentModal();
@@ -384,9 +450,21 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
             console.error('=== PAYMENT INITIALIZATION FAILED ===');
             console.error('Response status:', data.status);
             console.error('Response message:', data.message);
+            console.error('Response data:', data.data);
             console.error('Full response:', data);
             
-            const errorMsg = data.message || 'Failed to initialize payment';
+            // Provide more helpful error messages
+            let errorMsg = data.message || 'Failed to initialize payment';
+            
+            // Check for specific error types
+            if (data.message && data.message.includes('gateway not configured')) {
+                errorMsg = 'Payment gateway is not properly configured. Please contact support.';
+            } else if (data.message && data.message.includes('Invalid')) {
+                errorMsg = 'Invalid payment information. Please check your details and try again.';
+            } else if (data.message && data.message.includes('API')) {
+                errorMsg = 'Payment gateway connection error. Please try again in a moment.';
+            }
+            
             if (typeof Toast !== 'undefined') {
                 Toast.error(errorMsg);
             } else {
@@ -402,7 +480,20 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
         
-        // Fallback to Standard method
+        // Check if it's a network error
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            const errorMsg = 'Network error. Please check your internet connection and try again.';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+            return;
+        }
+        
+        // For other errors, try fallback to Standard method
         console.log('Falling back to Standard (redirect) method');
         processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
     });
@@ -457,8 +548,22 @@ function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText
         return response.json();
     })
     .then(data => {
-        console.log('=== PAYSTACK INIT RESPONSE ===');
+        console.log('=== PAYSTACK INIT RESPONSE (STANDARD) ===');
         console.log('Full response:', JSON.stringify(data, null, 2));
+        
+        // Check for errors first
+        if (data.status === 'error') {
+            console.error('Payment initialization error:', data.message);
+            const errorMsg = data.message || 'Failed to initialize payment. Please try again.';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert('Payment Error: ' + errorMsg);
+            }
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+            return;
+        }
         
         if (data.status === 'success' && data.authorization_url) {
             // Store data for verification after payment
@@ -479,23 +584,53 @@ function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText
                 window.location.href = data.authorization_url;
             }, 500);
         } else {
-            const errorMsg = data.message || 'Failed to initialize payment';
+            console.error('=== PAYMENT INITIALIZATION FAILED (STANDARD) ===');
+            console.error('Response status:', data.status);
+            console.error('Response message:', data.message);
+            console.error('Full response:', data);
+            
+            // Provide more helpful error messages
+            let errorMsg = data.message || 'Failed to initialize payment';
+            
+            // Check for specific error types
+            if (data.message && data.message.includes('gateway not configured')) {
+                errorMsg = 'Payment gateway is not properly configured. Please contact support.';
+            } else if (data.message && data.message.includes('Invalid')) {
+                errorMsg = 'Invalid payment information. Please check your details and try again.';
+            } else if (data.message && data.message.includes('API')) {
+                errorMsg = 'Payment gateway connection error. Please try again in a moment.';
+            }
+            
             if (typeof Toast !== 'undefined') {
                 Toast.error(errorMsg);
             } else {
-                alert(errorMsg);
+                alert('Payment Error: ' + errorMsg);
             }
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = originalText;
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        const errorMsg = 'Payment initialization failed. Please try again.';
-        if (typeof Toast !== 'undefined') {
-            Toast.error(errorMsg);
+        console.error('=== FETCH ERROR (STANDARD) ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        // Check if it's a network error
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            const errorMsg = 'Network error. Please check your internet connection and try again.';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
         } else {
-            alert(errorMsg);
+            const errorMsg = 'Payment initialization failed. Please try again.';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
         }
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = originalText;
