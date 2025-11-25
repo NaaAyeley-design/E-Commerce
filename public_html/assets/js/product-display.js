@@ -301,7 +301,7 @@ function displayProducts(products) {
                         <span class="product-category">${escapeHtml(product.cat_name || 'N/A')}</span>
                         <span class="product-brand">${escapeHtml(product.brand_name || 'N/A')}</span>
                     </div>
-                    <div class="product-price">$${parseFloat(product.product_price).toFixed(2)}</div>
+                    <div class="product-price">₵${parseFloat(product.product_price).toFixed(2)}</div>
                     <div class="product-actions">
                         <a href="${productUrl}" class="btn btn-primary btn-sm">View Details</a>
                         <button class="btn btn-outline btn-sm add-to-cart-btn" 

@@ -118,7 +118,7 @@ include __DIR__ . '/../templates/header.php';
             </div>
             <div class="metric-content">
                 <div class="metric-label">Total Spent</div>
-                <div class="metric-value">$<?php echo number_format($total_spent, 2); ?></div>
+                <div class="metric-value">₵<?php echo number_format($total_spent, 2); ?></div>
                 <div class="metric-change">
                     <i class="fas fa-infinity"></i> Lifetime
                 </div>
@@ -146,7 +146,7 @@ include __DIR__ . '/../templates/header.php';
             </div>
             <div class="metric-content">
                 <div class="metric-label">Spending This Month</div>
-                <div class="metric-value">$<?php echo number_format($spending_this_month, 2); ?></div>
+                <div class="metric-value">₵<?php echo number_format($spending_this_month, 2); ?></div>
                 <div class="metric-change">
                     <i class="fas fa-calendar"></i> <?php echo date('F'); ?>
                 </div>
@@ -244,7 +244,7 @@ include __DIR__ . '/../templates/header.php';
                         <td><strong>#<?php echo escape_html($order['order_id']); ?></strong></td>
                         <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
                         <td><?php echo isset($order['item_count']) ? $order['item_count'] : '—'; ?> items</td>
-                        <td class="amount">$<?php echo number_format($order['order_total'] ?? 0, 2); ?></td>
+                        <td class="amount">₵<?php echo number_format($order['order_total'] ?? 0, 2); ?></td>
                         <td>
                             <span class="status-badge status-<?php echo strtolower(escape_html($order['order_status'])); ?>">
                                 <?php echo ucfirst(escape_html($order['order_status'])); ?>

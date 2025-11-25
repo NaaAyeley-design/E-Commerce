@@ -566,10 +566,8 @@ const ECommerceApp = {
 
         // Format currency
         formatCurrency: function(amount) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(amount);
+            // Format as GHS (Ghana Cedis)
+            return '₵' + parseFloat(amount || 0).toFixed(2);
         },
 
         // Format date

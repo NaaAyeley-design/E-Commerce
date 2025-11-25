@@ -270,7 +270,7 @@ include __DIR__ . '/../templates/header.php';
                                                     
                                                     <div class="product-details">
                                                         <div class="product-price">
-                                                            <span class="current-price">$<?php echo number_format($product['product_price'] ?? 0, 2); ?></span>
+                                                            <span class="current-price">₵<?php echo number_format($product['product_price'] ?? 0, 2); ?></span>
                                                         </div>
                                                         
                                                         <?php if (!empty($product['product_desc'])): ?>

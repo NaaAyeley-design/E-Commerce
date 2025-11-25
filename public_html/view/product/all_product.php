@@ -276,7 +276,7 @@ include __DIR__ . '/../templates/header.php';
                                 <span class="product-category"><?php echo escape_html($product['cat_name'] ?? 'N/A'); ?></span>
                                 <span class="product-brand"><?php echo escape_html($product['brand_name'] ?? 'N/A'); ?></span>
                             </div>
-                            <div class="product-price">$<?php echo number_format($product['product_price'], 2); ?></div>
+                            <div class="product-price">₵<?php echo number_format($product['product_price'], 2); ?></div>
                             <div class="product-actions">
                                 <a href="<?php echo url('view/product/single_product.php?id=' . $product['product_id']); ?>" 
                                    class="btn btn-primary btn-sm">View Details</a>

@@ -154,7 +154,7 @@ include __DIR__ . '/../templates/header.php';
                                     ?>
                                 </td>
                                 <td class="order-total">
-                                    <strong>$<?php echo number_format($order['total_amount'], 2); ?></strong>
+                                    <strong>₵<?php echo number_format($order['total_amount'], 2); ?></strong>
                                 </td>
                                 <td class="order-status">
                                     <span class="status-badge status-<?php echo strtolower($order['order_status'] ?? 'pending'); ?>">
@@ -224,10 +224,10 @@ include __DIR__ . '/../templates/header.php';
                                                                 <span class="quantity-badge"><?php echo $item['quantity'] ?? 0; ?></span>
                                                             </td>
                                                             <td class="product-price">
-                                                                $<?php echo number_format($item['price'] ?? 0, 2); ?>
+                                                                ₵<?php echo number_format($item['price'] ?? 0, 2); ?>
                                                             </td>
                                                             <td class="product-subtotal">
-                                                                <strong>$<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 0), 2); ?></strong>
+                                                                <strong>₵<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 0), 2); ?></strong>
                                                             </td>
                                                         </tr>
                                                     <?php endforeach; ?>
@@ -238,7 +238,7 @@ include __DIR__ . '/../templates/header.php';
                                                             <strong>Cart Total:</strong>
                                                         </td>
                                                         <td class="cart-total-amount">
-                                                            <strong>$<?php echo number_format($order['total_amount'], 2); ?></strong>
+                                                            <strong>₵<?php echo number_format($order['total_amount'], 2); ?></strong>
                                                         </td>
                                                     </tr>
                                                 </tfoot>
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="info-item">
                             <label>Total Amount:</label>
-                            <span class="amount">$${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                            <span class="amount">₵${parseFloat(order.total_amount || 0).toFixed(2)}</span>
                         </div>
                         <div class="info-item">
                             <label>Date:</label>
@@ -457,8 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <tr>
                     <td>${item.product_title || 'N/A'}</td>
                     <td>${item.quantity || 0}</td>
-                    <td>$${parseFloat(item.price || 0).toFixed(2)}</td>
-                    <td>$${parseFloat((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
+                    <td>₵${parseFloat(item.price || 0).toFixed(2)}</td>
+                    <td>₵${parseFloat((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
                 </tr>
             `;
         });

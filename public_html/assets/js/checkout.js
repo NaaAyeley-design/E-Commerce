@@ -93,11 +93,11 @@ function displayCheckoutItems(items, total) {
                     ${escapeHtml(item.product_title)}
                 </div>
                 <div style="font-family: \'Spectral\', serif; font-size: 0.875rem; color: var(--text-light);">
-                    Qty: ${item.qty} × ₵${parseFloat(item.product_price || item.price || 0).toFixed(2)}
+                    Qty: ${item.quantity || item.qty || 1} × ₵${parseFloat(item.product_price || item.price || 0).toFixed(2)}
                 </div>
             </div>
             <div style="font-family: \'Cormorant Garamond\', serif; font-weight: 600; color: var(--terracotta); font-size: 1.25rem;">
-                ₵${parseFloat(item.subtotal || (item.product_price || item.price || 0) * item.qty).toFixed(2)}
+                ₵${parseFloat(item.subtotal || (item.product_price || item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
             </div>
         `;
         
@@ -106,11 +106,32 @@ function displayCheckoutItems(items, total) {
     
     const totalElement = document.getElementById('checkoutTotal');
     if (totalElement) {
-        totalElement.textContent = '₵' + parseFloat(total).toFixed(2);
+        const totalValue = parseFloat(total) || 0;
+        if (isNaN(totalValue)) {
+            console.error('Cart total is NaN. Items:', items);
+            // Recalculate from items
+            let calculatedTotal = 0;
+            items.forEach(item => {
+                const qty = parseFloat(item.quantity || item.qty || 1) || 1;
+                const price = parseFloat(item.product_price || item.price || 0) || 0;
+                calculatedTotal += qty * price;
+            });
+            totalElement.textContent = '₵' + calculatedTotal.toFixed(2);
+            window.checkoutTotal = calculatedTotal.toFixed(2);
+        } else {
+            totalElement.textContent = '₵' + totalValue.toFixed(2);
+            window.checkoutTotal = totalValue.toFixed(2);
+        }
+    } else {
+        // Fallback: calculate from items if total is invalid
+        let calculatedTotal = 0;
+        items.forEach(item => {
+            const qty = parseFloat(item.quantity || item.qty || 1) || 1;
+            const price = parseFloat(item.product_price || item.price || 0) || 0;
+            calculatedTotal += qty * price;
+        });
+        window.checkoutTotal = calculatedTotal.toFixed(2);
     }
-    
-    // Store total for payment modal
-    window.checkoutTotal = parseFloat(total).toFixed(2);
 }
 
 /**
@@ -194,7 +215,7 @@ function processCheckout() {
     // Get amount
     const amount = parseFloat(window.checkoutTotal || 0);
     
-    if (amount <= 0) {
+    if (amount <= 0 || isNaN(amount)) {
         if (typeof Toast !== 'undefined') {
             Toast.error('Invalid amount');
         } else {
@@ -205,22 +226,32 @@ function processCheckout() {
         return;
     }
     
-    // Check which Paystack method to use
-    // Option 1: Use Inline (popup) if PaystackPop is available
-    // Option 2: Use Standard (redirect) as fallback
-    
-    const useInline = typeof PaystackPop !== 'undefined' && 
-                      window.PAYSTACK_PUBLIC_KEY && 
-                      window.PAYSTACK_PUBLIC_KEY !== 'pk_test_YOUR_PUBLIC_KEY_HERE' &&
-                      window.PAYSTACK_PUBLIC_KEY !== '';
-    
-    if (useInline) {
-        // Use Paystack Inline (popup) method
-        processCheckoutInline(amount, customerEmail, confirmBtn, originalText);
-    } else {
-        // Use Paystack Standard (redirect) method
-        processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
+    // Wait for PaystackPop to be available (with timeout)
+    function waitForPaystackPop(callback, maxAttempts = 10, attempt = 0) {
+        if (typeof PaystackPop !== 'undefined' && PaystackPop) {
+            callback(true);
+        } else if (attempt < maxAttempts) {
+            setTimeout(() => waitForPaystackPop(callback, maxAttempts, attempt + 1), 200);
+        } else {
+            console.warn('PaystackPop not available after waiting. Using redirect method.');
+            callback(false);
+        }
     }
+    
+    waitForPaystackPop((isAvailable) => {
+        const useInline = isAvailable && 
+                          window.PAYSTACK_PUBLIC_KEY && 
+                          window.PAYSTACK_PUBLIC_KEY !== 'pk_test_YOUR_PUBLIC_KEY_HERE' &&
+                          window.PAYSTACK_PUBLIC_KEY !== '';
+        
+        if (useInline) {
+            // Use Paystack Inline (popup) method
+            processCheckoutInline(amount, customerEmail, confirmBtn, originalText);
+        } else {
+            // Use Paystack Standard (redirect) method
+            processCheckoutStandard(amount, customerEmail, confirmBtn, originalText);
+        }
+    });
 }
 
 /**
@@ -304,11 +335,18 @@ function processCheckoutInline(amount, customerEmail, confirmBtn, originalText) 
                     ref: data.reference,
                     currency: 'GHS',
                     callback: function(response) {
-                        // Payment successful
-                        console.log('=== PAYMENT SUCCESSFUL ===');
+                        // Payment callback received - DO NOT show success yet
+                        // We must verify on backend first
+                        console.log('=== PAYSTACK CALLBACK RECEIVED ===');
                         console.log('Payment response:', response);
+                        console.log('⚠️ DO NOT show success yet - verifying on backend...');
                         
-                        // Verify payment on backend
+                        // Show loading state
+                        if (typeof Toast !== 'undefined') {
+                            Toast.info('Verifying payment...', { duration: 0 });
+                        }
+                        
+                        // Verify payment on backend BEFORE showing success
                         verifyPaymentAfterInline(response.reference, amount);
                     },
                     onClose: function() {
@@ -481,12 +519,29 @@ function verifyPaymentAfterInline(reference, amount) {
             total_amount: amount
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        // Check if response is OK
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        console.log('Payment verification response:', data);
+        console.log('=== PAYMENT VERIFICATION RESPONSE ===');
+        console.log('Status:', data.status);
+        console.log('Verified:', data.verified);
+        console.log('Full response:', data);
         
-        if (data.status === 'success' && data.verified) {
-            // Redirect to success page
+        // CRITICAL: Only show success if backend explicitly verifies payment
+        if (data.status === 'success' && data.verified === true) {
+            console.log('✓ Payment verified successfully by backend');
+            
+            // Dismiss any loading toasts
+            if (typeof Toast !== 'undefined') {
+                Toast.success('Payment verified! Redirecting...');
+            }
+            
+            // Redirect to success page ONLY after verification
             const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
                              '/view/payment/payment_success.php?reference=' + 
                              encodeURIComponent(reference) + 
@@ -494,19 +549,24 @@ function verifyPaymentAfterInline(reference, amount) {
             
             window.location.href = successUrl;
         } else {
-            // Payment verification failed
-            const errorMsg = data.message || 'Payment verification failed';
+            // Payment verification failed - DO NOT show success
+            console.error('✗ Payment verification FAILED');
+            console.error('Response:', data);
+            
+            const errorMsg = data.message || 'Payment verification failed. Please contact support.';
+            
+            // Show error message
             if (typeof Toast !== 'undefined') {
                 Toast.error(errorMsg);
             } else {
-                alert(errorMsg);
+                alert('Payment Error: ' + errorMsg);
             }
             
             // Redirect to checkout with error
             setTimeout(() => {
                 window.location.href = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
                                      '/view/payment/checkout.php?error=verification_failed';
-            }, 2000);
+            }, 3000);
         }
     })
     .catch(error => {

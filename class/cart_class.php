@@ -202,12 +202,36 @@ class cart_class {
                 return [];
             }
             
-            // Add cart_id equivalent (using customer_id and product_id combination)
+            // Normalize cart items - ensure quantity is always available
             foreach ($items as &$item) {
                 if (isset($item['customer_id']) && isset($item['product_id'])) {
                     $item['cart_id'] = $item['customer_id'] . '_' . $item['product_id'];
                 }
+                
+                // Ensure both 'quantity' and 'qty' are available for compatibility
+                if (isset($item['quantity']) && !isset($item['qty'])) {
+                    $item['qty'] = $item['quantity'];
+                } elseif (isset($item['qty']) && !isset($item['quantity'])) {
+                    $item['quantity'] = $item['qty'];
+                } elseif (!isset($item['quantity']) && !isset($item['qty'])) {
+                    // Default to 1 if neither is set
+                    $item['quantity'] = 1;
+                    $item['qty'] = 1;
+                }
+                
+                // Ensure price fields are available
+                if (!isset($item['price']) && isset($item['product_price'])) {
+                    $item['price'] = $item['product_price'];
+                }
+                
+                // Calculate subtotal if not present
+                if (!isset($item['subtotal'])) {
+                    $qty = $item['quantity'] ?? $item['qty'] ?? 1;
+                    $price = $item['product_price'] ?? $item['price'] ?? 0;
+                    $item['subtotal'] = (float)$price * (int)$qty;
+                }
             }
+            unset($item); // Break reference
             
             return $items;
         } catch (PDOException $e) {

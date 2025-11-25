@@ -184,7 +184,7 @@ include __DIR__ . '/../templates/header.php';
                                         </div>
                                     </td>
                                     <td class="price-cell" data-label="Price">
-                                        <span class="product-price">$<?php echo number_format($item['product_price'], 2); ?></span>
+                                        <span class="product-price">₵<?php echo number_format($item['product_price'], 2); ?></span>
                                     </td>
                                     <td class="quantity-cell" data-label="Quantity">
                                         <div class="quantity-controls">
@@ -206,7 +206,7 @@ include __DIR__ . '/../templates/header.php';
                                         </div>
                                     </td>
                                     <td class="subtotal-cell" data-label="Subtotal">
-                                        <span class="item-subtotal">$<?php echo number_format($item_total, 2); ?></span>
+                                        <span class="item-subtotal">₵<?php echo number_format($item_total, 2); ?></span>
                                     </td>
                                     <td class="action-cell" data-label="Action">
                                         <button class="remove-cart-item" 
@@ -232,7 +232,7 @@ include __DIR__ . '/../templates/header.php';
                         </div>
                         <div class="summary-row total-row">
                             <strong>Total:</strong>
-                            <strong id="cart-total">$<?php echo number_format($cart_total, 2); ?></strong>
+                            <strong id="cart-total">₵<?php echo number_format($cart_total, 2); ?></strong>
                         </div>
                         <div class="summary-actions">
                             <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn btn-outline btn-block">

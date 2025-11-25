@@ -101,21 +101,25 @@ async function verifyPayment() {
         // Hide spinner
         document.getElementById('spinner').style.display = 'none';
         
-        if (data.status === 'success' && data.verified) {
-            // Payment verified successfully
-            console.log('✓ Payment verified successfully');
+        // CRITICAL: Only show success if backend explicitly verifies payment
+        if (data.status === 'success' && data.verified === true) {
+            // Payment verified successfully by backend
+            console.log('✓ Payment verified successfully by backend');
             document.getElementById('successBox').style.display = 'block';
             
-            // Redirect to success page
+            // Redirect to success page ONLY after verification
             setTimeout(() => {
                 window.location.replace('<?php echo url('view/payment/payment_success.php'); ?>?reference=' + encodeURIComponent(reference) + '&invoice=' + encodeURIComponent(data.invoice_no || ''));
             }, 1000);
             
         } else {
-            // Payment verification failed
+            // Payment verification failed - DO NOT show success
             const errorMsg = data.message || 'Payment verification failed';
-            console.error('✗ Payment verification failed:', errorMsg);
-            console.error('Response data:', data);
+            console.error('✗ Payment verification FAILED');
+            console.error('Status:', data.status);
+            console.error('Verified:', data.verified);
+            console.error('Error message:', errorMsg);
+            console.error('Full response:', data);
             
             // Show detailed error message
             let detailedError = errorMsg;

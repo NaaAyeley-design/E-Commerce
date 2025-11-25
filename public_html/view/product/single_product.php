@@ -122,7 +122,7 @@ include __DIR__ . '/../templates/header.php';
 
                 <div class="product-price">
                     <span class="price-label">Price:</span>
-                    <span class="price-value">$<?php echo number_format($product['product_price'], 2); ?></span>
+                    <span class="price-value">₵<?php echo number_format($product['product_price'], 2); ?></span>
                 </div>
 
                 <div class="product-description">

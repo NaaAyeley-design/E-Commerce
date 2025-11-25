@@ -193,9 +193,25 @@ $paystack_public_key = defined('PAYSTACK_PUBLIC_KEY') ? PAYSTACK_PUBLIC_KEY : ''
 ?>
 <script>
 // Store checkout data globally
-window.checkoutTotal = <?php echo json_encode($cart_total); ?>;
+window.checkoutTotal = <?php echo json_encode((float)$cart_total); ?>;
 window.customerEmail = <?php echo json_encode($customer_email); ?>;
 window.cartItems = <?php echo json_encode($cart_items); ?>;
+
+// Validate checkout total
+if (isNaN(window.checkoutTotal) || window.checkoutTotal <= 0) {
+    console.error('Invalid checkout total:', window.checkoutTotal);
+    // Recalculate from cart items
+    let calculatedTotal = 0;
+    if (window.cartItems && Array.isArray(window.cartItems)) {
+        window.cartItems.forEach(item => {
+            const qty = parseFloat(item.quantity || item.qty || 1) || 1;
+            const price = parseFloat(item.product_price || item.price || 0) || 0;
+            calculatedTotal += qty * price;
+        });
+    }
+    window.checkoutTotal = calculatedTotal.toFixed(2);
+    console.log('Recalculated total:', window.checkoutTotal);
+}
 
 // Store Paystack public key
 window.PAYSTACK_PUBLIC_KEY = <?php echo json_encode($paystack_public_key); ?>;
