@@ -185,40 +185,31 @@ function checkPaystackLoaded() {
     }
 }
 
-// Initialize Paystack when script is ready
-(function initializePaystack() {
-    // Function to set up Paystack
-    function setupPaystack() {
+// Verify Paystack is ready (key is passed directly to PaystackPop.setup(), not set globally)
+(function checkPaystackReady() {
+    function verifyPaystack() {
         if (typeof PaystackPop !== 'undefined') {
-            // Set Paystack public key if using Inline method
             if (window.PAYSTACK_PUBLIC_KEY && 
                 window.PAYSTACK_PUBLIC_KEY !== 'pk_test_YOUR_PUBLIC_KEY_HERE' && 
                 window.PAYSTACK_PUBLIC_KEY !== '') {
-                try {
-                    PaystackPop.setPublicKey(window.PAYSTACK_PUBLIC_KEY);
-                    console.log('✓ Paystack public key set successfully');
-                } catch (e) {
-                    console.error('✗ Error setting Paystack public key:', e);
-                }
+                console.log('✓ Paystack is ready. Public key configured:', window.PAYSTACK_PUBLIC_KEY.substring(0, 20) + '...');
             } else {
                 console.warn('⚠ Paystack public key not configured. Using Standard (redirect) method only.');
             }
         } else {
-            console.warn('⚠ PaystackPop not available. Using Standard (redirect) method only.');
+            console.warn('⚠ PaystackPop not loaded yet. Will use Standard (redirect) method if needed.');
         }
     }
     
-    // Try to set up immediately (script might already be loaded)
+    // Check when DOM is ready
     if (document.readyState === 'loading') {
-        // DOM is still loading, wait for it
-        document.addEventListener('DOMContentLoaded', setupPaystack);
+        document.addEventListener('DOMContentLoaded', verifyPaystack);
     } else {
-        // DOM is already loaded
-        setupPaystack();
+        verifyPaystack();
     }
     
-    // Also try after a short delay in case script loads asynchronously
-    setTimeout(setupPaystack, 500);
+    // Also check after script loads
+    setTimeout(verifyPaystack, 1000);
 })();
 </script>
 <script src="<?php echo ASSETS_URL; ?>/js/checkout.js?v=<?php echo time(); ?>"></script>
