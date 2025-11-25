@@ -12,6 +12,7 @@
     
     <!-- CSS Files -->
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sleep.css?v=<?php echo get_css_version('sleep.css'); ?>">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/kentekart-design-system.css?v=<?php echo get_css_version('kentekart-design-system.css'); ?>">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/header_footer.css?v=<?php echo get_css_version('header_footer.css'); ?>">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/sidebar.css?v=<?php echo get_css_version('sidebar.css'); ?>">
     <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/toast.css?v=<?php echo get_css_version('toast.css'); ?>">
