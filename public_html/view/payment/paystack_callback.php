@@ -92,29 +92,46 @@ async function verifyPayment() {
         });
         
         const data = await response.json();
-        console.log('Verification response:', data);
+        console.log('=== VERIFICATION RESPONSE ===');
+        console.log('Status:', data.status);
+        console.log('Verified:', data.verified);
+        console.log('Message:', data.message);
+        console.log('Full response:', data);
         
         // Hide spinner
         document.getElementById('spinner').style.display = 'none';
         
         if (data.status === 'success' && data.verified) {
             // Payment verified successfully
+            console.log('✓ Payment verified successfully');
             document.getElementById('successBox').style.display = 'block';
             
             // Redirect to success page
             setTimeout(() => {
-                window.location.replace('<?php echo url('view/payment/payment_success.php'); ?>?reference=' + encodeURIComponent(reference) + '&invoice=' + encodeURIComponent(data.invoice_no));
+                window.location.replace('<?php echo url('view/payment/payment_success.php'); ?>?reference=' + encodeURIComponent(reference) + '&invoice=' + encodeURIComponent(data.invoice_no || ''));
             }, 1000);
             
         } else {
             // Payment verification failed
             const errorMsg = data.message || 'Payment verification failed';
-            showError(errorMsg);
+            console.error('✗ Payment verification failed:', errorMsg);
+            console.error('Response data:', data);
             
-            // Redirect after 5 seconds
+            // Show detailed error message
+            let detailedError = errorMsg;
+            if (data.debug && typeof data.debug === 'object') {
+                detailedError += '\n\nDebug info: ' + JSON.stringify(data.debug, null, 2);
+            }
+            if (data.expected && data.paid) {
+                detailedError += `\n\nExpected: ${data.expected} GHS, Paid: ${data.paid} GHS`;
+            }
+            
+            showError(detailedError);
+            
+            // Redirect after 8 seconds (give user time to read error)
             setTimeout(() => {
-                window.location.href = '<?php echo url('view/payment/checkout.php'); ?>?error=verification_failed';
-            }, 5000);
+                window.location.href = '<?php echo url('view/payment/checkout.php'); ?>?error=verification_failed&ref=' + encodeURIComponent(reference);
+            }, 8000);
         }
         
     } catch (error) {

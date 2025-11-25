@@ -87,22 +87,45 @@ try {
     }
 
     // Get user ID and product ID
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+    if (!$user_id) {
+        $error_msg = 'User ID not found in session.';
+        if ($is_ajax) {
+            ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+            ob_end_flush();
+        } else {
+            echo $error_msg;
+        }
+        exit;
+    }
+    
     $product_id = (int)($_POST['product_id'] ?? 0);
+    
+    error_log("Upload action: Received product_id: $product_id, user_id: $user_id");
     
     // Allow product_id = 0 for new products (temporary uploads)
     // For existing products, verify they exist
     if ($product_id > 0) {
+        require_once __DIR__ . '/../controller/product_controller.php';
         $product = get_product_ctr($product_id);
         if (is_string($product) || !$product) {
-            $error_msg = 'Product not found.';
+            $error_msg = "Product not found. Product ID: $product_id";
+            error_log("Upload action: $error_msg");
             if ($is_ajax) {
+                ob_clean();
+                header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => $error_msg]);
+                ob_end_flush();
             } else {
                 echo $error_msg;
             }
             exit;
         }
+        error_log("Upload action: Product verified - ID: $product_id, Title: " . ($product['product_title'] ?? 'N/A'));
+    } else {
+        error_log("Upload action: product_id is 0 - treating as new product (temporary upload)");
     }
     
     // Debug: Log what we received (only in development)

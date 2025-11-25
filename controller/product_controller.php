@@ -349,10 +349,12 @@ function add_product_image_ctr($product_id, $file_path, $is_primary = false, $im
     try {
         // Validate input
         if (empty($product_id) || !is_numeric($product_id)) {
+            error_log("add_product_image_ctr: Invalid product ID: " . var_export($product_id, true));
             return "Invalid product ID.";
         }
 
         if (empty($file_path)) {
+            error_log("add_product_image_ctr: Empty file path");
             return "File path is required.";
         }
 
@@ -360,12 +362,25 @@ function add_product_image_ctr($product_id, $file_path, $is_primary = false, $im
 
         // Add the product image
         $result = $product->add_product_image($product_id, $file_path, $is_primary, $image_alt, $image_title, $sort_order);
+        
+        error_log("add_product_image_ctr: Result from add_product_image: " . json_encode($result));
 
-        return $result['success'] ? "success" : $result['message'];
+        if (isset($result['success']) && $result['success']) {
+            return "success";
+        } else {
+            $error_message = isset($result['message']) ? $result['message'] : 'Failed to add product image.';
+            error_log("add_product_image_ctr: Failed - " . $error_message);
+            return $error_message;
+        }
 
     } catch (Exception $e) {
         error_log("Add product image error: " . $e->getMessage());
-        return "An error occurred while adding the product image.";
+        error_log("Add product image trace: " . $e->getTraceAsString());
+        return "An error occurred while adding the product image: " . $e->getMessage();
+    } catch (Throwable $e) {
+        error_log("Add product image throwable error: " . $e->getMessage());
+        error_log("Add product image throwable trace: " . $e->getTraceAsString());
+        return "An error occurred while adding the product image: " . $e->getMessage();
     }
 }
 

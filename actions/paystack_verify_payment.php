@@ -52,27 +52,38 @@ if (!$reference) {
 }
 
 try {
+    error_log("=== PAYSTACK VERIFICATION START ===");
     error_log("Verifying Paystack transaction - Reference: $reference");
+    error_log("Customer ID: " . get_user_id());
     
     // Verify transaction with Paystack
     $verification_response = paystack_verify_transaction($reference);
     
     if (!$verification_response) {
+        error_log("ERROR: No response from Paystack verification API");
         throw new Exception("No response from Paystack verification API");
     }
     
-    error_log("Paystack verification response: " . json_encode($verification_response));
+    error_log("Paystack verification response status: " . (isset($verification_response['status']) ? ($verification_response['status'] ? 'true' : 'false') : 'not set'));
+    error_log("Paystack verification response message: " . ($verification_response['message'] ?? 'N/A'));
+    
+    // Log full response in development mode
+    if (defined('APP_ENV') && APP_ENV === 'development') {
+        error_log("Full Paystack verification response: " . json_encode($verification_response, JSON_PRETTY_PRINT));
+    }
     
     // Check if verification was successful
     if (!isset($verification_response['status']) || $verification_response['status'] !== true) {
         $error_msg = $verification_response['message'] ?? 'Payment verification failed';
-        error_log("Payment verification failed: $error_msg");
+        error_log("ERROR: Payment verification failed - $error_msg");
+        error_log("Response data: " . json_encode($verification_response));
         
         ob_clean();
         echo json_encode([
             'status' => 'error',
             'message' => $error_msg,
-            'verified' => false
+            'verified' => false,
+            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? $verification_response : null
         ]);
         ob_end_flush();
         exit;

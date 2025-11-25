@@ -71,6 +71,32 @@ include __DIR__ . '/../templates/header.php';
         </p>
     </div>
 
+    <!-- Error Messages -->
+    <?php
+    $error_type = isset($_GET['error']) ? $_GET['error'] : null;
+    if ($error_type):
+        $error_messages = [
+            'verification_failed' => 'Payment verification failed. Please try again or contact support if the issue persists.',
+            'cancelled' => 'Payment was cancelled. You can try again when ready.',
+            'connection_error' => 'Connection error occurred. Please check your internet connection and try again.',
+            'payment_failed' => 'Payment processing failed. Please try again or use a different payment method.'
+        ];
+        $error_message = $error_messages[$error_type] ?? 'An error occurred during payment processing.';
+    ?>
+    <div id="checkoutError" style="background: rgba(198, 125, 92, 0.1); border: 1px solid var(--terracotta); padding: 20px; border-radius: var(--radius-md); margin-bottom: 30px; text-align: center;">
+        <div style="color: var(--terracotta); font-family: 'Spectral', serif; font-size: 0.875rem; margin-bottom: 10px;">
+            <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
+            <strong>Payment Error</strong>
+        </div>
+        <div style="color: var(--text-dark); font-family: 'Spectral', serif; font-size: 0.875rem;">
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
+        <button onclick="document.getElementById('checkoutError').style.display='none'" style="margin-top: 15px; padding: 8px 20px; background: transparent; border: 1px solid var(--terracotta); color: var(--terracotta); border-radius: var(--radius-sm); cursor: pointer; font-family: 'Spectral', serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;">
+            Dismiss
+        </button>
+    </div>
+    <?php endif; ?>
+
     <!-- Order Summary -->
     <div style="background: var(--white); padding: 50px 40px; border: var(--border-thin); border-radius: var(--radius-md); margin-bottom: 30px; box-shadow: none;">
         <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 400; color: var(--text-dark); margin-bottom: 30px;">

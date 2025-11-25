@@ -658,9 +658,11 @@ class product_class extends db_class {
                 
                 error_log("add_product_image: Insert result - rowCount: $row_count, lastInsertId: $image_id");
                 
+                // Check both rowCount and lastInsertId
+                // Note: rowCount might be 0 for some MySQL configurations, so we rely on lastInsertId
                 if ($image_id > 0) {
                     // Insert was successful
-                    error_log("add_product_image: Image inserted successfully. Image ID: $image_id");
+                    error_log("add_product_image: Image inserted successfully. Image ID: $image_id, rowCount: $row_count");
                     
                     // Also update the main product_image field if this is the primary image
                     if ($is_primary) {
@@ -675,7 +677,10 @@ class product_class extends db_class {
                 } else {
                     // Insert failed - no ID returned
                     error_log("add_product_image: Insert failed - lastInsertId is 0, rowCount: $row_count");
-                    error_log("add_product_image: This usually means the INSERT didn't execute or product_id doesn't exist");
+                    
+                    // Get detailed error information
+                    $error_info = $stmt->errorInfo();
+                    error_log("add_product_image: Statement error info: " . json_encode($error_info));
                     
                     // Verify product exists
                     $product_check = $this->get_product_by_id($product_id);
@@ -684,7 +689,19 @@ class product_class extends db_class {
                         return ['success' => false, 'message' => 'Product not found. Product ID: ' . $product_id];
                     }
                     
-                    return ['success' => false, 'message' => 'Failed to add product image. Insert executed but no ID returned. Check database constraints.'];
+                    // Check for foreign key constraint issues
+                    $error_message = $error_info[2] ?? 'Unknown error';
+                    if (strpos($error_message, 'foreign key') !== false || strpos($error_message, 'Cannot add or update') !== false) {
+                        return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
+                    }
+                    
+                    // If rowCount is 0 and lastInsertId is 0, the INSERT didn't actually insert
+                    if ($row_count === 0 && $image_id === 0) {
+                        error_log("add_product_image: INSERT executed but no rows affected. This might indicate a constraint violation or trigger issue.");
+                        return ['success' => false, 'message' => 'Failed to add product image. No rows were inserted. Error: ' . $error_message];
+                    }
+                    
+                    return ['success' => false, 'message' => 'Failed to add product image. Insert executed but no ID returned. Error: ' . $error_message];
                 }
                 
             } catch (PDOException $e) {
