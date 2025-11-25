@@ -360,22 +360,52 @@ class order_class extends db_class {
      * Get all orders (admin function)
      */
     public function get_all_orders($limit = 50, $offset = 0, $status = null) {
-        $sql = "SELECT o.*, c.customer_name, c.customer_email 
-                FROM orders o 
-                JOIN customer c ON o.customer_id = c.customer_id";
-        
-        $params = [];
-        
-        if ($status) {
-            $sql .= " WHERE o.order_status = ?";
-            $params[] = $status;
+        try {
+            $sql = "SELECT o.*, c.customer_name, c.customer_email 
+                    FROM orders o 
+                    LEFT JOIN customer c ON o.customer_id = c.customer_id";
+            
+            $params = [];
+            
+            if ($status) {
+                $sql .= " WHERE o.order_status = ?";
+                $params[] = $status;
+            }
+            
+            $sql .= " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+            
+            // Use direct PDO connection to properly bind LIMIT and OFFSET as integers
+            $conn = $this->getConnection();
+            if (!$conn) {
+                error_log("get_all_orders: No database connection available");
+                return [];
+            }
+            
+            $stmt = $conn->prepare($sql);
+            
+            // Bind parameters
+            $param_index = 1;
+            if ($status) {
+                $stmt->bindValue($param_index++, $status, PDO::PARAM_STR);
+            }
+            $stmt->bindValue($param_index++, (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue($param_index++, (int)$offset, PDO::PARAM_INT);
+            
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("get_all_orders: Found " . count($results) . " orders (limit: $limit, offset: $offset, status: " . ($status ?? 'all') . ")");
+            
+            return $results ? $results : [];
+            
+        } catch (PDOException $e) {
+            error_log("get_all_orders PDO error: " . $e->getMessage());
+            error_log("get_all_orders SQL: " . $sql);
+            return [];
+        } catch (Exception $e) {
+            error_log("get_all_orders error: " . $e->getMessage());
+            return [];
         }
-        
-        $sql .= " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
-        
-        return $this->fetchAll($sql, $params);
     }
     
     /**
@@ -407,19 +437,33 @@ class order_class extends db_class {
      */
     public function count_all_orders($status = null) {
         try {
-            if (!isset($this->conn) || $this->conn === null) {
+            $conn = $this->getConnection();
+            if (!$conn) {
+                error_log("count_all_orders: No database connection available");
                 return 0;
             }
+            
             $sql = "SELECT COUNT(*) as total FROM orders";
-            $params = [];
             
             if ($status) {
                 $sql .= " WHERE order_status = ?";
-                $params[] = $status;
             }
             
-            $result = $this->fetchRow($sql, $params);
-            return $result ? (int)$result['total'] : 0;
+            $stmt = $conn->prepare($sql);
+            if ($status) {
+                $stmt->bindValue(1, $status, PDO::PARAM_STR);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $count = $result ? (int)$result['total'] : 0;
+            error_log("count_all_orders: Found $count orders (status: " . ($status ?? 'all') . ")");
+            
+            return $count;
+        } catch (PDOException $e) {
+            error_log("count_all_orders PDO error: " . $e->getMessage());
+            return 0;
         } catch (Exception $e) {
             error_log("count_all_orders error: " . $e->getMessage());
             return 0;

@@ -619,45 +619,87 @@ class product_class extends db_class {
             error_log("add_product_image: SQL: $sql");
             error_log("add_product_image: Params: " . json_encode($params));
             
-            $stmt = $this->execute($sql, $params);
-            
-            if ($stmt === false) {
-                error_log("add_product_image: execute() returned false. Check database connection and SQL syntax.");
-                return ['success' => false, 'message' => 'Database error: Failed to execute insert query.'];
+            // Use direct PDO connection to get better error information
+            $conn = $this->getConnection();
+            if (!$conn) {
+                error_log("add_product_image: ERROR - No database connection available");
+                return ['success' => false, 'message' => 'Database connection error.'];
             }
             
-            // Check if insert was successful using lastInsertId (more reliable than rowCount for INSERT)
-            $image_id = $this->lastInsertId();
-            $row_count = $stmt->rowCount();
-            
-            error_log("add_product_image: Insert result - rowCount: $row_count, lastInsertId: $image_id");
-            
-            if ($image_id > 0) {
-                // Insert was successful
-                error_log("add_product_image: Image inserted successfully. Image ID: $image_id");
+            try {
+                $stmt = $conn->prepare($sql);
                 
-                // Also update the main product_image field if this is the primary image
-                if ($is_primary) {
-                    $update_sql = "UPDATE products SET product_image = ? WHERE product_id = ?";
-                    $update_result = $this->execute($update_sql, [$image_url, $product_id]);
-                    if ($update_result === false) {
-                        error_log("add_product_image: Warning - Failed to update main product_image field, but image was inserted.");
+                if (!$stmt) {
+                    $error_info = $conn->errorInfo();
+                    error_log("add_product_image: Prepare failed. Error: " . json_encode($error_info));
+                    return ['success' => false, 'message' => 'Database prepare error: ' . ($error_info[2] ?? 'Unknown error')];
+                }
+                
+                $execute_result = $stmt->execute($params);
+                
+                if (!$execute_result) {
+                    $error_info = $stmt->errorInfo();
+                    error_log("add_product_image: Execute failed. Error: " . json_encode($error_info));
+                    $error_message = $error_info[2] ?? 'Unknown database error';
+                    
+                    // Check for common issues
+                    if (strpos($error_message, 'foreign key') !== false || strpos($error_message, 'Cannot add or update') !== false) {
+                        return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
+                    } elseif (strpos($error_message, 'Duplicate entry') !== false) {
+                        return ['success' => false, 'message' => 'Image already exists for this product.'];
+                    } else {
+                        return ['success' => false, 'message' => 'Database error: ' . $error_message];
                     }
                 }
                 
-                return ['success' => true, 'message' => 'Product image added successfully.', 'image_id' => $image_id];
-            } else {
-                // Insert failed - check for specific error
-                error_log("add_product_image: Insert failed - lastInsertId is 0, rowCount: $row_count");
+                // Check if insert was successful using lastInsertId
+                $image_id = $conn->lastInsertId();
+                $row_count = $stmt->rowCount();
                 
-                // Try to get more detailed error info
-                $conn = $this->getConnection();
-                if ($conn) {
-                    $error_info = $conn->errorInfo();
-                    error_log("add_product_image: PDO error info: " . json_encode($error_info));
+                error_log("add_product_image: Insert result - rowCount: $row_count, lastInsertId: $image_id");
+                
+                if ($image_id > 0) {
+                    // Insert was successful
+                    error_log("add_product_image: Image inserted successfully. Image ID: $image_id");
+                    
+                    // Also update the main product_image field if this is the primary image
+                    if ($is_primary) {
+                        $update_sql = "UPDATE products SET product_image = ? WHERE product_id = ?";
+                        $update_result = $this->execute($update_sql, [$image_url, $product_id]);
+                        if ($update_result === false) {
+                            error_log("add_product_image: Warning - Failed to update main product_image field, but image was inserted.");
+                        }
+                    }
+                    
+                    return ['success' => true, 'message' => 'Product image added successfully.', 'image_id' => $image_id];
+                } else {
+                    // Insert failed - no ID returned
+                    error_log("add_product_image: Insert failed - lastInsertId is 0, rowCount: $row_count");
+                    error_log("add_product_image: This usually means the INSERT didn't execute or product_id doesn't exist");
+                    
+                    // Verify product exists
+                    $product_check = $this->get_product_by_id($product_id);
+                    if (!$product_check) {
+                        error_log("add_product_image: Product ID $product_id does not exist in database");
+                        return ['success' => false, 'message' => 'Product not found. Product ID: ' . $product_id];
+                    }
+                    
+                    return ['success' => false, 'message' => 'Failed to add product image. Insert executed but no ID returned. Check database constraints.'];
                 }
                 
-                return ['success' => false, 'message' => 'Failed to add product image. No rows were inserted.'];
+            } catch (PDOException $e) {
+                error_log("add_product_image: PDOException caught: " . $e->getMessage());
+                error_log("add_product_image: Exception code: " . $e->getCode());
+                error_log("add_product_image: Exception trace: " . $e->getTraceAsString());
+                
+                $error_message = $e->getMessage();
+                if (strpos($error_message, 'foreign key') !== false) {
+                    return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
+                } elseif (strpos($error_message, 'Duplicate entry') !== false) {
+                    return ['success' => false, 'message' => 'Image already exists for this product.'];
+                } else {
+                    return ['success' => false, 'message' => 'Database error: ' . $error_message];
+                }
             }
             
         } catch (Exception $e) {

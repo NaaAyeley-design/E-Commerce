@@ -112,16 +112,38 @@ class brand_class extends db_class {
      * @return array Array of brands or empty array if none found.
      */
     public function get_brands_by_user($user_id, $limit = 50, $offset = 0) {
-        $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
-                       b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
-                       c.cat_name
-                FROM brands b
-                LEFT JOIN categories c ON b.cat_id = c.cat_id
-                WHERE b.user_id = ? 
-                ORDER BY b.brand_name ASC 
-                LIMIT ? OFFSET ?";
-        
-        return $this->fetchAll($sql, [$user_id, $limit, $offset]);
+        try {
+            $conn = $this->getConnection();
+            if (!$conn) {
+                error_log("get_brands_by_user: No database connection available");
+                return [];
+            }
+            
+            $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                           b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                           c.cat_name
+                    FROM brands b
+                    LEFT JOIN categories c ON b.cat_id = c.cat_id
+                    WHERE b.user_id = ? 
+                    ORDER BY b.brand_name ASC 
+                    LIMIT ? OFFSET ?";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bindValue(1, (int)$user_id, PDO::PARAM_INT);
+            $stmt->bindValue(2, (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(3, (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $result ? $result : [];
+            
+        } catch (PDOException $e) {
+            error_log("get_brands_by_user PDO error: " . $e->getMessage());
+            return [];
+        } catch (Exception $e) {
+            error_log("get_brands_by_user error: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -162,16 +184,32 @@ class brand_class extends db_class {
                 error_log("Error checking user role in get_brands_by_category: " . $e->getMessage());
             }
             
-            // Show only brands created by the logged-in user (for both admin and regular users)
+            // For admin users, show all brands in the category
+            // For regular users, show only brands created by them
             // Include cat_id and cat_name for proper frontend display
-            $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
-                           b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
-                           c.cat_name
-                    FROM brands b
-                    LEFT JOIN categories c ON b.cat_id = c.cat_id
-                    WHERE b.user_id = ? AND b.cat_id = ?
-                    ORDER BY b.brand_name ASC";
-            $params = [$user_id, $cat_id];
+            if ($is_admin) {
+                // Admin: show all brands in the category
+                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                               c.cat_name,
+                               u.customer_name as creator_name
+                        FROM brands b
+                        LEFT JOIN categories c ON b.cat_id = c.cat_id
+                        LEFT JOIN customer u ON b.user_id = u.customer_id
+                        WHERE b.cat_id = ?
+                        ORDER BY b.brand_name ASC";
+                $params = [$cat_id];
+            } else {
+                // Regular user: show only their brands
+                $sql = "SELECT b.brand_id, b.brand_name, b.brand_description, b.brand_logo, 
+                               b.cat_id, b.user_id, b.is_active, b.created_at, b.updated_at,
+                               c.cat_name
+                        FROM brands b
+                        LEFT JOIN categories c ON b.cat_id = c.cat_id
+                        WHERE b.user_id = ? AND b.cat_id = ?
+                        ORDER BY b.brand_name ASC";
+                $params = [$user_id, $cat_id];
+            }
             
             error_log("get_brands_by_category - SQL: " . $sql);
             error_log("get_brands_by_category - Params: " . print_r($params, true));
