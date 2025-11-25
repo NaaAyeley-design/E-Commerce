@@ -170,8 +170,20 @@ function paystack_api_request($method, $url, $data = null) {
     // Decode response
     $result = json_decode($response, true);
     
-    // Log for debugging (only in development)
-    if (APP_ENV === 'development') {
+    // Check if JSON decode failed
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("Paystack API Error: Failed to decode JSON response. Error: " . json_last_error_msg());
+        error_log("Raw response: " . substr($response, 0, 500));
+        return [
+            'status' => false,
+            'message' => 'Invalid response from payment gateway'
+        ];
+    }
+    
+    // Always log errors, and log full response in development
+    if ($http_code !== 200 || (isset($result['status']) && $result['status'] === false)) {
+        error_log("Paystack API Error (HTTP $http_code): " . json_encode($result));
+    } elseif (APP_ENV === 'development') {
         error_log("Paystack API Response (HTTP $http_code): " . json_encode($result));
     }
     

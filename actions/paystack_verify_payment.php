@@ -73,17 +73,38 @@ try {
     }
     
     // Check if verification was successful
+    // Paystack returns status: true when verification is successful
     if (!isset($verification_response['status']) || $verification_response['status'] !== true) {
         $error_msg = $verification_response['message'] ?? 'Payment verification failed';
-        error_log("ERROR: Payment verification failed - $error_msg");
-        error_log("Response data: " . json_encode($verification_response));
+        
+        // Provide more specific error messages
+        if (isset($verification_response['message'])) {
+            if (strpos(strtolower($verification_response['message']), 'not found') !== false || 
+                strpos(strtolower($verification_response['message']), 'invalid') !== false) {
+                $error_msg = 'Transaction reference not found. The payment may not have been completed.';
+            } elseif (strpos(strtolower($verification_response['message']), 'key') !== false) {
+                $error_msg = 'Payment gateway configuration error. Please contact support.';
+            }
+        }
+        
+        error_log("ERROR: Payment verification failed");
+        error_log("Reference: $reference");
+        error_log("Error message: $error_msg");
+        error_log("Full response: " . json_encode($verification_response, JSON_PRETTY_PRINT));
         
         ob_clean();
         echo json_encode([
             'status' => 'error',
             'message' => $error_msg,
             'verified' => false,
-            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? $verification_response : null
+            'reference' => $reference,
+            'paystack_response' => $verification_response,
+            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? [
+                'reference' => $reference,
+                'full_response' => $verification_response,
+                'response_status' => $verification_response['status'] ?? 'not set',
+                'response_message' => $verification_response['message'] ?? 'not set'
+            ] : null
         ]);
         ob_end_flush();
         exit;
