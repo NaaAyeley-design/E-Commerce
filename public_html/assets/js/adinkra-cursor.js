@@ -64,6 +64,65 @@ const CURSOR_COLORS = {
   dark: '#6B4423'        // Earth Brown
 };
 
+// Color schemes for different element types
+const SYMBOL_COLORS = {
+  button: {
+    primary: 'rgba(255, 154, 86, 0.9)',   // Amber
+    secondary: 'rgba(183, 65, 14, 0.7)',   // Rust
+    hueRotate: '0deg',
+    brightness: '0.8'
+  },
+  link: {
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust/Red
+    secondary: 'rgba(255, 154, 86, 0.7)',  // Amber
+    hueRotate: '-20deg',
+    brightness: '0.8'
+  },
+  card: {
+    primary: 'rgba(107, 68, 35, 0.9)',     // Brown
+    secondary: 'rgba(139, 90, 43, 0.7)',   // Light brown
+    hueRotate: '-30deg',
+    brightness: '0.7'
+  },
+  input: {
+    primary: 'rgba(100, 150, 200, 0.9)',   // Blue
+    secondary: 'rgba(70, 120, 180, 0.7)',  // Dark blue
+    hueRotate: '180deg',
+    brightness: '0.85'
+  },
+  product: {
+    primary: 'rgba(76, 175, 80, 0.9)',     // Green
+    secondary: 'rgba(56, 142, 60, 0.7)',   // Dark green
+    hueRotate: '100deg',
+    brightness: '0.8'
+  },
+  default: {
+    primary: 'rgba(255, 154, 86, 0.9)',   // Amber (default)
+    secondary: 'rgba(183, 65, 14, 0.7)',   // Rust
+    hueRotate: '0deg',
+    brightness: '0.8'
+  }
+};
+
+// Function to get color scheme based on element type
+function getElementColor(element) {
+  // Determine element type
+  if (element.matches('button, .btn, [type="button"], [type="submit"]')) {
+    return SYMBOL_COLORS.button;
+  } else if (element.matches('a, .link')) {
+    return SYMBOL_COLORS.link;
+  } else if (element.matches('.card, .product-card, .heritage-card, .warm-card, .feature-card, .testimonial-card, .designer-card, .recommendation-card, .education-card, .action-card, .brand-card')) {
+    return SYMBOL_COLORS.card;
+  } else if (element.matches('input, textarea, select, [type="text"], [type="email"], [type="password"], [type="search"]')) {
+    return SYMBOL_COLORS.input;
+  } else if (element.matches('.product-item, [data-product], .product, .product-card')) {
+    return SYMBOL_COLORS.product;
+  }
+  
+  // Default to button colors
+  return SYMBOL_COLORS.default;
+}
+
 // Initialize cursor elements
 function initAdinkraCursor() {
   // Disable ONLY on actual mobile devices (not touch-capable desktops)
@@ -110,7 +169,45 @@ function initAdinkraCursor() {
   }
   
   style.textContent = `
-    /* Normal system cursor is restored - no cursor: none rules */
+    /* Hide system cursor ONLY on interactive elements */
+    a, 
+    button, 
+    input, 
+    textarea, 
+    select, 
+    [role="button"],
+    [onclick],
+    .btn, 
+    .card,
+    .sidebar-link,
+    .top-navbar-link,
+    .footer-link,
+    .social-link,
+    .product-card,
+    .product-item,
+    .warm-card,
+    .heritage-card,
+    .impact-card,
+    .feature-card,
+    .testimonial-card,
+    .designer-card,
+    .recommendation-card,
+    .education-card,
+    .action-card,
+    .quick-stat,
+    .brand-card {
+      cursor: none !important;
+    }
+
+    /* Keep normal cursor everywhere else */
+    body {
+      cursor: auto !important;
+    }
+
+    * {
+      /* Allow elements to have their normal cursors */
+      cursor: inherit;
+    }
 
     .custom-cursor {
       position: fixed !important;
@@ -154,8 +251,8 @@ function initAdinkraCursor() {
 
     .adinkra-cursor {
       position: fixed !important;
-      width: 45px !important;
-      height: 45px !important;
+      width: 50px !important;
+      height: 50px !important;
       pointer-events: none !important;
       z-index: 100000 !important;
       transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
@@ -173,36 +270,19 @@ function initAdinkraCursor() {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
-      /* Apply brown/rust color to symbols with glow effects */
+      /* Default brown/rust color - will be overridden by JavaScript for different elements */
       filter: 
-        /* Color transformation to brown/rust */
         brightness(0.8)
         sepia(100%)
         saturate(300%)
-        hue-rotate(-10deg)
-        /* Add brown/rust glow effects */
-        drop-shadow(0 2px 12px rgba(107, 68, 35, 0.9))
+        hue-rotate(0deg)
+        drop-shadow(0 2px 12px rgba(255, 154, 86, 0.9))
         drop-shadow(0 0 20px rgba(183, 65, 14, 0.7))
         drop-shadow(0 0 30px rgba(255, 154, 86, 0.5)) !important;
-      /* Smooth transitions for all effects */
-      transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+      /* Smooth transitions for color changes */
+      transition: filter 0.3s ease-in-out !important;
       /* Ensure image is centered */
       display: block !important;
-    }
-
-    /* Enhanced brown glow when active/hovering */
-    .adinkra-cursor.active img,
-    .adinkra-cursor.active .adinkra-img {
-      filter: 
-        /* Stronger brown color */
-        brightness(0.7)
-        sepia(100%)
-        saturate(350%)
-        hue-rotate(-10deg)
-        /* Enhanced brown/rust glow */
-        drop-shadow(0 4px 16px rgba(107, 68, 35, 1))
-        drop-shadow(0 0 30px rgba(183, 65, 14, 0.9))
-        drop-shadow(0 0 40px rgba(255, 154, 86, 0.7)) !important;
     }
 
     .adinkra-cursor.active {
@@ -211,6 +291,8 @@ function initAdinkraCursor() {
       display: block !important;
       visibility: visible !important;
       animation: adinkra-rotate 0.4s ease-out !important;
+      /* Make symbol more prominent since it's replacing the cursor */
+      filter: drop-shadow(0 0 25px rgba(255, 154, 86, 0.6)) !important;
     }
     
     /* Ensure cursor is visible when hovering interactive elements */
@@ -542,7 +624,10 @@ function setupAdinkraCursor() {
     const isInteractive = target.matches(interactiveSelectors) || target.closest(interactiveSelectors);
     
     if (isInteractive && !adinkraCursor.classList.contains('active')) {
-      console.log('Hover detected on interactive element:', target.tagName, target.className);
+      const element = target.closest(interactiveSelectors) || target;
+      const colors = getElementColor(element);
+      
+      console.log('Hover detected on interactive element:', target.tagName, target.className, 'Color scheme:', colors);
       
       adinkraCursor.classList.add('active');
       cursor.classList.add('hover');
@@ -555,6 +640,17 @@ function setupAdinkraCursor() {
         const newSrc = ADINKRA_SYMBOLS[currentSymbolIndex];
         console.log('Changing to symbol:', currentSymbolIndex, 'Path:', newSrc);
         adinkraImg.src = newSrc;
+        
+        // Apply dynamic color filter based on element type
+        adinkraImg.style.filter = `
+          brightness(${colors.brightness})
+          sepia(100%)
+          saturate(300%)
+          hue-rotate(${colors.hueRotate})
+          drop-shadow(0 2px 12px ${colors.primary})
+          drop-shadow(0 0 20px ${colors.secondary})
+          drop-shadow(0 0 30px ${colors.primary})
+        `;
         
         // Add error handler for debugging
         adinkraImg.onerror = function() {
@@ -580,6 +676,24 @@ function setupAdinkraCursor() {
       cursor.style.opacity = '0';
       cursorRing.style.display = 'none';
       cursorRing.style.opacity = '0';
+    } else if (isInteractive && adinkraCursor.classList.contains('active')) {
+      // Element type might have changed, update color
+      const element = target.closest(interactiveSelectors) || target;
+      const colors = getElementColor(element);
+      const adinkraImg = adinkraCursor.querySelector('.adinkra-img');
+      
+      if (adinkraImg) {
+        // Update color if hovering different element type
+        adinkraImg.style.filter = `
+          brightness(${colors.brightness})
+          sepia(100%)
+          saturate(300%)
+          hue-rotate(${colors.hueRotate})
+          drop-shadow(0 2px 12px ${colors.primary})
+          drop-shadow(0 0 20px ${colors.secondary})
+          drop-shadow(0 0 30px ${colors.primary})
+        `;
+      }
     }
   }
 
@@ -605,6 +719,12 @@ function setupAdinkraCursor() {
       cursor.style.opacity = '0';
       cursorRing.style.display = 'none';
       cursorRing.style.opacity = '0';
+      
+      // Reset color filter to default
+      const adinkraImg = adinkraCursor.querySelector('.adinkra-img');
+      if (adinkraImg) {
+        adinkraImg.style.filter = ''; // Clear inline styles, use CSS default
+      }
       
       // Hide adinkra cursor
       adinkraCursor.style.opacity = '0';
