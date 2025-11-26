@@ -78,8 +78,8 @@ function initAdinkraCursor() {
       transform: translate(-50%, -50%) !important;
       box-shadow: 0 0 20px ${CURSOR_COLORS.primary}, 0 0 40px rgba(255, 154, 86, 0.5) !important;
       opacity: 1 !important;
-      left: 50% !important;
-      top: 50% !important;
+      left: 0;
+      top: 0;
       display: block !important;
       visibility: visible !important;
       margin: 0 !important;
@@ -98,8 +98,8 @@ function initAdinkraCursor() {
       transform: translate(-50%, -50%) !important;
       box-shadow: 0 0 15px rgba(183, 65, 14, 0.5), 0 0 30px rgba(183, 65, 14, 0.3) !important;
       opacity: 1 !important;
-      left: 50% !important;
-      top: 50% !important;
+      left: 0;
+      top: 0;
       display: block !important;
       visibility: visible !important;
       margin: 0 !important;
@@ -117,8 +117,8 @@ function initAdinkraCursor() {
       color: ${CURSOR_COLORS.secondary} !important;
       filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.5)) !important;
       text-shadow: 0 0 10px ${CURSOR_COLORS.primary} !important;
-      left: 50% !important;
-      top: 50% !important;
+      left: 0;
+      top: 0;
       display: block !important;
       margin: 0 !important;
       padding: 0 !important;

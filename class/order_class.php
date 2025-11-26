@@ -61,10 +61,28 @@ class order_class extends db_class {
                 error_log("Execute returned false for order creation");
                 error_log("SQL: " . $sql);
                 error_log("Params: " . json_encode($params));
-                // Check if connection exists
-                if (!$this->conn) {
-                    error_log("Database connection is null");
+                
+                // Get detailed error information
+                $conn = $this->getConnection();
+                if ($conn) {
+                    $error_info = $conn->errorInfo();
+                    error_log("PDO Error Info: " . json_encode($error_info));
+                    
+                    // Check for specific error codes
+                    if (isset($error_info[1])) {
+                        $error_code = $error_info[1];
+                        if ($error_code == 1452) {
+                            error_log("FOREIGN KEY CONSTRAINT ERROR: Customer ID $customer_id does not exist in customer table");
+                        } elseif ($error_code == 1146) {
+                            error_log("TABLE NOT FOUND ERROR: Orders table does not exist");
+                        } elseif ($error_code == 1054) {
+                            error_log("COLUMN NOT FOUND ERROR: One or more columns don't exist in orders table");
+                        }
+                    }
+                } else {
+                    error_log("Database connection is null - cannot get error details");
                 }
+                
                 return false;
             }
             

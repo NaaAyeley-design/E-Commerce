@@ -453,14 +453,72 @@ try {
     log_diagnostic("Order parameters", [
         'customer_id' => $customer_id,
         'total_amount' => $total_amount,
-        'shipping_address' => $shipping_address
+        'shipping_address' => $shipping_address,
+        'customer_id_type' => gettype($customer_id),
+        'total_amount_type' => gettype($total_amount),
+        'shipping_address_length' => strlen($shipping_address)
     ]);
     
-    $order_id = $order->create_order($customer_id, $total_amount, $shipping_address, 'pending');
+    // Verify customer exists before creating order
+    log_diagnostic("Verifying customer exists...");
+    $customer_check = $user->get_customer_by_id($customer_id);
+    if (!$customer_check) {
+        log_diagnostic("✗ Customer not found in database", ['customer_id' => $customer_id]);
+        throw new Exception("Customer not found. Customer ID: " . $customer_id);
+    }
+    log_diagnostic("✓ Customer verified", ['customer_name' => $customer_check['customer_name'] ?? 'N/A']);
     
-    if (!$order_id || $order_id <= 0) {
-        log_diagnostic("✗ Order creation failed", $order_id);
-        throw new Exception("Failed to create order. Returned: " . var_export($order_id, true));
+    // Check if orders table exists
+    log_diagnostic("Checking if orders table exists...");
+    try {
+        $table_check = $order->fetchRow("SHOW TABLES LIKE 'orders'");
+        if (!$table_check) {
+            log_diagnostic("✗ Orders table does not exist");
+            throw new Exception("Orders table does not exist. Please run database migrations.");
+        }
+        log_diagnostic("✓ Orders table exists");
+        
+        // Check table structure
+        $columns = $order->fetchAll("DESCRIBE orders");
+        log_diagnostic("Orders table columns", array_column($columns, 'Field'));
+    } catch (Exception $e) {
+        log_diagnostic("✗ Table check failed: " . $e->getMessage());
+        throw $e;
+    }
+    
+    // Try to create order with detailed error catching
+    try {
+        $order_id = $order->create_order($customer_id, $total_amount, $shipping_address, 'pending');
+        
+        if (!$order_id || $order_id <= 0) {
+            log_diagnostic("✗ Order creation failed", ['returned' => $order_id]);
+            
+            // Try to get more details about why it failed
+            // Check if there's a PDO error
+            $conn = $order->getConnection();
+            if ($conn) {
+                $error_info = $conn->errorInfo();
+                log_diagnostic("PDO error info", $error_info);
+            }
+            
+            // Check last error
+            $last_error = error_get_last();
+            if ($last_error) {
+                log_diagnostic("Last PHP error", $last_error);
+            }
+            
+            throw new Exception("Failed to create order. Returned: " . var_export($order_id, true) . ". Check PHP error logs for PDO details.");
+        }
+    } catch (PDOException $e) {
+        log_diagnostic("✗ PDO Exception during order creation", [
+            'message' => $e->getMessage(),
+            'code' => $e->getCode(),
+            'sql_state' => $e->getCode()
+        ]);
+        throw new Exception("Database error creating order: " . $e->getMessage());
+    } catch (Exception $e) {
+        log_diagnostic("✗ Exception during order creation", ['message' => $e->getMessage()]);
+        throw $e;
     }
     
     $diagnostic['order_created'] = true;
