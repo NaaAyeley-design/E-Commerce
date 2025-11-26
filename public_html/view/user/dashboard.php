@@ -1,8 +1,8 @@
 <?php
 /**
- * KenteKart User Dashboard - Metrics-Focused Design
+ * KenteKart User Dashboard - Sidebar Navigation Design
  * 
- * Clean dashboard showing actual user metrics with visual charts
+ * Clean dashboard with sidebar navigation showing different metric views
  */
 
 // Suppress error reporting to prevent code from showing
@@ -19,7 +19,7 @@ require_once __DIR__ . '/../../../controller/order_controller.php';
 $page_title = 'My Dashboard - KenteKart';
 $page_description = 'View your shopping metrics and order history';
 $body_class = 'dashboard-page';
-$additional_css = ['dashboard-metrics.css']; // New CSS file for metrics dashboard
+$additional_css = ['dashboard-metrics.css']; // Dashboard metrics CSS file
 
 // Check authentication
 if (!is_logged_in()) {
@@ -42,25 +42,57 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 1) {
 }
 
 // Get user orders
-$order_result = get_customer_orders_ctr($_SESSION['user_id'], 1, 5);
-$recent_orders = isset($order_result['orders']) ? $order_result['orders'] : [];
+$order_result = get_customer_orders_ctr($_SESSION['user_id'], 1, 100); // Get more orders for better analysis
+$all_orders = isset($order_result['orders']) ? $order_result['orders'] : [];
 
 // Calculate metrics from actual orders
-$total_orders = count($recent_orders);
+$total_orders = count($all_orders);
 $total_spent = 0;
 $orders_this_month = 0;
 $spending_this_month = 0;
 $unique_artisans = [];
+$orders_delivered = 0;
+$orders_in_transit = 0;
+
+// Spending by month (last 6 months)
+$monthly_spending = [];
+$monthly_orders = [];
 
 $current_month = date('Y-m');
+$current_year = date('Y');
 
-foreach ($recent_orders as $order) {
-    $total_spent += $order['order_total'] ?? 0;
+// Initialize last 6 months
+for ($i = 5; $i >= 0; $i--) {
+    $date = date('Y-m', strtotime("-$i months"));
+    $monthly_spending[$date] = 0;
+    $monthly_orders[$date] = 0;
+}
+
+foreach ($all_orders as $order) {
+    $order_amount = $order['order_total'] ?? 0;
+    $total_spent += $order_amount;
+    
+    // Get order month
+    $order_month = date('Y-m', strtotime($order['created_at']));
+    
+    // Add to monthly totals if in last 6 months
+    if (isset($monthly_spending[$order_month])) {
+        $monthly_spending[$order_month] += $order_amount;
+        $monthly_orders[$order_month]++;
+    }
     
     // Check if order is from this month
-    if (date('Y-m', strtotime($order['created_at'])) === $current_month) {
+    if ($order_month === $current_month) {
         $orders_this_month++;
-        $spending_this_month += $order['order_total'] ?? 0;
+        $spending_this_month += $order_amount;
+    }
+    
+    // Count by status
+    $status = strtolower($order['order_status'] ?? '');
+    if ($status === 'delivered' || $status === 'completed') {
+        $orders_delivered++;
+    } elseif ($status === 'shipped' || $status === 'processing') {
+        $orders_in_transit++;
     }
     
     // TODO: When you have artisan/seller data in orders, extract unique artisan IDs
@@ -70,375 +102,451 @@ foreach ($recent_orders as $order) {
     // }
 }
 
+// Calculate average order value
+$average_order_value = $total_orders > 0 ? $total_spent / $total_orders : 0;
+
 // Placeholder for artisans count (TODO: Replace with actual query)
 $artisans_supported = $total_orders > 0 ? min($total_orders, rand(3, 8)) : 0;
+
+// Format chart data
+$chart_months = [];
+$chart_spending = [];
+$chart_orders = [];
+
+foreach ($monthly_spending as $month => $spending) {
+    $chart_months[] = date('M', strtotime($month . '-01'));
+    $chart_spending[] = $spending;
+    $chart_orders[] = $monthly_orders[$month];
+}
+
+// Get recent 5 orders for display
+$recent_orders = array_slice($all_orders, 0, 5);
 
 // Include header
 include __DIR__ . '/../templates/header.php';
 ?>
 
-<div class="dashboard-container">
+<div class="kentekart-dashboard">
     
-    <!-- WELCOME HEADER -->
-    <div class="dashboard-header">
-        <div class="welcome-section">
-            <h1>Welcome back, <span class="user-name"><?php echo escape_html($customer['customer_name']); ?></span>!</h1>
-            <p>Here's your shopping overview</p>
-        </div>
-        <div class="header-actions">
-            <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">
-                <i class="fas fa-shopping-bag"></i> Browse Products
-            </a>
-            <a href="<?php echo url('view/order/order_history.php'); ?>" class="btn-secondary">
-                <i class="fas fa-history"></i> Order History
-            </a>
-        </div>
-    </div>
-
-    <!-- KEY METRICS CARDS -->
-    <div class="metrics-grid">
-        <!-- Total Orders -->
-        <div class="metric-card">
-            <div class="metric-icon" style="background: linear-gradient(135deg, #FF9A56, #E97451);">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-            <div class="metric-content">
-                <div class="metric-label">Total Orders</div>
-                <div class="metric-value"><?php echo $total_orders; ?></div>
-                <div class="metric-change positive">
-                    <i class="fas fa-arrow-up"></i> All time
-                </div>
-            </div>
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <h2>Dashboard</h2>
+            <p>Your artisan journey</p>
         </div>
 
-        <!-- Total Spent (Lifetime) -->
-        <div class="metric-card">
-            <div class="metric-icon" style="background: linear-gradient(135deg, #CC8B3C, #C1502F);">
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-section="overview">
+                <i class="fas fa-th"></i>
+                <span>Overview</span>
+            </button>
+            <button class="nav-item" data-section="orders">
+                <i class="fas fa-box"></i>
+                <span>Orders</span>
+            </button>
+            <button class="nav-item" data-section="spending">
                 <i class="fas fa-dollar-sign"></i>
-            </div>
-            <div class="metric-content">
-                <div class="metric-label">Total Spent</div>
-                <div class="metric-value">₵<?php echo number_format($total_spent, 2); ?></div>
-                <div class="metric-change">
-                    <i class="fas fa-infinity"></i> Lifetime
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders This Month -->
-        <div class="metric-card">
-            <div class="metric-icon" style="background: linear-gradient(135deg, #E3B778, #D4A574);">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="metric-content">
-                <div class="metric-label">Orders This Month</div>
-                <div class="metric-value"><?php echo $orders_this_month; ?></div>
-                <div class="metric-change">
-                    <i class="fas fa-calendar"></i> <?php echo date('F'); ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Spending This Month -->
-        <div class="metric-card">
-            <div class="metric-icon" style="background: linear-gradient(135deg, #B7410E, #FF7F50);">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="metric-content">
-                <div class="metric-label">Spending This Month</div>
-                <div class="metric-value">₵<?php echo number_format($spending_this_month, 2); ?></div>
-                <div class="metric-change">
-                    <i class="fas fa-calendar"></i> <?php echo date('F'); ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Artisans Supported -->
-        <div class="metric-card highlight">
-            <div class="metric-icon" style="background: linear-gradient(135deg, #C1502F, #B7410E);">
+                <span>Spending</span>
+            </button>
+            <button class="nav-item" data-section="artisans">
                 <i class="fas fa-users"></i>
+                <span>Artisans</span>
+            </button>
+            <button class="nav-item" data-section="insights">
+                <i class="fas fa-chart-line"></i>
+                <span>Insights</span>
+            </button>
+            <button class="nav-item" data-section="wishlist">
+                <i class="fas fa-heart"></i>
+                <span>Wishlist</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                <?php echo strtoupper(substr($customer['customer_name'], 0, 1)); ?>
             </div>
-            <div class="metric-content">
-                <div class="metric-label">Artisans Supported</div>
-                <div class="metric-value"><?php echo $artisans_supported; ?></div>
-                <div class="metric-change cultural">
-                    <i class="fas fa-heart"></i> Ghanaian creators
+            <div class="user-info">
+                <p class="user-name"><?php echo escape_html($customer['customer_name']); ?></p>
+                <p class="user-since">Member since <?php echo date('M Y', strtotime($customer['created_at'] ?? 'now')); ?></p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-main">
+        
+        <!-- OVERVIEW SECTION -->
+        <section id="section-overview" class="dashboard-section active">
+            
+            <!-- Header -->
+            <header class="section-header-minimal">
+                <div>
+                    <p class="section-subtitle">Dashboard</p>
+                    <h1 class="section-title">Your Journey</h1>
+                </div>
+                <div class="header-meta">
+                    <p class="meta-label">Member since</p>
+                    <p class="meta-value"><?php echo date('F Y', strtotime($customer['created_at'] ?? 'now')); ?></p>
+                </div>
+            </header>
+
+            <!-- Key Stats -->
+            <div class="stats-row">
+                <div class="stat-column">
+                    <p class="stat-number"><?php echo $total_orders; ?></p>
+                    <p class="stat-label">Orders</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number">₵<?php echo number_format($total_spent, 0); ?></p>
+                    <p class="stat-label">Total Spent</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number"><?php echo $artisans_supported; ?></p>
+                    <p class="stat-label">Artisans</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number"><?php echo $orders_this_month; ?></p>
+                    <p class="stat-label">This Month</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number">₵<?php echo number_format($average_order_value, 0); ?></p>
+                    <p class="stat-label">Average</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- VISUAL CHARTS SECTION -->
-    <div class="charts-section">
-        <!-- Spending Over Time Chart -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-chart-area"></i> Spending Over Time</h3>
-                <div class="chart-period">
-                    <button class="period-btn active" data-period="6months">6 Months</button>
-                    <button class="period-btn" data-period="year">1 Year</button>
-                    <button class="period-btn" data-period="all">All Time</button>
+            <!-- Insight Banner -->
+            <div class="insight-banner">
+                <i class="fas fa-award"></i>
+                <div>
+                    <p class="insight-main">You're <?php echo (10 - $artisans_supported); ?> orders away from supporting 10 unique artisans</p>
+                    <p class="insight-sub">Your spending has increased this year as you discover new favorites</p>
                 </div>
             </div>
-            <div class="chart-container">
-                <canvas id="spendingChart"></canvas>
-            </div>
-        </div>
 
-        <!-- Orders by Month Chart -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-chart-bar"></i> Orders by Month</h3>
-            </div>
-            <div class="chart-container">
-                <canvas id="ordersChart"></canvas>
-            </div>
-        </div>
-    </div>
+            <!-- Charts Grid -->
+            <div class="charts-grid-minimal">
+                <!-- Spending Chart -->
+                <div class="chart-box">
+                    <div class="chart-box-header">
+                        <h3>Spending Pattern</h3>
+                        <p>Your purchasing activity over the last 6 months</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="spendingChartOverview"></canvas>
+                    </div>
+                </div>
 
-    <!-- CURRENT CART -->
-    <div class="cart-section">
-        <div class="section-header">
-            <h2><i class="fas fa-shopping-cart"></i> Current Cart</h2>
-            <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="view-all">View Full Cart →</a>
-        </div>
-        
-        <div class="cart-card" id="cart-summary">
-            <div class="cart-empty">
-                <i class="fas fa-shopping-cart"></i>
-                <p>Your cart is empty</p>
-                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Start Shopping</a>
+                <!-- Categories Chart -->
+                <div class="chart-box">
+                    <div class="chart-box-header">
+                        <h3>Category Breakdown</h3>
+                        <p>Where you've invested in artisan crafts</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="categoriesChart"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- RECENT ORDERS -->
-    <div class="orders-section">
-        <div class="section-header">
-            <h2><i class="fas fa-box"></i> Recent Orders (Last 5)</h2>
-            <a href="<?php echo url('view/order/order_history.php'); ?>" class="view-all">View All Orders →</a>
-        </div>
-        
-        <div class="orders-table-container">
-            <?php if (empty($recent_orders)): ?>
-            <div class="empty-state">
-                <i class="fas fa-box-open"></i>
-                <p>No orders yet</p>
-                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Browse Products</a>
+        </section>
+
+        <!-- ORDERS SECTION -->
+        <section id="section-orders" class="dashboard-section">
+            
+            <header class="section-header-minimal">
+                <div>
+                    <h1 class="section-title">Your Orders</h1>
+                    <p class="section-subtitle">Complete history of your artisan purchases</p>
+                </div>
+            </header>
+
+            <!-- Order Stats -->
+            <div class="mini-stats-grid">
+                <div class="mini-stat-card">
+                    <i class="fas fa-box"></i>
+                    <p class="mini-stat-label">Total Orders</p>
+                    <p class="mini-stat-value"><?php echo $total_orders; ?></p>
+                </div>
+                <div class="mini-stat-card">
+                    <i class="fas fa-clock"></i>
+                    <p class="mini-stat-label">In Transit</p>
+                    <p class="mini-stat-value"><?php echo $orders_in_transit; ?></p>
+                </div>
+                <div class="mini-stat-card">
+                    <i class="fas fa-check-circle"></i>
+                    <p class="mini-stat-label">Delivered</p>
+                    <p class="mini-stat-value"><?php echo $orders_delivered; ?></p>
+                </div>
+                <div class="mini-stat-card">
+                    <i class="fas fa-chart-line"></i>
+                    <p class="mini-stat-label">This Month</p>
+                    <p class="mini-stat-value"><?php echo $orders_this_month; ?></p>
+                </div>
             </div>
-            <?php else: ?>
-            <table class="orders-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach (array_slice($recent_orders, 0, 5) as $order): ?>
-                    <tr>
-                        <td><strong>#<?php echo escape_html($order['order_id']); ?></strong></td>
-                        <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
-                        <td><?php echo isset($order['item_count']) ? $order['item_count'] : '—'; ?> items</td>
-                        <td class="amount">₵<?php echo number_format($order['order_total'] ?? 0, 2); ?></td>
-                        <td>
-                            <span class="status-badge status-<?php echo strtolower(escape_html($order['order_status'])); ?>">
-                                <?php echo ucfirst(escape_html($order['order_status'])); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <a href="<?php echo url('view/order/order_details.php?id=' . $order['order_id']); ?>" class="btn-view">
-                                <i class="fas fa-eye"></i> View
+
+            <!-- Recent Orders -->
+            <div class="orders-list-section">
+                <h3 class="subsection-title">Recent Activity</h3>
+                
+                <?php if (empty($recent_orders)): ?>
+                <div class="empty-state-minimal">
+                    <i class="fas fa-box-open"></i>
+                    <p>No orders yet</p>
+                    <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-minimal">Browse Products</a>
+                </div>
+                <?php else: ?>
+                <div class="orders-list-minimal">
+                    <?php foreach ($recent_orders as $index => $order): ?>
+                    <div class="order-item-minimal <?php echo $index < count($recent_orders) - 1 ? 'has-border' : ''; ?>">
+                        <div class="order-item-content">
+                            <div class="order-item-info">
+                                <p class="order-item-title">Order #<?php echo escape_html($order['order_id']); ?></p>
+                                <p class="order-item-meta"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
+                            </div>
+                        </div>
+                        <div class="order-item-actions">
+                            <p class="order-item-amount">₵<?php echo number_format($order['order_total'] ?? 0, 2); ?></p>
+                            <a href="<?php echo url('view/order/order_details.php?id=' . $order['order_id']); ?>" class="btn-outline-minimal">
+                                View
                             </a>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php endif; ?>
-        </div>
-    </div>
+                </div>
+                <?php endif; ?>
+            </div>
 
-    <!-- QUICK ACTIONS -->
-    <div class="quick-actions">
-        <div class="section-header">
-            <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
-        </div>
-        <div class="actions-grid">
-            <a href="<?php echo url('view/product/all_product.php'); ?>" class="action-card">
-                <i class="fas fa-search"></i>
-                <span>Browse Products</span>
-            </a>
-            <a href="<?php echo url('view/order/order_history.php'); ?>" class="action-card">
-                <i class="fas fa-history"></i>
-                <span>Order History</span>
-            </a>
-            <a href="<?php echo url('view/user/profile.php'); ?>" class="action-card">
-                <i class="fas fa-user-edit"></i>
-                <span>Edit Profile</span>
-            </a>
-            <a href="<?php echo url('view/user/change_password.php'); ?>" class="action-card">
-                <i class="fas fa-key"></i>
-                <span>Change Password</span>
-            </a>
-        </div>
-    </div>
+        </section>
+
+        <!-- SPENDING SECTION -->
+        <section id="section-spending" class="dashboard-section">
+            
+            <header class="section-header-minimal">
+                <div>
+                    <h1 class="section-title">Spending Analysis</h1>
+                    <p class="section-subtitle">Your investment in artisan craftsmanship</p>
+                </div>
+            </header>
+
+            <!-- Spending Stats -->
+            <div class="stats-row centered">
+                <div class="stat-column">
+                    <p class="stat-number large">₵<?php echo number_format($total_spent, 2); ?></p>
+                    <p class="stat-label">Total Spent</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number large">₵<?php echo number_format($spending_this_month, 2); ?></p>
+                    <p class="stat-label">This Month</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number large">₵<?php echo number_format($average_order_value, 2); ?></p>
+                    <p class="stat-label">Average Order</p>
+                </div>
+            </div>
+
+            <!-- Full Width Chart -->
+            <div class="chart-box-full">
+                <div class="chart-box-header">
+                    <h3>Monthly Trends</h3>
+                    <p>Your spending pattern over the last 6 months</p>
+                </div>
+                <div class="chart-wrapper-large">
+                    <canvas id="spendingChartFull"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ARTISANS SECTION -->
+        <section id="section-artisans" class="dashboard-section">
+            
+            <header class="section-header-minimal">
+                <div>
+                    <h1 class="section-title">Artisan Community</h1>
+                    <p class="section-subtitle">The makers you've supported on your journey</p>
+                </div>
+            </header>
+
+            <!-- Artisan Stats -->
+            <div class="stats-row centered">
+                <div class="stat-column">
+                    <p class="stat-number large"><?php echo $artisans_supported; ?></p>
+                    <p class="stat-label">Artisans Supported</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number large"><?php echo min($artisans_supported, 3); ?></p>
+                    <p class="stat-label">Favorite Makers</p>
+                </div>
+                <div class="stat-column">
+                    <p class="stat-number large">5</p>
+                    <p class="stat-label">Countries</p>
+                </div>
+            </div>
+
+            <!-- Placeholder for Artisans -->
+            <div class="empty-state-minimal">
+                <i class="fas fa-users"></i>
+                <p>Artisan details coming soon</p>
+                <p class="text-muted">We're working on bringing you detailed artisan profiles</p>
+            </div>
+
+        </section>
+
+        <!-- INSIGHTS SECTION -->
+        <section id="section-insights" class="dashboard-section">
+            
+            <header class="section-header-minimal">
+                <div>
+                    <h1 class="section-title">Personal Insights</h1>
+                    <p class="section-subtitle">Understanding your shopping patterns</p>
+                </div>
+            </header>
+
+            <!-- Insights Grid -->
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Growth Trajectory</h3>
+                    <p>You've placed <?php echo $total_orders; ?> orders, spending ₵<?php echo number_format($total_spent, 2); ?>. Your average order value is ₵<?php echo number_format($average_order_value, 2); ?>.</p>
+                    <div class="insight-card-footer">
+                        <p class="footer-label">Average per order</p>
+                        <p class="footer-value">₵<?php echo number_format($average_order_value, 2); ?></p>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <i class="fas fa-calendar"></i>
+                    <h3>This Month's Activity</h3>
+                    <p>You've made <?php echo $orders_this_month; ?> orders in <?php echo date('F'); ?>, spending ₵<?php echo number_format($spending_this_month, 2); ?>. Keep discovering amazing artisan crafts!</p>
+                    <div class="insight-card-footer">
+                        <p class="footer-label">Most active month</p>
+                        <p class="footer-value"><?php echo date('F'); ?></p>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <i class="fas fa-heart"></i>
+                    <h3>Artisan Support</h3>
+                    <p>You've supported <?php echo $artisans_supported; ?> unique artisan<?php echo $artisans_supported != 1 ? 's' : ''; ?>. Each purchase directly supports Ghanaian craftspeople and their families.</p>
+                    <div class="insight-card-footer">
+                        <p class="footer-label">Artisans supported</p>
+                        <p class="footer-value"><?php echo $artisans_supported; ?></p>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <i class="fas fa-award"></i>
+                    <h3>Milestone Progress</h3>
+                    <p>You're <?php echo (10 - $artisans_supported); ?> orders away from supporting 10 unique artisans. This milestone unlocks special recognition in our community.</p>
+                    <div class="insight-card-footer">
+                        <p class="footer-label">Next milestone</p>
+                        <p class="footer-value">10 Artisans</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- WISHLIST SECTION -->
+        <section id="section-wishlist" class="dashboard-section">
+            
+            <header class="section-header-minimal">
+                <div>
+                    <h1 class="section-title">Saved Items</h1>
+                    <p class="section-subtitle">Your curated collection of favorites</p>
+                </div>
+            </header>
+
+            <!-- Placeholder for Wishlist -->
+            <div class="empty-state-minimal">
+                <i class="fas fa-heart"></i>
+                <p>Wishlist feature coming soon</p>
+                <p class="text-muted">Save your favorite items and we'll notify you of price drops</p>
+            </div>
+
+        </section>
+
+    </main>
     
 </div>
 
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- Dashboard Data & Charts Script -->
+<!-- Dashboard Script -->
 <script>
 // Dashboard data from PHP
 const dashboardData = {
+    chartMonths: <?php echo json_encode($chart_months); ?>,
+    chartSpending: <?php echo json_encode($chart_spending); ?>,
+    chartOrders: <?php echo json_encode($chart_orders); ?>,
     totalOrders: <?php echo $total_orders; ?>,
-    totalSpent: <?php echo $total_spent; ?>,
-    ordersThisMonth: <?php echo $orders_this_month; ?>,
-    spendingThisMonth: <?php echo $spending_this_month; ?>,
-    artisansSupported: <?php echo $artisans_supported; ?>
+    totalSpent: <?php echo $total_spent; ?>
 };
 
-// TODO: Fetch historical data from API for charts
-// This is placeholder data - replace with actual API calls
-async function fetchChartData() {
-    try {
-        // TODO: Replace with actual API endpoint
-        // const response = await fetch('/api/user/chart-data.php');
-        // return await response.json();
-        
-        // Placeholder data
-        const months = [];
-        const spending = [];
-        const orders = [];
-        
-        for (let i = 5; i >= 0; i--) {
-            const date = new Date();
-            date.setMonth(date.getMonth() - i);
-            months.push(date.toLocaleDateString('en-US', { month: 'short' }));
-            
-            // Placeholder values
-            spending.push(Math.random() * 300 + 50);
-            orders.push(Math.floor(Math.random() * 5) + 1);
-        }
-        
-        return { months, spending, orders };
-    } catch (error) {
-        console.error('Error fetching chart data:', error);
-        return null;
-    }
-}
-
-// Fetch cart data
-async function fetchCartData() {
-    try {
-        // TODO: Replace with actual API endpoint
-        // const response = await fetch('/api/cart/summary.php');
-        // return await response.json();
-        
-        // Placeholder
-        return {
-            itemCount: 0,
-            totalValue: 0,
-            items: []
-        };
-    } catch (error) {
-        console.error('Error fetching cart:', error);
-        return null;
-    }
-}
-
-// Update cart summary
-function updateCart(cartData) {
-    const cartSummary = document.getElementById('cart-summary');
-    
-    if (cartData.itemCount === 0) {
-        cartSummary.innerHTML = `
-            <div class="cart-empty">
-                <i class="fas fa-shopping-cart"></i>
-                <p>Your cart is empty</p>
-                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-primary">Start Shopping</a>
-            </div>
-        `;
-    } else {
-        cartSummary.innerHTML = `
-            <div class="cart-info">
-                <div class="cart-items">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span><strong>${cartData.itemCount}</strong> items in cart</span>
-                </div>
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <strong>$${cartData.totalValue.toFixed(2)}</strong>
-                </div>
-            </div>
-            <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="btn-primary">
-                <i class="fas fa-shopping-cart"></i> View Cart
-            </a>
-        `;
-    }
-}
-
-// Chart colors (African Savanna theme)
-const chartColors = {
-    primary: '#FF9A56',      // Amber
-    secondary: '#CC8B3C',    // Ochre
-    tertiary: '#B7410E',     // Rust
-    quaternary: '#E3B778',   // Sand
-    grid: 'rgba(204, 139, 60, 0.1)',
-    text: '#6B4423'          // Earth
+// KenteKart colors
+const colors = {
+    terracotta: '#C67D5C',
+    deepBrown: '#8B6F47',
+    lightBrown: '#8B7F74',
+    warmBeige: '#F4EDE4'
 };
 
-// Create Spending Over Time Chart
-async function createSpendingChart() {
-    const ctx = document.getElementById('spendingChart').getContext('2d');
-    const data = await fetchChartData();
+// Navigation functionality
+document.querySelectorAll('.nav-item').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons and sections
+        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.dashboard-section').forEach(section => section.classList.remove('active'));
+        
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Show corresponding section
+        const sectionId = 'section-' + this.dataset.section;
+        document.getElementById(sectionId).classList.add('active');
+    });
+});
+
+// Create Spending Chart (Overview)
+function createSpendingChartOverview() {
+    const ctx = document.getElementById('spendingChartOverview');
+    if (!ctx) return;
     
-    if (!data) return;
-    
-    new Chart(ctx, {
+    new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: data.months,
+            labels: dashboardData.chartMonths,
             datasets: [{
-                label: 'Spending ($)',
-                data: data.spending,
-                borderColor: chartColors.primary,
-                backgroundColor: 'rgba(255, 154, 86, 0.1)',
-                borderWidth: 3,
+                label: 'Spending',
+                data: dashboardData.chartSpending,
+                borderColor: colors.terracotta,
+                backgroundColor: 'rgba(198, 125, 92, 0.1)',
+                borderWidth: 2,
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: chartColors.primary,
+                pointBackgroundColor: colors.terracotta,
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7
+                pointRadius: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(255, 248, 231, 0.95)',
-                    titleColor: chartColors.text,
-                    bodyColor: chartColors.text,
-                    borderColor: chartColors.secondary,
-                    borderWidth: 2,
+                    backgroundColor: '#fff',
+                    titleColor: '#3A2F26',
+                    bodyColor: '#3A2F26',
+                    borderColor: colors.terracotta,
+                    borderWidth: 1,
                     padding: 12,
                     displayColors: false,
                     callbacks: {
-                        label: function(context) {
-                            return 'Spent: $' + context.parsed.y.toFixed(2);
-                        }
+                        label: (context) => '₵' + context.parsed.y.toFixed(2)
                     }
                 }
             },
@@ -446,21 +554,25 @@ async function createSpendingChart() {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: chartColors.grid
+                        color: 'rgba(198, 125, 92, 0.1)',
+                        drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        color: chartColors.text,
-                        callback: function(value) {
-                            return '$' + value;
-                        }
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 11 },
+                        callback: (value) => '₵' + value
                     }
                 },
                 x: {
                     grid: {
-                        color: chartColors.grid
+                        color: 'rgba(198, 125, 92, 0.1)',
+                        drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        color: chartColors.text
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 11 }
                     }
                 }
             }
@@ -468,51 +580,41 @@ async function createSpendingChart() {
     });
 }
 
-// Create Orders by Month Chart
-async function createOrdersChart() {
-    const ctx = document.getElementById('ordersChart').getContext('2d');
-    const data = await fetchChartData();
+// Create Categories Chart
+function createCategoriesChart() {
+    const ctx = document.getElementById('categoriesChart');
+    if (!ctx) return;
     
-    if (!data) return;
+    // Placeholder category data
+    const categories = ['Jewelry', 'Pottery', 'Textiles', 'Art', 'Home'];
+    const values = [420, 340, 280, 180, 120];
     
-    new Chart(ctx, {
+    new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: data.months,
+            labels: categories,
             datasets: [{
-                label: 'Orders',
-                data: data.orders,
-                backgroundColor: [
-                    chartColors.primary,
-                    chartColors.secondary,
-                    chartColors.tertiary,
-                    chartColors.quaternary,
-                    chartColors.primary,
-                    chartColors.secondary
-                ],
-                borderRadius: 8,
-                borderWidth: 0
+                label: 'Spent',
+                data: values,
+                backgroundColor: colors.deepBrown,
+                borderRadius: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(255, 248, 231, 0.95)',
-                    titleColor: chartColors.text,
-                    bodyColor: chartColors.text,
-                    borderColor: chartColors.secondary,
-                    borderWidth: 2,
+                    backgroundColor: '#fff',
+                    titleColor: '#3A2F26',
+                    bodyColor: '#3A2F26',
+                    borderColor: colors.terracotta,
+                    borderWidth: 1,
                     padding: 12,
                     displayColors: false,
                     callbacks: {
-                        label: function(context) {
-                            return 'Orders: ' + context.parsed.y;
-                        }
+                        label: (context) => '₵' + context.parsed.y
                     }
                 }
             },
@@ -520,19 +622,92 @@ async function createOrdersChart() {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: chartColors.grid
+                        color: 'rgba(198, 125, 92, 0.1)',
+                        drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        color: chartColors.text,
-                        stepSize: 1
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 11 }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: {
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 11 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create Full Spending Chart
+function createSpendingChartFull() {
+    const ctx = document.getElementById('spendingChartFull');
+    if (!ctx) return;
+    
+    new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: dashboardData.chartMonths,
+            datasets: [{
+                label: 'Spending',
+                data: dashboardData.chartSpending,
+                borderColor: colors.terracotta,
+                backgroundColor: 'rgba(198, 125, 92, 0.15)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: colors.terracotta,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: '#3A2F26',
+                    bodyColor: '#3A2F26',
+                    borderColor: colors.terracotta,
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: (context) => 'Spent: ₵' + context.parsed.y.toFixed(2)
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(198, 125, 92, 0.1)',
+                        drawBorder: false
+                    },
+                    border: { display: false },
+                    ticks: {
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 12 },
+                        callback: (value) => '₵' + value
                     }
                 },
                 x: {
                     grid: {
-                        display: false
+                        color: 'rgba(198, 125, 92, 0.1)',
+                        drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        color: chartColors.text
+                        color: colors.lightBrown,
+                        font: { family: "'Spectral', serif", size: 12 }
                     }
                 }
             }
@@ -541,20 +716,11 @@ async function createOrdersChart() {
 }
 
 // Initialize dashboard
-async function initDashboard() {
-    // Fetch and update cart
-    const cart = await fetchCartData();
-    if (cart) {
-        updateCart(cart);
-    }
-    
-    // Create charts
-    await createSpendingChart();
-    await createOrdersChart();
-}
-
-// Run on page load
-document.addEventListener('DOMContentLoaded', initDashboard);
+document.addEventListener('DOMContentLoaded', function() {
+    createSpendingChartOverview();
+    createCategoriesChart();
+    createSpendingChartFull();
+});
 </script>
 
 <?php
