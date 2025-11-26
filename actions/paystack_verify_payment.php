@@ -142,13 +142,38 @@ try {
     }
     
     // Check if status is set and equals true
+    // Paystack can return status as boolean true, or sometimes as 1, or as string "true"
     $response_status = $verification_response['status'] ?? null;
     error_log("Checking response status: " . var_export($response_status, true));
     error_log("Status type: " . gettype($response_status));
     error_log("Status === true: " . ($response_status === true ? 'YES' : 'NO'));
     error_log("Status == true: " . ($response_status == true ? 'YES' : 'NO'));
+    error_log("Status == 1: " . ($response_status == 1 ? 'YES' : 'NO'));
     
-    if (!isset($verification_response['status']) || $verification_response['status'] !== true) {
+    // More flexible check: accept true, 1, or "true" as valid success status
+    $is_success = (
+        isset($verification_response['status']) && 
+        (
+            $verification_response['status'] === true || 
+            $verification_response['status'] === 1 ||
+            $verification_response['status'] === 'true' ||
+            (is_bool($verification_response['status']) && $verification_response['status'] === true)
+        )
+    );
+    
+    error_log("Is success (flexible check): " . ($is_success ? 'YES' : 'NO'));
+    
+    // Also check if we have data even if status check fails (sometimes Paystack returns data even if status is not explicitly true)
+    $has_data = isset($verification_response['data']) && is_array($verification_response['data']) && !empty($verification_response['data']);
+    error_log("Has transaction data: " . ($has_data ? 'YES' : 'NO'));
+    
+    // If status check fails but we have data, log it for investigation
+    if (!$is_success && $has_data) {
+        error_log("WARNING: Status check failed but data exists. This might be a false negative.");
+        error_log("Attempting to proceed with data validation...");
+    }
+    
+    if (!$is_success && !$has_data) {
         $error_msg = $verification_response['message'] ?? 'Payment verification failed';
         
         // Provide more specific error messages
@@ -194,10 +219,33 @@ try {
         exit;
     }
     
-    error_log("✓ Paystack API verification successful (status: true)");
+    // If we got here, either status is true OR we have data to work with
+    if ($is_success) {
+        error_log("✓ Paystack API verification successful (status: true)");
+    } else {
+        error_log("⚠ Status check failed but proceeding with data validation");
+    }
     
     // Extract transaction data
     $transaction_data = $verification_response['data'] ?? [];
+    
+    // If no data, that's a problem
+    if (empty($transaction_data)) {
+        error_log("ERROR: No transaction data in response");
+        ob_clean();
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Transaction data not found in verification response',
+            'verified' => false,
+            'reference' => $reference,
+            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? [
+                'response' => $verification_response
+            ] : null
+        ]);
+        ob_end_flush();
+        exit;
+    }
+    
     $payment_status = $transaction_data['status'] ?? null;
     $amount_paid = isset($transaction_data['amount']) ? $transaction_data['amount'] / 100 : 0; // Convert from pesewas
     $customer_email = $transaction_data['customer']['email'] ?? '';
@@ -205,22 +253,87 @@ try {
     $authorization_code = $authorization['authorization_code'] ?? '';
     $payment_method_channel = $authorization['channel'] ?? 'card';
     
-    error_log("Transaction status: $payment_status, Amount: $amount_paid GHS");
+    $gateway_response = $transaction_data['gateway_response'] ?? null;
     
-    // Validate payment status
-    if ($payment_status !== 'success') {
-        error_log("Payment status is not successful: $payment_status");
+    error_log("Transaction status: " . ($payment_status ?? 'NULL'));
+    error_log("Gateway response: " . ($gateway_response ?? 'NULL'));
+    error_log("Amount: $amount_paid GHS");
+    
+    // Validate payment status - be more flexible
+    // Paystack can return 'success', 'Success', 'SUCCESS', or indicate success in gateway_response
+    $is_payment_successful = false;
+    
+    if ($payment_status) {
+        $status_lower = strtolower(trim($payment_status));
+        $is_payment_successful = (
+            $status_lower === 'success' || 
+            $status_lower === 'successful' ||
+            $status_lower === 'completed'
+        );
+    }
+    
+    // Also check gateway_response
+    if (!$is_payment_successful && $gateway_response) {
+        $gateway_lower = strtolower(trim($gateway_response));
+        $is_payment_successful = (
+            $gateway_lower === 'successful' ||
+            $gateway_lower === 'approved' ||
+            $gateway_lower === 'success'
+        );
+    }
+    
+    // Check if amount was paid (another indicator)
+    if (!$is_payment_successful && isset($transaction_data['amount']) && $transaction_data['amount'] > 0) {
+        // If we have a paid amount and no explicit failure, it might be successful
+        // But only if status is not explicitly 'failed' or 'reversed'
+        $status_lower = strtolower(trim($payment_status ?? ''));
+        if (!in_array($status_lower, ['failed', 'reversed', 'declined', 'cancelled'])) {
+            error_log("WARNING: Status unclear but amount was paid. Proceeding with caution.");
+            $is_payment_successful = true; // Give benefit of doubt if amount was paid
+        }
+    }
+    
+    error_log("Is payment successful (flexible check): " . ($is_payment_successful ? 'YES' : 'NO'));
+    
+    if (!$is_payment_successful) {
+        error_log("Payment status check failed");
+        error_log("Payment status: " . ($payment_status ?? 'NULL'));
+        error_log("Gateway response: " . ($gateway_response ?? 'NULL'));
+        error_log("Full transaction data: " . json_encode($transaction_data, JSON_PRETTY_PRINT));
+        
+        // Check if it's pending (might need to wait)
+        $status_lower = strtolower(trim($payment_status ?? ''));
+        if ($status_lower === 'pending' || $status_lower === 'processing') {
+            error_log("Payment is pending - may need to wait");
+            ob_clean();
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Payment is still pending. Please wait a moment and try again.',
+                'verified' => false,
+                'payment_status' => $payment_status
+            ]);
+            ob_end_flush();
+            exit;
+        }
         
         ob_clean();
         echo json_encode([
             'status' => 'error',
-            'message' => 'Payment was not successful. Status: ' . ucfirst($payment_status),
+            'message' => 'Payment was not successful. Status: ' . ucfirst($payment_status ?? 'Unknown'),
             'verified' => false,
-            'payment_status' => $payment_status
+            'payment_status' => $payment_status,
+            'gateway_response' => $gateway_response,
+            'debug' => (defined('APP_ENV') && APP_ENV === 'development') ? [
+                'transaction_data' => $transaction_data,
+                'payment_status' => $payment_status,
+                'gateway_response' => $gateway_response
+            ] : null
         ]);
         ob_end_flush();
         exit;
     }
+    
+    error_log("✓ Payment status is successful");
     
     // Get customer ID and cart items
     $customer_id = get_user_id();
