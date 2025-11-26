@@ -4,7 +4,26 @@
 // ============================================
 
 // Configuration
-const ADINKRA_SYMBOLS = ['✦', '◈', '❖', '✤', '◆', '❋', '✶', '※'];
+// Get base path for assets (fallback to relative if not available)
+const getAssetPath = (path) => {
+  // Try to use ASSETS_URL if available (set by PHP)
+  if (typeof ASSETS_URL !== 'undefined' && ASSETS_URL) {
+    return ASSETS_URL + '/' + path;
+  }
+  // Try to use BASE_URL if available
+  if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+    return BASE_URL + '/assets/' + path;
+  }
+  // Fallback to relative path from script location
+  return '../images/' + path;
+};
+
+const ADINKRA_SYMBOLS = [
+  getAssetPath('images/adinkra symbol 1.png'),
+  getAssetPath('images/adinkra symbol 2.png'),
+  getAssetPath('images/adinkra symbol 3.png'),
+  getAssetPath('images/adinkra symbol 4.png')
+];
 const TRAIL_DELAY = 30; // milliseconds between trail dots
 const CURSOR_COLORS = {
   primary: '#FF9A56',    // Amber
@@ -108,20 +127,50 @@ function initAdinkraCursor() {
 
     .adinkra-cursor {
       position: fixed !important;
-      font-size: 32px !important;
+      width: 45px !important;
+      height: 45px !important;
       pointer-events: none !important;
       z-index: 100000 !important;
       transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
       transform: translate(-50%, -50%) scale(0) !important;
       opacity: 0 !important;
-      color: ${CURSOR_COLORS.secondary} !important;
-      filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.5)) !important;
-      text-shadow: 0 0 10px ${CURSOR_COLORS.primary} !important;
       left: 0;
       top: 0;
       display: block !important;
       margin: 0 !important;
       padding: 0 !important;
+    }
+
+    .adinkra-cursor img,
+    .adinkra-cursor .adinkra-img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      /* Multiple layered drop shadows for depth and glow */
+      filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.6))
+              drop-shadow(0 0 12px rgba(255, 154, 86, 0.8))
+              drop-shadow(0 0 20px rgba(183, 65, 14, 0.7))
+              drop-shadow(0 0 30px rgba(255, 154, 86, 0.5))
+              /* Color overlay to match amber/rust theme */
+              brightness(1.1)
+              contrast(1.05)
+              saturate(1.2) !important;
+      /* Smooth transitions for all effects */
+      transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+      /* Ensure image is centered */
+      display: block !important;
+    }
+
+    /* Enhanced glow on hover */
+    .adinkra-cursor.active img,
+    .adinkra-cursor.active .adinkra-img {
+      filter: drop-shadow(0 4px 12px rgba(255, 154, 86, 0.9))
+              drop-shadow(0 0 16px rgba(255, 154, 86, 1))
+              drop-shadow(0 0 24px rgba(183, 65, 14, 0.9))
+              drop-shadow(0 0 40px rgba(255, 154, 86, 0.7))
+              brightness(1.2)
+              contrast(1.1)
+              saturate(1.3) !important;
     }
 
     .adinkra-cursor.active {
@@ -191,6 +240,34 @@ function initAdinkraCursor() {
         transform: translate(-50%, -50%) scale(1) rotate(360deg);
       }
     }
+
+    /* Pulse glow animation for active state */
+    @keyframes adinkra-pulse {
+      0%, 100% {
+        filter: drop-shadow(0 4px 12px rgba(255, 154, 86, 0.9))
+                drop-shadow(0 0 16px rgba(255, 154, 86, 1))
+                drop-shadow(0 0 24px rgba(183, 65, 14, 0.9))
+                drop-shadow(0 0 40px rgba(255, 154, 86, 0.7))
+                brightness(1.2)
+                contrast(1.1)
+                saturate(1.3);
+      }
+      50% {
+        filter: drop-shadow(0 6px 16px rgba(255, 154, 86, 1))
+                drop-shadow(0 0 20px rgba(255, 154, 86, 1))
+                drop-shadow(0 0 30px rgba(183, 65, 14, 1))
+                drop-shadow(0 0 50px rgba(255, 154, 86, 0.9))
+                brightness(1.3)
+                contrast(1.15)
+                saturate(1.4);
+      }
+    }
+
+    /* Apply pulse animation to active adinkra cursor images */
+    .adinkra-cursor.active img,
+    .adinkra-cursor.active .adinkra-img {
+      animation: adinkra-pulse 2s ease-in-out infinite !important;
+    }
   `;
   
   console.log('✓ Cursor styles added to head');
@@ -205,12 +282,19 @@ function initAdinkraCursor() {
   try {
     console.log('Creating cursor elements with createElement...');
     
-    // Create adinkra cursor element
+    // Create adinkra cursor element with image
     const adinkraCursor = document.createElement('div');
     adinkraCursor.className = 'adinkra-cursor';
-    adinkraCursor.textContent = '✦';
     adinkraCursor.setAttribute('data-cursor-type', 'adinkra');
-    console.log('✓ Adinkra cursor element created');
+    
+    // Create image element inside adinkra cursor
+    const adinkraImg = document.createElement('img');
+    adinkraImg.className = 'adinkra-img';
+    adinkraImg.src = ADINKRA_SYMBOLS[0];
+    adinkraImg.alt = 'Adinkra Symbol';
+    adinkraCursor.appendChild(adinkraImg);
+    
+    console.log('✓ Adinkra cursor element created with image');
     
     // Create custom cursor element
     const customCursor = document.createElement('div');
@@ -333,9 +417,16 @@ function setupAdinkraCursor() {
   const cursor = document.querySelector('.custom-cursor');
   const cursorRing = document.querySelector('.cursor-ring');
   const adinkraCursor = document.querySelector('.adinkra-cursor');
+  const adinkraImg = document.querySelector('.adinkra-img');
 
   // Check if cursor elements exist
-  if (!cursor || !cursorRing || !adinkraCursor) {
+  if (!cursor || !cursorRing || !adinkraCursor || !adinkraImg) {
+    console.error('Cursor elements not found:', {
+      cursor: !!cursor,
+      cursorRing: !!cursorRing,
+      adinkraCursor: !!adinkraCursor,
+      adinkraImg: !!adinkraImg
+    });
     return; // Exit if elements don't exist (mobile device)
   }
 
@@ -449,9 +540,12 @@ function setupAdinkraCursor() {
       cursor.classList.add('hover');
       cursorRing.classList.add('hover');
 
-      // Change to next Adinkra symbol
+      // Change to next Adinkra symbol (update image src)
       currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
-      adinkraCursor.textContent = ADINKRA_SYMBOLS[currentSymbolIndex];
+      const adinkraImg = adinkraCursor.querySelector('.adinkra-img');
+      if (adinkraImg) {
+        adinkraImg.src = ADINKRA_SYMBOLS[currentSymbolIndex];
+      }
       
       // Ensure cursor is visible
       adinkraCursor.style.opacity = '1';
@@ -460,8 +554,11 @@ function setupAdinkraCursor() {
       adinkraCursor.style.transform = 'translate(-50%, -50%) scale(1)';
       adinkraCursor.style.zIndex = '100000';
       
-      // Add rotation animation
+      // Add rotation animation (applies to both container and image)
       adinkraCursor.style.animation = 'adinkra-rotate 0.4s ease-out';
+      if (adinkraImg) {
+        adinkraImg.style.animation = 'adinkra-rotate 0.4s ease-out';
+      }
       
       // Hide main cursor and ring
       cursor.style.opacity = '0';
@@ -513,12 +610,16 @@ function setupAdinkraCursor() {
     cursorRing.style.opacity = '1';
   });
 
-  // Click effect
+  // Click effect - scale down on click with enhanced glow
   document.addEventListener('mousedown', () => {
     cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
     cursorRing.style.transform = 'translate(-50%, -50%) scale(0.9)';
     if (adinkraCursor.classList.contains('active')) {
       adinkraCursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+      // Enhance glow on click
+      if (adinkraImg) {
+        adinkraImg.style.filter = 'drop-shadow(0 6px 20px rgba(255, 154, 86, 1)) drop-shadow(0 0 24px rgba(255, 154, 86, 1)) drop-shadow(0 0 36px rgba(183, 65, 14, 1)) drop-shadow(0 0 60px rgba(255, 154, 86, 0.9)) brightness(1.4) contrast(1.2) saturate(1.5)';
+      }
     }
   });
 
@@ -527,6 +628,10 @@ function setupAdinkraCursor() {
     cursorRing.style.transform = 'translate(-50%, -50%) scale(1)';
     if (adinkraCursor.classList.contains('active')) {
       adinkraCursor.style.transform = 'translate(-50%, -50%) scale(1)';
+      // Restore normal glow on release (let CSS handle it)
+      if (adinkraImg) {
+        adinkraImg.style.filter = ''; // Reset to CSS default
+      }
     }
   });
 }
