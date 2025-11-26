@@ -16,15 +16,13 @@ const CURSOR_COLORS = {
 function initAdinkraCursor() {
   // Disable on mobile/touch devices
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    console.log('Cursor disabled: Touch device detected');
     return; // Exit function - don't initialize cursor on touch devices
   }
 
-  // Create cursor HTML
-  const cursorHTML = `
-    <div class="adinkra-cursor">✦</div>
-    <div class="custom-cursor"></div>
-    <div class="cursor-ring"></div>
-  `;
+  console.log('=== INITIALIZING ADINKRA CURSOR ===');
+  console.log('Document body exists:', !!document.body);
+  console.log('Document ready state:', document.readyState);
   
   // Check if styles already exist
   let style = document.getElementById('adinkra-cursor-styles');
@@ -32,6 +30,9 @@ function initAdinkraCursor() {
     style = document.createElement('style');
     style.id = 'adinkra-cursor-styles';
     document.head.appendChild(style);
+    console.log('✓ Cursor styles element created');
+  } else {
+    console.log('Cursor styles already exist, reusing...');
   }
   
   style.textContent = `
@@ -170,18 +171,121 @@ function initAdinkraCursor() {
     }
   `;
   
+  console.log('✓ Cursor styles added to head');
+  
   // Insert cursor HTML into body - ensure body exists
   if (!document.body) {
-    console.error('Cannot initialize cursor: document.body does not exist');
+    console.error('✗ Cannot initialize cursor: document.body does not exist');
     return;
   }
   
-  // Insert cursor HTML
+  // Use createElement approach (more reliable than insertAdjacentHTML)
   try {
-    document.body.insertAdjacentHTML('beforeend', cursorHTML);
-    console.log('Cursor HTML inserted successfully');
+    console.log('Creating cursor elements with createElement...');
+    
+    // Create adinkra cursor element
+    const adinkraCursor = document.createElement('div');
+    adinkraCursor.className = 'adinkra-cursor';
+    adinkraCursor.textContent = '✦';
+    adinkraCursor.setAttribute('data-cursor-type', 'adinkra');
+    console.log('✓ Adinkra cursor element created');
+    
+    // Create custom cursor element
+    const customCursor = document.createElement('div');
+    customCursor.className = 'custom-cursor';
+    customCursor.setAttribute('data-cursor-type', 'custom');
+    console.log('✓ Custom cursor element created');
+    
+    // Create cursor ring element
+    const cursorRing = document.createElement('div');
+    cursorRing.className = 'cursor-ring';
+    cursorRing.setAttribute('data-cursor-type', 'ring');
+    console.log('✓ Cursor ring element created');
+    
+    // Append to body
+    document.body.appendChild(adinkraCursor);
+    document.body.appendChild(customCursor);
+    document.body.appendChild(cursorRing);
+    
+    console.log('✓ All cursor elements appended to body');
+    
+    // IMMEDIATE VERIFICATION
+    console.log('=== IMMEDIATE VERIFICATION ===');
+    const immediateCheck1 = document.querySelector('.custom-cursor');
+    const immediateCheck2 = document.querySelector('.cursor-ring');
+    const immediateCheck3 = document.querySelector('.adinkra-cursor');
+    
+    console.log('Immediate querySelector results:');
+    console.log('  custom-cursor found:', !!immediateCheck1, immediateCheck1);
+    console.log('  cursor-ring found:', !!immediateCheck2, immediateCheck2);
+    console.log('  adinkra-cursor found:', !!immediateCheck3, immediateCheck3);
+    
+    // Check if elements are in body HTML
+    const bodyHTML = document.body.innerHTML;
+    const hasCustomCursor = bodyHTML.includes('custom-cursor');
+    const hasCursorRing = bodyHTML.includes('cursor-ring');
+    const hasAdinkraCursor = bodyHTML.includes('adinkra-cursor');
+    
+    console.log('HTML contains custom-cursor:', hasCustomCursor);
+    console.log('HTML contains cursor-ring:', hasCursorRing);
+    console.log('HTML contains adinkra-cursor:', hasAdinkraCursor);
+    
+    // Verify elements are actually in DOM
+    const allElements = document.body.querySelectorAll('[data-cursor-type]');
+    console.log('Elements with data-cursor-type:', allElements.length);
+    allElements.forEach((el, idx) => {
+      console.log(`  Element ${idx + 1}:`, el.className, el);
+    });
+    
+    // Check parent-child relationship
+    if (immediateCheck1) {
+      console.log('custom-cursor parent:', immediateCheck1.parentElement);
+      console.log('custom-cursor in body:', document.body.contains(immediateCheck1));
+    }
+    if (immediateCheck2) {
+      console.log('cursor-ring parent:', immediateCheck2.parentElement);
+      console.log('cursor-ring in body:', document.body.contains(immediateCheck2));
+    }
+    if (immediateCheck3) {
+      console.log('adinkra-cursor parent:', immediateCheck3.parentElement);
+      console.log('adinkra-cursor in body:', document.body.contains(immediateCheck3));
+    }
+    
+    // Set up MutationObserver to detect if elements are removed
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.removedNodes.forEach((node) => {
+          if (node.nodeType === 1 && node.classList) {
+            if (node.classList.contains('custom-cursor') || 
+                node.classList.contains('cursor-ring') || 
+                node.classList.contains('adinkra-cursor')) {
+              console.error('⚠️ CURSOR ELEMENT WAS REMOVED FROM DOM!', {
+                className: node.className,
+                parent: node.parentElement,
+                stack: new Error().stack
+              });
+            }
+          }
+        });
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    console.log('✓ MutationObserver set up to detect element removal');
+    
+    if (immediateCheck1 && immediateCheck2 && immediateCheck3) {
+      console.log('✓✓✓ ALL CURSOR ELEMENTS SUCCESSFULLY CREATED AND FOUND ✓✓✓');
+    } else {
+      console.error('✗✗✗ SOME CURSOR ELEMENTS NOT FOUND AFTER CREATION ✗✗✗');
+    }
+    
   } catch (e) {
-    console.error('Error inserting cursor HTML:', e);
+    console.error('✗ Error creating cursor elements:', e);
+    console.error('Error stack:', e.stack);
   }
 }
 
@@ -477,10 +581,12 @@ if (document.readyState === 'loading') {
 
 // Also try after window load as fallback
 window.addEventListener('load', () => {
+  console.log('Window load event fired, checking cursor...');
   if (!document.querySelector('.custom-cursor')) {
-    console.log('Retrying cursor initialization after window load...');
+    console.log('🔄 Retrying cursor initialization after window load...');
     initializeCursor();
   } else {
+    console.log('✓ Cursor already exists, ensuring visibility...');
     // Ensure cursor is visible even if already initialized
     const cursor = document.querySelector('.custom-cursor');
     const cursorRing = document.querySelector('.cursor-ring');
@@ -490,17 +596,55 @@ window.addEventListener('load', () => {
       cursor.style.display = 'block';
       cursor.style.visibility = 'visible';
       cursor.style.opacity = '1';
+      console.log('✓ Custom cursor made visible');
     }
     if (cursorRing) {
       cursorRing.style.display = 'block';
       cursorRing.style.visibility = 'visible';
       cursorRing.style.opacity = '1';
+      console.log('✓ Cursor ring made visible');
     }
     if (adinkraCursor) {
       adinkraCursor.style.display = 'block';
+      console.log('✓ Adinkra cursor made visible');
     }
   }
 });
+
+// SIMPLE TEST - Run after everything to verify basic insertion works
+setTimeout(() => {
+  console.log('=== SIMPLE INSERTION TEST ===');
+  const testDiv = document.createElement('div');
+  testDiv.className = 'cursor-test-element';
+  testDiv.style.cssText = 'position:fixed; top:10px; left:10px; background:red; padding:10px; z-index:999999; color:white; font-weight:bold;';
+  testDiv.textContent = 'TEST CURSOR ELEMENT';
+  testDiv.setAttribute('data-test', 'cursor-insertion');
+  
+  try {
+    document.body.appendChild(testDiv);
+    console.log('✓ Test element appended to body');
+    
+    setTimeout(() => {
+      const found = document.querySelector('.cursor-test-element');
+      console.log('Test element found:', !!found);
+      if (found) {
+        console.log('✓✓✓ BASIC INSERTION WORKS - problem is specific to cursor code ✓✓✓');
+        // Remove test element after 3 seconds
+        setTimeout(() => {
+          if (found && found.parentElement) {
+            found.remove();
+            console.log('Test element removed');
+          }
+        }, 3000);
+      } else {
+        console.error('✗✗✗ BASIC INSERTION FAILS - something is blocking ALL insertions ✗✗✗');
+        console.error('This may indicate a Content Security Policy (CSP) issue');
+      }
+    }, 100);
+  } catch (e) {
+    console.error('✗ Error in test insertion:', e);
+  }
+}, 2000);
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {

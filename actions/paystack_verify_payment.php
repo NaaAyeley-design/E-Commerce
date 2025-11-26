@@ -335,28 +335,40 @@ try {
     
     error_log("✓ Payment status is successful");
     
+    // ============================================
+    // BEGIN DATABASE TRANSACTION
+    // ============================================
+    error_log("=== STARTING DATABASE TRANSACTION ===");
+    
     // Get customer ID and cart items
     $customer_id = get_user_id();
+    error_log("Customer ID: $customer_id");
     
     // Get fresh cart items if not provided
     if (!$cart_items || count($cart_items) == 0) {
+        error_log("Fetching cart items from database...");
         $cart_items = get_cart_items_ctr($customer_id);
     }
     
     if (!$cart_items || count($cart_items) == 0) {
-        throw new Exception("Cart is empty");
+        error_log("ERROR: Cart is empty - cannot create order");
+        throw new Exception("Cart is empty. Cannot create order without items.");
     }
+    
+    error_log("Cart items count: " . count($cart_items));
     
     // Calculate total from cart if not provided
     if ($total_amount <= 0) {
+        error_log("Calculating total from cart...");
         $total_amount = get_cart_total_ctr($customer_id);
     }
     
     error_log("Expected order total: $total_amount GHS");
+    error_log("Amount paid (from Paystack): $amount_paid GHS");
     
     // Verify amount matches (with 1 pesewa tolerance)
     if (abs($amount_paid - $total_amount) > 0.01) {
-        error_log("Amount mismatch - Expected: $total_amount GHS, Paid: $amount_paid GHS");
+        error_log("ERROR: Amount mismatch - Expected: $total_amount GHS, Paid: $amount_paid GHS");
         
         ob_clean();
         echo json_encode([
@@ -370,13 +382,18 @@ try {
         exit;
     }
     
+    error_log("✓ Amount verification passed");
+    
     // Get customer data for shipping address
     $user = new user_class();
     $customer_data = $user->get_customer_by_id($customer_id);
     
     if (!$customer_data) {
+        error_log("ERROR: Customer data not found for ID: $customer_id");
         throw new Exception("Customer data not found");
     }
+    
+    error_log("✓ Customer data retrieved");
     
     // Build shipping address from customer data
     $shipping_address = sprintf(
@@ -392,59 +409,205 @@ try {
     foreach ($cart_items as $item) {
         $order_items[] = [
             'product_id' => (int)$item['product_id'],
-            'quantity' => (int)$item['quantity'],
+            'quantity' => (int)($item['quantity'] ?? $item['qty'] ?? 1),
             'price' => (float)$item['product_price']
         ];
     }
     
-    // Create order
-    $order_result = create_order_ctr($customer_id, $order_items, $shipping_address, 'paid');
+    error_log("Prepared " . count($order_items) . " order items");
     
-    if (!$order_result || !isset($order_result['success']) || !$order_result['success']) {
-        error_log("Order creation failed: " . json_encode($order_result));
-        throw new Exception($order_result['message'] ?? 'Failed to create order');
+    // Generate invoice number (use Paystack reference or generate unique)
+    $invoice_no = $reference; // Use Paystack reference as invoice number
+    
+    // Initialize order class for transaction
+    // Use a single instance to ensure same connection
+    $order = new order_class();
+    $conn = $order->getConnection();
+    
+    if (!$conn) {
+        error_log("ERROR: Database connection failed");
+        throw new Exception("Database connection failed");
     }
     
-    $order_id = $order_result['order_id'];
-    error_log("Order created - ID: $order_id");
+    error_log("✓ Database connection established");
     
-    // Record payment
-    $payment_date = date('Y-m-d');
-    $payment_id = record_payment_ctr(
-        $total_amount,
-        $customer_id,
-        $order_id,
-        'GHS',
-        $payment_date,
-        'paystack',
-        $reference,
-        $authorization_code,
-        $payment_method_channel
-    );
-    
-    if (!$payment_id) {
-        error_log("Payment recording failed for order: $order_id");
-        // Order is created but payment not recorded - this is logged but we continue
-    } else {
-        error_log("Payment recorded - ID: $payment_id, Reference: $reference");
+    // Begin transaction
+    error_log("Beginning database transaction...");
+    try {
+        $conn->beginTransaction();
+        error_log("✓ Transaction started");
+    } catch (Exception $e) {
+        error_log("ERROR: Failed to begin transaction: " . $e->getMessage());
+        throw new Exception("Failed to start database transaction");
     }
     
-    // Clear cart
-    $cart_cleared = clear_cart_ctr($customer_id);
-    if (!$cart_cleared) {
-        error_log("Warning: Failed to clear cart for customer: $customer_id");
+    try {
+        // ============================================
+        // STEP 1: CREATE ORDER (orders table)
+        // ============================================
+        error_log("=== STEP 1: Creating order ===");
+        error_log("Customer ID: $customer_id");
+        error_log("Shipping address: $shipping_address");
+        error_log("Order items: " . count($order_items));
+        
+        // Calculate order total
+        $order_total = 0;
+        foreach ($order_items as $item) {
+            $order_total += ($item['price'] * $item['quantity']);
+        }
+        error_log("Order total: $order_total GHS");
+        
+        // Create order directly using order class (same connection)
+        $order_id = $order->create_order($customer_id, $order_total, $shipping_address, 'pending');
+        
+        if (!$order_id || $order_id <= 0) {
+            error_log("ERROR: Order creation failed - order_id: " . var_export($order_id, true));
+            throw new Exception("Failed to create order in database");
+        }
+        
+        error_log("✓ Order created - ID: $order_id");
+        
+        // ============================================
+        // STEP 1B: ADD ORDER ITEMS (order_items/order_details table)
+        // ============================================
+        error_log("=== STEP 1B: Adding order items ===");
+        $items_added = 0;
+        foreach ($order_items as $item) {
+            error_log("Adding item: product_id={$item['product_id']}, quantity={$item['quantity']}, price={$item['price']}");
+            $item_added = $order->add_order_item(
+                $order_id,
+                $item['product_id'],
+                $item['quantity'],
+                $item['price']
+            );
+            
+            if (!$item_added) {
+                error_log("ERROR: Failed to add order item: product_id={$item['product_id']}");
+                throw new Exception("Failed to add order item: product_id={$item['product_id']}");
+            }
+            $items_added++;
+        }
+        
+        error_log("✓ All order items added - $items_added items");
+        
+        // Verify order_items were created
+        $order_items_check = $order->get_order_items($order_id);
+        if (empty($order_items_check)) {
+            error_log("WARNING: Order items not found after creation");
+        } else {
+            error_log("✓ Order items verified - " . count($order_items_check) . " items in database");
+        }
+        
+        // ============================================
+        // STEP 2: RECORD PAYMENT (payment table)
+        // ============================================
+        error_log("=== STEP 2: Recording payment ===");
+        $payment_date = date('Y-m-d H:i:s'); // Use full datetime
+        error_log("Payment date: $payment_date");
+        error_log("Payment amount: $total_amount GHS");
+        error_log("Payment method: paystack");
+        error_log("Transaction reference: $reference");
+        error_log("Authorization code: " . ($authorization_code ?? 'N/A'));
+        error_log("Payment channel: " . ($payment_method_channel ?? 'N/A'));
+        
+        // Record payment directly using order class (same connection)
+        $payment_id = $order->record_payment(
+            $total_amount,
+            $customer_id,
+            $order_id,
+            'GHS',
+            $payment_date,
+            'paystack',
+            $reference,
+            $authorization_code,
+            $payment_method_channel
+        );
+        
+        if (!$payment_id || $payment_id <= 0) {
+            error_log("ERROR: Payment recording failed - payment_id: " . var_export($payment_id, true));
+            throw new Exception("Failed to record payment in database");
+        }
+        
+        error_log("✓ Payment recorded - ID: $payment_id, Reference: $reference");
+        
+        // ============================================
+        // STEP 3: UPDATE ORDER STATUS (orders table)
+        // ============================================
+        error_log("=== STEP 3: Updating order status ===");
+        error_log("Updating order_id: $order_id");
+        error_log("Setting status to: completed");
+        error_log("Setting invoice_no to: $invoice_no");
+        
+        $order_updated = $order->update_order_complete($order_id, $invoice_no, 'completed');
+        
+        if (!$order_updated) {
+            error_log("WARNING: update_order_complete failed, trying update_order_status only...");
+            // Try just updating status
+            $status_updated = $order->update_order_status($order_id, 'completed');
+            if (!$status_updated) {
+                error_log("ERROR: Failed to update order status");
+                throw new Exception("Failed to update order status to completed");
+            }
+            error_log("✓ Order status updated to 'completed' (invoice_no may not be set)");
+        } else {
+            error_log("✓ Order updated - status: completed, invoice_no: $invoice_no");
+        }
+        
+        // ============================================
+        // COMMIT TRANSACTION
+        // ============================================
+        error_log("=== COMMITTING TRANSACTION ===");
+        $conn->commit();
+        error_log("✓ Transaction committed successfully");
+        error_log("=== ALL DATABASE UPDATES COMPLETE ===");
+        error_log("Summary:");
+        error_log("  - Order ID: $order_id");
+        error_log("  - Payment ID: $payment_id");
+        error_log("  - Invoice No: $invoice_no");
+        error_log("  - Order Status: completed");
+        error_log("  - Items: $items_added");
+        
+        // ============================================
+        // POST-TRANSACTION CLEANUP
+        // ============================================
+        error_log("=== CLEANUP: Clearing cart and session ===");
+        
+        // Clear cart
+        $cart_cleared = clear_cart_ctr($customer_id);
+        if (!$cart_cleared) {
+            error_log("WARNING: Failed to clear cart for customer: $customer_id");
+        } else {
+            error_log("✓ Cart cleared");
+        }
+        
+        // Clear session payment data
+        unset($_SESSION['paystack_ref']);
+        unset($_SESSION['paystack_amount']);
+        unset($_SESSION['paystack_timestamp']);
+        error_log("✓ Session data cleared");
+        
+        // Log activity
+        log_activity('payment_verified', "Payment verified via Paystack - Order: #$order_id, Amount: GHS $total_amount, Reference: $reference", $customer_id);
+        error_log("✓ Activity logged");
+        
+    } catch (Exception $e) {
+        // ============================================
+        // ROLLBACK TRANSACTION ON ERROR
+        // ============================================
+        error_log("=== ERROR DETECTED - ROLLING BACK TRANSACTION ===");
+        error_log("Error: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        
+        try {
+            $conn->rollBack();
+            error_log("✓ Transaction rolled back");
+        } catch (Exception $rollback_error) {
+            error_log("ERROR: Failed to rollback transaction: " . $rollback_error->getMessage());
+        }
+        
+        // Re-throw to be caught by outer catch block
+        throw $e;
     }
-    
-    // Clear session payment data
-    unset($_SESSION['paystack_ref']);
-    unset($_SESSION['paystack_amount']);
-    unset($_SESSION['paystack_timestamp']);
-    
-    // Generate invoice number
-    $invoice_no = 'INV-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
-    
-    // Log activity
-    log_activity('payment_verified', "Payment verified via Paystack - Order: #$order_id, Amount: GHS $total_amount, Reference: $reference", $customer_id);
     
     // Return success response
     ob_clean();

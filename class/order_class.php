@@ -318,18 +318,88 @@ class order_class extends db_class {
      */
     public function update_order_status($order_id, $status) {
         try {
-            $valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+            // Accept more status values including 'completed' and 'paid'
+            $valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'completed', 'paid'];
             
             if (!in_array($status, $valid_statuses)) {
+                error_log("Invalid order status: $status");
                 return false;
             }
             
             $sql = "UPDATE orders SET order_status = ? WHERE order_id = ?";
             $stmt = $this->execute($sql, [$status, $order_id]);
             
-            return $stmt !== false && $stmt->rowCount() > 0;
+            if ($stmt !== false && $stmt->rowCount() > 0) {
+                error_log("Order status updated successfully: order_id=$order_id, status=$status");
+                return true;
+            } else {
+                error_log("Failed to update order status: order_id=$order_id, status=$status, rowCount=" . ($stmt ? $stmt->rowCount() : 0));
+                return false;
+            }
         } catch (Exception $e) {
             error_log("Update order status error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update order with invoice number and status
+     */
+    public function update_order_complete($order_id, $invoice_no, $status = 'completed') {
+        try {
+            error_log("Updating order to complete: order_id=$order_id, invoice_no=$invoice_no, status=$status");
+            
+            // Check if invoice_no column exists
+            $sql = "UPDATE orders SET order_status = ?";
+            $params = [$status];
+            
+            // Try to update invoice_no if column exists
+            // We'll use a try-catch approach since column might not exist
+            try {
+                $sql .= ", invoice_no = ?";
+                $params[] = $invoice_no;
+            } catch (Exception $e) {
+                // Column might not exist, continue without it
+                error_log("Note: invoice_no column might not exist, continuing without it");
+            }
+            
+            $sql .= " WHERE order_id = ?";
+            $params[] = $order_id;
+            
+            error_log("Update order SQL: $sql");
+            error_log("Update order params: " . json_encode($params));
+            
+            $stmt = $this->execute($sql, $params);
+            
+            if ($stmt !== false && $stmt->rowCount() > 0) {
+                error_log("✓ Order updated successfully: order_id=$order_id, invoice_no=$invoice_no, status=$status");
+                return true;
+            } else {
+                error_log("✗ Failed to update order: order_id=$order_id, rowCount=" . ($stmt ? $stmt->rowCount() : 0));
+                // Try without invoice_no if that failed
+                if (count($params) > 2) {
+                    error_log("Retrying without invoice_no...");
+                    $sql_retry = "UPDATE orders SET order_status = ? WHERE order_id = ?";
+                    $stmt_retry = $this->execute($sql_retry, [$status, $order_id]);
+                    if ($stmt_retry !== false && $stmt_retry->rowCount() > 0) {
+                        error_log("✓ Order status updated (without invoice_no): order_id=$order_id, status=$status");
+                        return true;
+                    }
+                }
+                return false;
+            }
+        } catch (PDOException $e) {
+            error_log("Update order complete PDO error: " . $e->getMessage());
+            // If error is about invoice_no column, try without it
+            if (strpos($e->getMessage(), 'invoice_no') !== false) {
+                error_log("Retrying without invoice_no column...");
+                $sql_retry = "UPDATE orders SET order_status = ? WHERE order_id = ?";
+                $stmt_retry = $this->execute($sql_retry, [$status, $order_id]);
+                return $stmt_retry !== false && $stmt_retry->rowCount() > 0;
+            }
+            return false;
+        } catch (Exception $e) {
+            error_log("Update order complete error: " . $e->getMessage());
             return false;
         }
     }
