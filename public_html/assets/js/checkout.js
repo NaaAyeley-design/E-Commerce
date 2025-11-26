@@ -648,9 +648,7 @@ function verifyPaymentAfterInline(reference, amount) {
     console.log('Reference:', reference);
     console.log('Amount:', amount);
     
-    // TEMPORARY: Using diagnostic version
-    // TODO: Switch back to paystack_verify_payment.php after fixing
-    const verifyUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_verify_payment_diagnostic.php';
+    const verifyUrl = '../../actions/paystack_verify_payment.php';
     
     console.log('Verification URL:', verifyUrl);
     console.log('Sending verification request...');
