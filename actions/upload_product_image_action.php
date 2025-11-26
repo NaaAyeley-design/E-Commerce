@@ -346,9 +346,27 @@ try {
             // Only add to database if product exists (product_id > 0)
             // For new products, just save the file and return the path
             if ($product_id > 0) {
-                error_log("Upload action: Calling add_product_image_ctr with product_id: $product_id, relative_path: $relative_path");
+                error_log("=== DATABASE INSERT START ===");
+                error_log("Upload action: Calling add_product_image_ctr with:");
+                error_log("  - product_id: $product_id");
+                error_log("  - relative_path: $relative_path");
+                error_log("  - is_primary: " . ($is_primary ? 'yes' : 'no'));
+                error_log("  - image_alt: " . ($image_alt ?? 'null'));
+                error_log("  - image_title: " . ($image_title ?? 'null'));
+                error_log("  - sort_order: $sort_order");
+                error_log("  - File exists: " . (file_exists($file_path) ? 'yes' : 'no'));
+                error_log("  - File size: " . filesize($file_path) . " bytes");
+                
                 $result = add_product_image_ctr($product_id, $relative_path, $is_primary, $image_alt, $image_title, $sort_order);
+                
                 error_log("Upload action: add_product_image_ctr returned: " . var_export($result, true));
+                error_log("=== DATABASE INSERT END ===");
+                
+                if ($result !== "success") {
+                    error_log("ERROR: Database insert failed with message: " . $result);
+                    error_log("This means the file was uploaded but not saved to database");
+                    error_log("File path that failed: $file_path");
+                }
             } else {
                 // For new products, just mark as success (file is saved, will be moved when product is created)
                 error_log("Upload action: product_id is 0, skipping database insert (temporary upload)");

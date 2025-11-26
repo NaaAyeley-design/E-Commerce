@@ -13,39 +13,96 @@ class order_class extends db_class {
      */
     public function create_order($customer_id, $total_amount, $shipping_address, $payment_method = 'pending') {
         try {
+            error_log("=== ORDER CREATION START ===");
+            error_log("Customer ID: " . var_export($customer_id, true));
+            error_log("Total Amount: " . var_export($total_amount, true));
+            error_log("Shipping Address: " . var_export($shipping_address, true));
+            error_log("Payment Method: " . var_export($payment_method, true));
+            
             // Validate inputs
             if (empty($customer_id) || !is_numeric($customer_id)) {
-                error_log("Invalid customer_id: " . $customer_id);
+                error_log("ERROR: Invalid customer_id: " . var_export($customer_id, true));
                 return false;
             }
             
             if (empty($total_amount) || !is_numeric($total_amount) || $total_amount <= 0) {
-                error_log("Invalid total_amount: " . $total_amount);
+                error_log("ERROR: Invalid total_amount: " . var_export($total_amount, true));
                 return false;
             }
             
             if (empty($shipping_address)) {
-                error_log("Empty shipping_address");
+                error_log("ERROR: Empty shipping_address");
                 return false;
             }
             
+            // Check database connection
+            $conn = $this->getConnection();
+            if (!$conn) {
+                error_log("ERROR: Database connection is null");
+                return false;
+            }
+            error_log("✓ Database connection established");
+            
+            // Check if customer exists BEFORE creating order
+            error_log("Checking if customer exists...");
+            $customer_check = $this->fetchRow("SELECT customer_id FROM customer WHERE customer_id = ?", [(int)$customer_id]);
+            if (!$customer_check) {
+                error_log("ERROR: Customer ID $customer_id does NOT exist in customer table");
+                error_log("This will cause a foreign key constraint error");
+                
+                // List available customers for debugging
+                $all_customers = $this->fetchAll("SELECT customer_id, customer_name, customer_email FROM customer LIMIT 5");
+                if ($all_customers) {
+                    error_log("Available customers in database:");
+                    foreach ($all_customers as $cust) {
+                        error_log("  - ID: {$cust['customer_id']}, Name: {$cust['customer_name']}, Email: {$cust['customer_email']}");
+                    }
+                } else {
+                    error_log("WARNING: No customers found in database at all!");
+                }
+                return false;
+            }
+            error_log("✓ Customer exists: ID={$customer_check['customer_id']}");
+            
             // Check if orders table exists
+            error_log("Checking if orders table exists...");
             try {
                 $table_check = $this->fetchRow("SHOW TABLES LIKE 'orders'");
                 if (!$table_check) {
-                    error_log("Orders table does not exist - attempting to create");
+                    error_log("WARNING: Orders table does not exist - attempting to create");
                     // Try to create the table
                     require_once __DIR__ . '/../db/create_orders_tables.php';
                     // Re-check
                     $table_check = $this->fetchRow("SHOW TABLES LIKE 'orders'");
                     if (!$table_check) {
-                        error_log("Orders table still does not exist after creation attempt");
+                        error_log("ERROR: Orders table still does not exist after creation attempt");
                         return false;
                     }
+                    error_log("✓ Orders table created successfully");
+                } else {
+                    error_log("✓ Orders table exists");
                 }
             } catch (Exception $e) {
-                error_log("Orders table check failed: " . $e->getMessage());
+                error_log("WARNING: Orders table check failed: " . $e->getMessage());
                 // Continue anyway - table might exist
+            }
+            
+            // Verify table structure
+            error_log("Verifying orders table structure...");
+            $table_structure = $this->fetchAll("DESCRIBE orders");
+            if ($table_structure) {
+                $columns = array_column($table_structure, 'Field');
+                error_log("Orders table columns: " . implode(', ', $columns));
+                
+                $required_columns = ['order_id', 'customer_id', 'total_amount', 'shipping_address', 'payment_method', 'order_status'];
+                $missing_columns = array_diff($required_columns, $columns);
+                if (!empty($missing_columns)) {
+                    error_log("ERROR: Missing required columns: " . implode(', ', $missing_columns));
+                    return false;
+                }
+                error_log("✓ All required columns exist");
+            } else {
+                error_log("WARNING: Cannot describe orders table structure");
             }
             
             $sql = "INSERT INTO orders 
@@ -53,12 +110,13 @@ class order_class extends db_class {
                     VALUES (?, ?, ?, ?, 'pending')";
             
             $params = [(int)$customer_id, (float)$total_amount, $shipping_address, $payment_method];
-            error_log("Creating order with params: customer_id=" . $customer_id . ", total=" . $total_amount);
+            error_log("Executing SQL: " . $sql);
+            error_log("Parameters: " . json_encode($params));
             
             $stmt = $this->execute($sql, $params);
             
             if ($stmt === false) {
-                error_log("Execute returned false for order creation");
+                error_log("ERROR: Execute returned false for order creation");
                 error_log("SQL: " . $sql);
                 error_log("Params: " . json_encode($params));
                 
@@ -72,43 +130,73 @@ class order_class extends db_class {
                     if (isset($error_info[1])) {
                         $error_code = $error_info[1];
                         if ($error_code == 1452) {
-                            error_log("FOREIGN KEY CONSTRAINT ERROR: Customer ID $customer_id does not exist in customer table");
+                            error_log("FOREIGN KEY CONSTRAINT ERROR (1452): Customer ID $customer_id does not exist in customer table");
                         } elseif ($error_code == 1146) {
-                            error_log("TABLE NOT FOUND ERROR: Orders table does not exist");
+                            error_log("TABLE NOT FOUND ERROR (1146): Orders table does not exist");
                         } elseif ($error_code == 1054) {
-                            error_log("COLUMN NOT FOUND ERROR: One or more columns don't exist in orders table");
+                            error_log("COLUMN NOT FOUND ERROR (1054): One or more columns don't exist in orders table");
+                        } elseif ($error_code == 1062) {
+                            error_log("DUPLICATE ENTRY ERROR (1062): Duplicate key value");
+                        } elseif ($error_code == 1048) {
+                            error_log("NULL VALUE ERROR (1048): NULL value in NOT NULL column");
                         }
                     }
+                    
+                    if (isset($error_info[2])) {
+                        error_log("PDO Error Message: " . $error_info[2]);
+                    }
                 } else {
-                    error_log("Database connection is null - cannot get error details");
+                    error_log("ERROR: Database connection is null - cannot get error details");
                 }
                 
+                error_log("=== ORDER CREATION FAILED ===");
                 return false;
             }
             
+            error_log("✓ SQL executed successfully");
+            
             $row_count = $stmt->rowCount();
+            error_log("Rows affected: " . $row_count);
+            
             if ($row_count > 0) {
                 $order_id = $this->lastInsertId();
+                error_log("lastInsertId() returned: " . var_export($order_id, true));
+                
                 if ($order_id && $order_id > 0) {
-                    error_log("Order created successfully with ID: " . $order_id);
-                    return (int)$order_id;
+                    error_log("✓ Order created successfully with ID: " . $order_id);
+                    
+                    // Verify order was actually inserted
+                    $verify = $this->fetchRow("SELECT * FROM orders WHERE order_id = ?", [$order_id]);
+                    if ($verify) {
+                        error_log("✓ Order verified in database");
+                        error_log("=== ORDER CREATION SUCCESS ===");
+                        return (int)$order_id;
+                    } else {
+                        error_log("ERROR: Order ID $order_id returned but order not found in database");
+                        error_log("=== ORDER CREATION FAILED ===");
+                        return false;
+                    }
                 } else {
-                    error_log("Order created but lastInsertId returned: " . var_export($order_id, true));
+                    error_log("WARNING: Order created but lastInsertId returned: " . var_export($order_id, true));
                     // Even if lastInsertId fails, check if the order was actually inserted
                     // by querying for the most recent order for this customer
                     $check_sql = "SELECT order_id FROM orders WHERE customer_id = ? ORDER BY order_id DESC LIMIT 1";
                     $check_result = $this->fetchRow($check_sql, [$customer_id]);
                     if ($check_result && isset($check_result['order_id'])) {
-                        error_log("Order found via query: " . $check_result['order_id']);
+                        error_log("✓ Order found via query: " . $check_result['order_id']);
+                        error_log("=== ORDER CREATION SUCCESS (via query) ===");
                         return (int)$check_result['order_id'];
                     }
+                    error_log("ERROR: Order not found even after query");
+                    error_log("=== ORDER CREATION FAILED ===");
                     return false;
                 }
             }
             
-            error_log("Failed to create order - rowCount: " . $row_count);
+            error_log("ERROR: Failed to create order - rowCount: " . $row_count);
             error_log("SQL: " . $sql);
             error_log("Params: " . json_encode($params));
+            error_log("=== ORDER CREATION FAILED ===");
             return false;
         } catch (PDOException $e) {
             error_log("Create order PDO error: " . $e->getMessage());

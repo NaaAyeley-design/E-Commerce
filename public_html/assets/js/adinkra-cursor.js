@@ -889,40 +889,6 @@ window.addEventListener('load', () => {
   }
 });
 
-// SIMPLE TEST - Run after everything to verify basic insertion works
-setTimeout(() => {
-  console.log('=== SIMPLE INSERTION TEST ===');
-  const testDiv = document.createElement('div');
-  testDiv.className = 'cursor-test-element';
-  testDiv.style.cssText = 'position:fixed; top:10px; left:10px; background:red; padding:10px; z-index:999999; color:white; font-weight:bold;';
-  testDiv.textContent = 'TEST CURSOR ELEMENT';
-  testDiv.setAttribute('data-test', 'cursor-insertion');
-  
-  try {
-    document.body.appendChild(testDiv);
-    console.log('✓ Test element appended to body');
-    
-    setTimeout(() => {
-      const found = document.querySelector('.cursor-test-element');
-      console.log('Test element found:', !!found);
-      if (found) {
-        console.log('✓✓✓ BASIC INSERTION WORKS - problem is specific to cursor code ✓✓✓');
-        // Remove test element after 3 seconds
-        setTimeout(() => {
-          if (found && found.parentElement) {
-            found.remove();
-            console.log('Test element removed');
-          }
-        }, 3000);
-      } else {
-        console.error('✗✗✗ BASIC INSERTION FAILS - something is blocking ALL insertions ✗✗✗');
-        console.error('This may indicate a Content Security Policy (CSP) issue');
-      }
-    }, 100);
-  } catch (e) {
-    console.error('✗ Error in test insertion:', e);
-  }
-}, 2000);
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {

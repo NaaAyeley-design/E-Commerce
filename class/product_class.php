@@ -586,12 +586,58 @@ class product_class extends db_class {
                 return ['success' => false, 'message' => 'Image URL is required.'];
             }
             
+            // Check if product_images table exists
+            error_log("add_product_image: Checking if product_images table exists...");
+            $table_check = $this->fetchRow("SHOW TABLES LIKE 'product_images'");
+            if (!$table_check) {
+                error_log("add_product_image: ERROR - product_images table does not exist");
+                error_log("add_product_image: Attempting to create table...");
+                
+                // Try to create the table
+                $create_table_sql = "CREATE TABLE IF NOT EXISTS product_images (
+                    image_id INT(11) NOT NULL AUTO_INCREMENT,
+                    product_id INT(11) NOT NULL,
+                    image_url VARCHAR(500) NOT NULL,
+                    image_alt VARCHAR(200) DEFAULT NULL,
+                    image_title VARCHAR(200) DEFAULT NULL,
+                    sort_order INT(11) DEFAULT 0,
+                    is_primary TINYINT(1) DEFAULT 0,
+                    file_size INT(11) DEFAULT NULL,
+                    mime_type VARCHAR(100) DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (image_id),
+                    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+                    INDEX idx_product_id (product_id),
+                    INDEX idx_sort_order (sort_order),
+                    INDEX idx_is_primary (is_primary),
+                    INDEX idx_created_at (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+                
+                $create_result = $this->execute($create_table_sql);
+                if ($create_result === false) {
+                    error_log("add_product_image: Failed to create product_images table");
+                    return ['success' => false, 'message' => 'Database table not found and could not be created. Please contact administrator.'];
+                }
+                
+                // Re-check
+                $table_check = $this->fetchRow("SHOW TABLES LIKE 'product_images'");
+                if (!$table_check) {
+                    error_log("add_product_image: Table still does not exist after creation attempt");
+                    return ['success' => false, 'message' => 'Database table not found. Please contact administrator.'];
+                }
+                error_log("add_product_image: product_images table created successfully");
+            } else {
+                error_log("add_product_image: product_images table exists");
+            }
+            
             // Check if product exists
             $product = $this->get_product_by_id($product_id);
             if (!$product) {
                 error_log("add_product_image: Product not found. ID: $product_id");
                 return ['success' => false, 'message' => 'Product not found.'];
             }
+            error_log("add_product_image: Product verified - ID: $product_id, Title: " . ($product['product_title'] ?? 'N/A'));
             
             // If this is set as primary, unset other primary images
             if ($is_primary) {
@@ -599,6 +645,8 @@ class product_class extends db_class {
                 $unset_result = $this->execute($sql_unset, [$product_id]);
                 if ($unset_result === false) {
                     error_log("add_product_image: Failed to unset other primary images for product ID: $product_id");
+                } else {
+                    error_log("add_product_image: Unset other primary images for product ID: $product_id");
                 }
             }
             
@@ -640,12 +688,35 @@ class product_class extends db_class {
                 if (!$execute_result) {
                     $error_info = $stmt->errorInfo();
                     error_log("add_product_image: Execute failed. Error: " . json_encode($error_info));
-                    $error_message = $error_info[2] ?? 'Unknown database error';
+                    error_log("add_product_image: SQL State: " . ($error_info[0] ?? 'N/A'));
+                    error_log("add_product_image: Error Code: " . ($error_info[1] ?? 'N/A'));
+                    error_log("add_product_image: Error Message: " . ($error_info[2] ?? 'N/A'));
                     
-                    // Check for common issues
-                    if (strpos($error_message, 'foreign key') !== false || strpos($error_message, 'Cannot add or update') !== false) {
+                    $error_message = $error_info[2] ?? 'Unknown database error';
+                    $error_code = $error_info[1] ?? 0;
+                    
+                    // Check for specific error codes
+                    if ($error_code == 1452) {
+                        error_log("add_product_image: FOREIGN KEY CONSTRAINT ERROR - Product ID $product_id does not exist");
                         return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
-                    } elseif (strpos($error_message, 'Duplicate entry') !== false) {
+                    } elseif ($error_code == 1146) {
+                        error_log("add_product_image: TABLE NOT FOUND ERROR - product_images table does not exist");
+                        return ['success' => false, 'message' => 'Database table not found. Please contact administrator.'];
+                    } elseif ($error_code == 1054) {
+                        error_log("add_product_image: COLUMN NOT FOUND ERROR - One or more columns don't exist");
+                        return ['success' => false, 'message' => 'Database schema error. Please contact administrator.'];
+                    } elseif ($error_code == 1062) {
+                        error_log("add_product_image: DUPLICATE ENTRY ERROR");
+                        return ['success' => false, 'message' => 'Image already exists for this product.'];
+                    } elseif ($error_code == 1048) {
+                        error_log("add_product_image: NULL VALUE ERROR - NULL value in NOT NULL column");
+                        return ['success' => false, 'message' => 'Invalid image data provided.'];
+                    }
+                    
+                    // Check for common issues in error message
+                    if (stripos($error_message, 'foreign key') !== false || stripos($error_message, 'Cannot add or update') !== false) {
+                        return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
+                    } elseif (stripos($error_message, 'Duplicate entry') !== false) {
                         return ['success' => false, 'message' => 'Image already exists for this product.'];
                     } else {
                         return ['success' => false, 'message' => 'Database error: ' . $error_message];
@@ -681,6 +752,30 @@ class product_class extends db_class {
                     // Get detailed error information
                     $error_info = $stmt->errorInfo();
                     error_log("add_product_image: Statement error info: " . json_encode($error_info));
+                    error_log("add_product_image: SQL State: " . ($error_info[0] ?? 'N/A'));
+                    error_log("add_product_image: Error Code: " . ($error_info[1] ?? 'N/A'));
+                    error_log("add_product_image: Error Message: " . ($error_info[2] ?? 'N/A'));
+                    
+                    // Check if table exists
+                    $table_check = $this->fetchRow("SHOW TABLES LIKE 'product_images'");
+                    if (!$table_check) {
+                        error_log("add_product_image: ERROR - product_images table does not exist");
+                        return ['success' => false, 'message' => 'Database table not found. Please contact administrator.'];
+                    }
+                    
+                    // Check table structure
+                    $table_structure = $this->fetchAll("DESCRIBE product_images");
+                    if ($table_structure) {
+                        $columns = array_column($table_structure, 'Field');
+                        error_log("add_product_image: product_images table columns: " . implode(', ', $columns));
+                        
+                        $required_columns = ['image_id', 'product_id', 'image_url'];
+                        $missing_columns = array_diff($required_columns, $columns);
+                        if (!empty($missing_columns)) {
+                            error_log("add_product_image: ERROR - Missing required columns: " . implode(', ', $missing_columns));
+                            return ['success' => false, 'message' => 'Database schema error. Missing columns: ' . implode(', ', $missing_columns)];
+                        }
+                    }
                     
                     // Verify product exists
                     $product_check = $this->get_product_by_id($product_id);
@@ -691,6 +786,12 @@ class product_class extends db_class {
                     
                     // Check for foreign key constraint issues
                     $error_message = $error_info[2] ?? 'Unknown error';
+                    $error_code = $error_info[1] ?? 0;
+                    
+                    if ($error_code == 1452) {
+                        error_log("add_product_image: FOREIGN KEY CONSTRAINT ERROR - Product ID $product_id does not exist");
+                        return ['success' => false, 'message' => 'Product not found. Product ID: ' . $product_id];
+                    }
                     if (strpos($error_message, 'foreign key') !== false || strpos($error_message, 'Cannot add or update') !== false) {
                         return ['success' => false, 'message' => 'Product not found or invalid product ID.'];
                     }
