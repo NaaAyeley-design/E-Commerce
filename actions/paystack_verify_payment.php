@@ -430,15 +430,47 @@ try {
     }
     
     error_log("✓ Database connection established");
+    error_log("Connection type: " . get_class($conn));
+    error_log("Connection object ID: " . spl_object_hash($conn));
+    
+    // Verify connection type
+    if (!($conn instanceof PDO)) {
+        error_log("ERROR: Connection is not PDO instance. Got: " . get_class($conn));
+        throw new Exception("Invalid database connection type. Expected PDO, got: " . get_class($conn));
+    }
+    
+    error_log("✓ Connection verified as PDO");
+    
+    // Verify order_class is using the same connection
+    $order_conn = $order->getConnection();
+    $order_conn_id = spl_object_hash($order_conn);
+    if ($order_conn_id !== spl_object_hash($conn)) {
+        error_log("WARNING: Order class connection is different from transaction connection!");
+        error_log("Transaction connection ID: " . spl_object_hash($conn));
+        error_log("Order class connection ID: " . $order_conn_id);
+        error_log("This may cause transaction issues. Using order class connection for transaction.");
+        $conn = $order_conn; // Use the order class connection
+    } else {
+        error_log("✓ Order class using same connection instance");
+    }
     
     // Begin transaction
     error_log("Beginning database transaction...");
     try {
-        $conn->beginTransaction();
-        error_log("✓ Transaction started");
+        if (!$conn->inTransaction()) {
+            $conn->beginTransaction();
+            error_log("✓ PDO Transaction started");
+        } else {
+            error_log("⚠ Transaction already in progress");
+        }
+    } catch (PDOException $e) {
+        error_log("ERROR: Failed to begin PDO transaction: " . $e->getMessage());
+        error_log("PDO Error Code: " . $e->getCode());
+        error_log("PDO Error Info: " . json_encode($conn->errorInfo()));
+        throw new Exception("Failed to start database transaction: " . $e->getMessage());
     } catch (Exception $e) {
         error_log("ERROR: Failed to begin transaction: " . $e->getMessage());
-        throw new Exception("Failed to start database transaction");
+        throw new Exception("Failed to start database transaction: " . $e->getMessage());
     }
     
     try {
@@ -557,8 +589,19 @@ try {
         // COMMIT TRANSACTION
         // ============================================
         error_log("=== COMMITTING TRANSACTION ===");
-        $conn->commit();
-        error_log("✓ Transaction committed successfully");
+        try {
+            if ($conn->inTransaction()) {
+                $conn->commit();
+                error_log("✓ PDO Transaction committed successfully");
+            } else {
+                error_log("⚠ No active transaction to commit");
+            }
+        } catch (PDOException $e) {
+            error_log("ERROR: Failed to commit PDO transaction: " . $e->getMessage());
+            error_log("PDO Error Code: " . $e->getCode());
+            error_log("PDO Error Info: " . json_encode($conn->errorInfo()));
+            throw new Exception("Failed to commit transaction: " . $e->getMessage());
+        }
         error_log("=== ALL DATABASE UPDATES COMPLETE ===");
         error_log("Summary:");
         error_log("  - Order ID: $order_id");
@@ -599,8 +642,16 @@ try {
         error_log("Stack trace: " . $e->getTraceAsString());
         
         try {
-            $conn->rollBack();
-            error_log("✓ Transaction rolled back");
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+                error_log("✓ PDO Transaction rolled back");
+            } else {
+                error_log("⚠ No active transaction to rollback");
+            }
+        } catch (PDOException $e) {
+            error_log("ERROR: Failed to rollback PDO transaction: " . $e->getMessage());
+            error_log("PDO Error Code: " . $e->getCode());
+            error_log("PDO Error Info: " . json_encode($conn->errorInfo()));
         } catch (Exception $rollback_error) {
             error_log("ERROR: Failed to rollback transaction: " . $rollback_error->getMessage());
         }

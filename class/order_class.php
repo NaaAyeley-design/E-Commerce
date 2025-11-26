@@ -42,6 +42,13 @@ class order_class extends db_class {
                 return false;
             }
             error_log("✓ Database connection established");
+            error_log("Connection type: " . get_class($conn));
+            
+            // Verify it's PDO
+            if (!($conn instanceof PDO)) {
+                error_log("ERROR: Connection is not PDO instance. Got: " . get_class($conn));
+                return false;
+            }
             
             // Check if customer exists BEFORE creating order
             error_log("Checking if customer exists...");
