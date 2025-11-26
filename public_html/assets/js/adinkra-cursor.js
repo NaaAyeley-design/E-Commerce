@@ -4,24 +4,41 @@
 // ============================================
 
 // Configuration
-// Get base path for assets (fallback to relative if not available)
+// Get base path for assets - FIXED to ALWAYS use assets/images/ correctly
 const getAssetPath = (filename) => {
   // URL encode spaces in filename
   const encodedFilename = filename.replace(/ /g, '%20');
   
-  // Try to use ASSETS_URL if available (set by PHP)
-  if (typeof ASSETS_URL !== 'undefined' && ASSETS_URL) {
-    return ASSETS_URL + '/images/' + encodedFilename;
+  // Priority 1: Use ASSETS_URL if available (set by PHP in footer) - MOST RELIABLE
+  if (typeof ASSETS_URL !== 'undefined' && ASSETS_URL && ASSETS_URL !== '') {
+    // Ensure ASSETS_URL doesn't already end with /assets
+    let assetsPath = ASSETS_URL;
+    if (assetsPath.endsWith('/assets')) {
+      assetsPath = assetsPath;
+    } else if (!assetsPath.includes('/assets')) {
+      assetsPath = assetsPath + '/assets';
+    }
+    const path = assetsPath + '/images/' + encodedFilename;
+    console.log('✓ Using ASSETS_URL path:', path);
+    return path;
   }
-  // Try to use BASE_URL if available
-  if (typeof BASE_URL !== 'undefined' && BASE_URL) {
-    return BASE_URL + '/assets/images/' + encodedFilename;
+  
+  // Priority 2: Use BASE_URL if available
+  if (typeof BASE_URL !== 'undefined' && BASE_URL && BASE_URL !== '') {
+    const path = BASE_URL + '/assets/images/' + encodedFilename;
+    console.log('✓ Using BASE_URL path:', path);
+    return path;
   }
-  // Fallback to relative path from script location
-  return '../images/' + encodedFilename;
+  
+  // Priority 3: Use direct assets/images path (works from public_html root)
+  // This is the most reliable fallback - always use assets/images/
+  const directPath = 'assets/images/' + encodedFilename;
+  console.log('✓ Using direct assets path:', directPath);
+  return directPath;
 };
 
-// Files are .svg, not .png!
+// Files are .svg format (confirmed from directory listing: adinkra symbol 1.svg, etc.)
+// If your files are actually .png, change .svg to .png below
 const ADINKRA_SYMBOLS = [
   getAssetPath('adinkra symbol 1.svg'),
   getAssetPath('adinkra symbol 2.svg'),
@@ -30,7 +47,16 @@ const ADINKRA_SYMBOLS = [
 ];
 
 // Debug: Log the paths being used
+console.log('=== ADINKRA CURSOR CONFIGURATION ===');
+console.log('ASSETS_URL available:', typeof ASSETS_URL !== 'undefined' ? ASSETS_URL : 'NOT SET');
+console.log('BASE_URL available:', typeof BASE_URL !== 'undefined' ? BASE_URL : 'NOT SET');
 console.log('Adinkra symbol paths:', ADINKRA_SYMBOLS);
+
+// Test if first image can load (debugging)
+const testImg = new Image();
+testImg.onload = () => console.log('✓✓✓ FIRST SYMBOL TEST: Image loaded successfully! Path:', testImg.src);
+testImg.onerror = () => console.error('✗✗✗ FIRST SYMBOL TEST: Failed to load image. Path:', testImg.src, 'Check that file exists and path is correct.');
+testImg.src = ADINKRA_SYMBOLS[0];
 const TRAIL_DELAY = 30; // milliseconds between trail dots
 const CURSOR_COLORS = {
   primary: '#FF9A56',    // Amber

@@ -107,6 +107,13 @@
     <!-- JavaScript Files -->
     <script src="<?php echo ASSETS_URL; ?>/js/toast.js?v=<?php echo get_js_version('toast.js'); ?>"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/script.js?v=<?php echo get_js_version('script.js'); ?>"></script>
+    <!-- Pass ASSETS_URL to JavaScript for cursor images -->
+    <script>
+        // Make ASSETS_URL available to JavaScript
+        if (typeof ASSETS_URL === 'undefined') {
+            var ASSETS_URL = '<?php echo ASSETS_URL; ?>';
+        }
+    </script>
     <!-- Adinkra Cursor - Blue Glowing Gradient Theme -->
     <script src="<?php echo ASSETS_URL; ?>/js/adinkra-cursor.js?v=<?php echo get_js_version('adinkra-cursor.js'); ?>"></script>
     <?php if (isset($additional_js) && is_array($additional_js)): ?>
