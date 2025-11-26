@@ -14,11 +14,33 @@ const CURSOR_COLORS = {
 
 // Initialize cursor elements
 function initAdinkraCursor() {
-  // Disable on mobile/touch devices
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    console.log('Cursor disabled: Touch device detected');
-    return; // Exit function - don't initialize cursor on touch devices
+  // Disable ONLY on actual mobile devices (not touch-capable desktops)
+  // Many desktop browsers report touch capabilities, so we ONLY check user agent
+  // This is more reliable than checking touch capabilities
+  const mobileUserAgents = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const isMobileDevice = mobileUserAgents.test(navigator.userAgent);
+  
+  // Additional check: if screen is very small AND has touch, it's likely mobile
+  const isSmallTouchScreen = window.innerWidth <= 480 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  
+  if (isMobileDevice || isSmallTouchScreen) {
+    console.log('Cursor disabled: Mobile/small touch device detected', {
+      userAgent: navigator.userAgent,
+      screenWidth: window.innerWidth,
+      isMobileUA: isMobileDevice,
+      isSmallTouch: isSmallTouchScreen,
+      hasTouch: 'ontouchstart' in window,
+      maxTouchPoints: navigator.maxTouchPoints
+    });
+    return; // Exit function - don't initialize cursor on mobile devices
   }
+  
+  console.log('✓ Touch detection passed - cursor will initialize', {
+    userAgent: navigator.userAgent.substring(0, 50) + '...',
+    screenWidth: window.innerWidth,
+    hasTouch: 'ontouchstart' in window,
+    maxTouchPoints: navigator.maxTouchPoints
+  });
 
   console.log('=== INITIALIZING ADINKRA CURSOR ===');
   console.log('Document body exists:', !!document.body);
@@ -291,9 +313,14 @@ function initAdinkraCursor() {
 
 // Main cursor logic
 function setupAdinkraCursor() {
-  // Disable on mobile/touch devices
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    return; // Exit function - don't setup cursor on touch devices
+  // Disable ONLY on actual mobile devices (same logic as initAdinkraCursor)
+  const mobileUserAgents = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const isMobileDevice = mobileUserAgents.test(navigator.userAgent);
+  const isSmallTouchScreen = window.innerWidth <= 480 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  
+  if (isMobileDevice || isSmallTouchScreen) {
+    console.log('Cursor setup disabled: Mobile/small touch device detected');
+    return; // Exit function - don't setup cursor on mobile devices
   }
 
   let currentSymbolIndex = 0;
