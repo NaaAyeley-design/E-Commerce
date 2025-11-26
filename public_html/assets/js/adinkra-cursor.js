@@ -5,25 +5,32 @@
 
 // Configuration
 // Get base path for assets (fallback to relative if not available)
-const getAssetPath = (path) => {
+const getAssetPath = (filename) => {
+  // URL encode spaces in filename
+  const encodedFilename = filename.replace(/ /g, '%20');
+  
   // Try to use ASSETS_URL if available (set by PHP)
   if (typeof ASSETS_URL !== 'undefined' && ASSETS_URL) {
-    return ASSETS_URL + '/' + path;
+    return ASSETS_URL + '/images/' + encodedFilename;
   }
   // Try to use BASE_URL if available
   if (typeof BASE_URL !== 'undefined' && BASE_URL) {
-    return BASE_URL + '/assets/' + path;
+    return BASE_URL + '/assets/images/' + encodedFilename;
   }
   // Fallback to relative path from script location
-  return '../images/' + path;
+  return '../images/' + encodedFilename;
 };
 
+// Files are .svg, not .png!
 const ADINKRA_SYMBOLS = [
-  getAssetPath('images/adinkra symbol 1.png'),
-  getAssetPath('images/adinkra symbol 2.png'),
-  getAssetPath('images/adinkra symbol 3.png'),
-  getAssetPath('images/adinkra symbol 4.png')
+  getAssetPath('adinkra symbol 1.svg'),
+  getAssetPath('adinkra symbol 2.svg'),
+  getAssetPath('adinkra symbol 3.svg'),
+  getAssetPath('adinkra symbol 4.svg')
 ];
+
+// Debug: Log the paths being used
+console.log('Adinkra symbol paths:', ADINKRA_SYMBOLS);
 const TRAIL_DELAY = 30; // milliseconds between trail dots
 const CURSOR_COLORS = {
   primary: '#FF9A56',    // Amber
@@ -292,9 +299,21 @@ function initAdinkraCursor() {
     adinkraImg.className = 'adinkra-img';
     adinkraImg.src = ADINKRA_SYMBOLS[0];
     adinkraImg.alt = 'Adinkra Symbol';
+    
+    // Add error handler to debug image loading
+    adinkraImg.onerror = function() {
+      console.error('✗ Failed to load Adinkra image:', this.src);
+      console.error('Check that the file exists at:', this.src);
+    };
+    
+    adinkraImg.onload = function() {
+      console.log('✓ Adinkra image loaded successfully:', this.src);
+    };
+    
     adinkraCursor.appendChild(adinkraImg);
     
     console.log('✓ Adinkra cursor element created with image');
+    console.log('Initial image src:', ADINKRA_SYMBOLS[0]);
     
     // Create custom cursor element
     const customCursor = document.createElement('div');
@@ -544,7 +563,19 @@ function setupAdinkraCursor() {
       currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
       const adinkraImg = adinkraCursor.querySelector('.adinkra-img');
       if (adinkraImg) {
-        adinkraImg.src = ADINKRA_SYMBOLS[currentSymbolIndex];
+        const newSrc = ADINKRA_SYMBOLS[currentSymbolIndex];
+        console.log('Changing to symbol:', currentSymbolIndex, 'Path:', newSrc);
+        adinkraImg.src = newSrc;
+        
+        // Add error handler for debugging
+        adinkraImg.onerror = function() {
+          console.error('✗ Failed to load Adinkra image:', this.src);
+        };
+        adinkraImg.onload = function() {
+          console.log('✓ Adinkra image loaded:', this.src);
+        };
+      } else {
+        console.error('✗ Adinkra image element not found');
       }
       
       // Ensure cursor is visible
