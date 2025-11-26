@@ -110,13 +110,7 @@ function initAdinkraCursor() {
   }
   
   style.textContent = `
-    body {
-      cursor: none !important;
-    }
-    
-    * {
-      cursor: none !important;
-    }
+    /* Normal system cursor is restored - no cursor: none rules */
 
     .custom-cursor {
       position: fixed !important;
@@ -129,11 +123,11 @@ function initAdinkraCursor() {
       transition: all 0.15s ease-out !important;
       transform: translate(-50%, -50%) !important;
       box-shadow: 0 0 20px ${CURSOR_COLORS.primary}, 0 0 40px rgba(255, 154, 86, 0.5) !important;
-      opacity: 1 !important;
       left: 0;
       top: 0;
-      display: block !important;
-      visibility: visible !important;
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
     }
@@ -149,11 +143,11 @@ function initAdinkraCursor() {
       transition: all 0.2s ease-out !important;
       transform: translate(-50%, -50%) !important;
       box-shadow: 0 0 15px rgba(183, 65, 14, 0.5), 0 0 30px rgba(183, 65, 14, 0.3) !important;
-      opacity: 1 !important;
       left: 0;
       top: 0;
-      display: block !important;
-      visibility: visible !important;
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
     }
@@ -179,31 +173,36 @@ function initAdinkraCursor() {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
-      /* Multiple layered drop shadows for depth and glow */
-      filter: drop-shadow(0 2px 8px rgba(255, 154, 86, 0.6))
-              drop-shadow(0 0 12px rgba(255, 154, 86, 0.8))
-              drop-shadow(0 0 20px rgba(183, 65, 14, 0.7))
-              drop-shadow(0 0 30px rgba(255, 154, 86, 0.5))
-              /* Color overlay to match amber/rust theme */
-              brightness(1.1)
-              contrast(1.05)
-              saturate(1.2) !important;
+      /* Apply brown/rust color to symbols with glow effects */
+      filter: 
+        /* Color transformation to brown/rust */
+        brightness(0.8)
+        sepia(100%)
+        saturate(300%)
+        hue-rotate(-10deg)
+        /* Add brown/rust glow effects */
+        drop-shadow(0 2px 12px rgba(107, 68, 35, 0.9))
+        drop-shadow(0 0 20px rgba(183, 65, 14, 0.7))
+        drop-shadow(0 0 30px rgba(255, 154, 86, 0.5)) !important;
       /* Smooth transitions for all effects */
       transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
       /* Ensure image is centered */
       display: block !important;
     }
 
-    /* Enhanced glow on hover */
+    /* Enhanced brown glow when active/hovering */
     .adinkra-cursor.active img,
     .adinkra-cursor.active .adinkra-img {
-      filter: drop-shadow(0 4px 12px rgba(255, 154, 86, 0.9))
-              drop-shadow(0 0 16px rgba(255, 154, 86, 1))
-              drop-shadow(0 0 24px rgba(183, 65, 14, 0.9))
-              drop-shadow(0 0 40px rgba(255, 154, 86, 0.7))
-              brightness(1.2)
-              contrast(1.1)
-              saturate(1.3) !important;
+      filter: 
+        /* Stronger brown color */
+        brightness(0.7)
+        sepia(100%)
+        saturate(350%)
+        hue-rotate(-10deg)
+        /* Enhanced brown/rust glow */
+        drop-shadow(0 4px 16px rgba(107, 68, 35, 1))
+        drop-shadow(0 0 30px rgba(183, 65, 14, 0.9))
+        drop-shadow(0 0 40px rgba(255, 154, 86, 0.7)) !important;
     }
 
     .adinkra-cursor.active {
@@ -211,12 +210,7 @@ function initAdinkraCursor() {
       opacity: 1 !important;
       display: block !important;
       visibility: visible !important;
-    }
-
-    .adinkra-cursor.active ~ .custom-cursor,
-    .adinkra-cursor.active ~ .cursor-ring {
-      opacity: 0 !important;
-      transform: translate(-50%, -50%) scale(0) !important;
+      animation: adinkra-rotate 0.4s ease-out !important;
     }
     
     /* Ensure cursor is visible when hovering interactive elements */
@@ -274,33 +268,6 @@ function initAdinkraCursor() {
       }
     }
 
-    /* Pulse glow animation for active state */
-    @keyframes adinkra-pulse {
-      0%, 100% {
-        filter: drop-shadow(0 4px 12px rgba(255, 154, 86, 0.9))
-                drop-shadow(0 0 16px rgba(255, 154, 86, 1))
-                drop-shadow(0 0 24px rgba(183, 65, 14, 0.9))
-                drop-shadow(0 0 40px rgba(255, 154, 86, 0.7))
-                brightness(1.2)
-                contrast(1.1)
-                saturate(1.3);
-      }
-      50% {
-        filter: drop-shadow(0 6px 16px rgba(255, 154, 86, 1))
-                drop-shadow(0 0 20px rgba(255, 154, 86, 1))
-                drop-shadow(0 0 30px rgba(183, 65, 14, 1))
-                drop-shadow(0 0 50px rgba(255, 154, 86, 0.9))
-                brightness(1.3)
-                contrast(1.15)
-                saturate(1.4);
-      }
-    }
-
-    /* Apply pulse animation to active adinkra cursor images */
-    .adinkra-cursor.active img,
-    .adinkra-cursor.active .adinkra-img {
-      animation: adinkra-pulse 2s ease-in-out infinite !important;
-    }
   `;
   
   console.log('✓ Cursor styles added to head');
@@ -475,19 +442,17 @@ function setupAdinkraCursor() {
     return; // Exit if elements don't exist (mobile device)
   }
 
-  // Set initial position and make visible
+  // Set initial position - keep custom cursor and ring HIDDEN
   cursor.style.left = mouseX + 'px';
   cursor.style.top = mouseY + 'px';
-  cursor.style.opacity = '1';
-  cursor.style.display = 'block';
-  cursor.style.visibility = 'visible';
-  cursor.style.zIndex = '99999';
+  cursor.style.display = 'none';
+  cursor.style.visibility = 'hidden';
+  cursor.style.opacity = '0';
   cursorRing.style.left = ringX + 'px';
   cursorRing.style.top = ringY + 'px';
-  cursorRing.style.opacity = '1';
-  cursorRing.style.display = 'block';
-  cursorRing.style.visibility = 'visible';
-  cursorRing.style.zIndex = '99998';
+  cursorRing.style.display = 'none';
+  cursorRing.style.visibility = 'hidden';
+  cursorRing.style.opacity = '0';
   adinkraCursor.style.left = mouseX + 'px';
   adinkraCursor.style.top = mouseY + 'px';
   adinkraCursor.style.display = 'block';
@@ -517,20 +482,18 @@ function setupAdinkraCursor() {
     mouseX = e.clientX;
     mouseY = e.clientY;
 
-    // Update main cursor immediately
+    // Update positions - keep custom cursor and ring HIDDEN
     cursor.style.left = mouseX + 'px';
     cursor.style.top = mouseY + 'px';
-    cursor.style.opacity = '1';
-    cursor.style.display = 'block';
-    cursor.style.visibility = 'visible';
-    cursor.style.zIndex = '99999';
+    cursor.style.display = 'none';
+    cursor.style.visibility = 'hidden';
+    cursor.style.opacity = '0';
     
     cursorRing.style.left = ringX + 'px';
     cursorRing.style.top = ringY + 'px';
-    cursorRing.style.opacity = '1';
-    cursorRing.style.display = 'block';
-    cursorRing.style.visibility = 'visible';
-    cursorRing.style.zIndex = '99998';
+    cursorRing.style.display = 'none';
+    cursorRing.style.visibility = 'hidden';
+    cursorRing.style.opacity = '0';
     
     adinkraCursor.style.left = mouseX + 'px';
     adinkraCursor.style.top = mouseY + 'px';
@@ -611,14 +574,11 @@ function setupAdinkraCursor() {
       adinkraCursor.style.transform = 'translate(-50%, -50%) scale(1)';
       adinkraCursor.style.zIndex = '100000';
       
-      // Add rotation animation (applies to both container and image)
-      adinkraCursor.style.animation = 'adinkra-rotate 0.4s ease-out';
-      if (adinkraImg) {
-        adinkraImg.style.animation = 'adinkra-rotate 0.4s ease-out';
-      }
-      
-      // Hide main cursor and ring
+      // Rotation animation is handled by CSS (.adinkra-cursor.active)
+      // Keep custom cursor and ring hidden
+      cursor.style.display = 'none';
       cursor.style.opacity = '0';
+      cursorRing.style.display = 'none';
       cursorRing.style.opacity = '0';
     }
   }
@@ -640,9 +600,11 @@ function setupAdinkraCursor() {
       cursor.classList.remove('hover');
       cursorRing.classList.remove('hover');
       
-      // Show main cursor and ring again
-      cursor.style.opacity = '1';
-      cursorRing.style.opacity = '1';
+      // Keep custom cursor and ring hidden
+      cursor.style.display = 'none';
+      cursor.style.opacity = '0';
+      cursorRing.style.display = 'none';
+      cursorRing.style.opacity = '0';
       
       // Hide adinkra cursor
       adinkraCursor.style.opacity = '0';
@@ -657,14 +619,19 @@ function setupAdinkraCursor() {
 
   // Hide cursor when leaving window
   document.addEventListener('mouseleave', () => {
+    cursor.style.display = 'none';
     cursor.style.opacity = '0';
+    cursorRing.style.display = 'none';
     cursorRing.style.opacity = '0';
     adinkraCursor.style.opacity = '0';
   });
 
   document.addEventListener('mouseenter', () => {
-    cursor.style.opacity = '1';
-    cursorRing.style.opacity = '1';
+    // Keep custom cursor and ring hidden on mouse enter
+    cursor.style.display = 'none';
+    cursor.style.opacity = '0';
+    cursorRing.style.display = 'none';
+    cursorRing.style.opacity = '0';
   });
 
   // Click effect - scale down on click with enhanced glow
@@ -782,16 +749,18 @@ window.addEventListener('load', () => {
     const adinkraCursor = document.querySelector('.adinkra-cursor');
     
     if (cursor) {
-      cursor.style.display = 'block';
-      cursor.style.visibility = 'visible';
-      cursor.style.opacity = '1';
-      console.log('✓ Custom cursor made visible');
+      // Keep custom cursor hidden
+      cursor.style.display = 'none';
+      cursor.style.visibility = 'hidden';
+      cursor.style.opacity = '0';
+      console.log('✓ Custom cursor kept hidden (normal cursor shown)');
     }
     if (cursorRing) {
-      cursorRing.style.display = 'block';
-      cursorRing.style.visibility = 'visible';
-      cursorRing.style.opacity = '1';
-      console.log('✓ Cursor ring made visible');
+      // Keep cursor ring hidden
+      cursorRing.style.display = 'none';
+      cursorRing.style.visibility = 'hidden';
+      cursorRing.style.opacity = '0';
+      console.log('✓ Cursor ring kept hidden (normal cursor shown)');
     }
     if (adinkraCursor) {
       adinkraCursor.style.display = 'block';
