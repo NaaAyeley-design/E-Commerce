@@ -644,16 +644,17 @@ function processCheckoutStandard(amount, customerEmail, confirmBtn, originalText
  * Switch back to paystack_verify_payment.php after fixing the issue
  */
 function verifyPaymentAfterInline(reference, amount) {
-    console.log('=== PAYMENT VERIFICATION START ===');
+    console.log('=== VERIFYING PAYMENT ===');
     console.log('Reference:', reference);
     console.log('Amount:', amount);
     
-    const verifyUrl = '../../actions/paystack_verify_payment.php';
+    // Show loading message
+    if (typeof Toast !== 'undefined') {
+        Toast.info('Verifying payment...', { duration: 0 });
+    }
     
-    console.log('Verification URL:', verifyUrl);
-    console.log('Sending verification request...');
-    
-    fetch(verifyUrl, {
+    // Call verification endpoint
+    fetch('../../actions/paystack_verify_payment.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -665,131 +666,55 @@ function verifyPaymentAfterInline(reference, amount) {
         })
     })
     .then(response => {
-        console.log('=== HTTP RESPONSE RECEIVED ===');
-        console.log('Status:', response.status);
-        console.log('Status Text:', response.statusText);
-        console.log('OK:', response.ok);
-        
-        // Check if response is OK
         if (!response.ok) {
-            console.error('HTTP error! status:', response.status);
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Verification request failed');
         }
-        
-        // Get response text first to see raw data
-        return response.text().then(text => {
-            console.log('=== RAW RESPONSE ===');
-            console.log('Response text length:', text.length);
-            console.log('Response text (first 1000 chars):', text.substring(0, 1000));
-            
-            try {
-                const data = JSON.parse(text);
-                console.log('=== PARSED JSON RESPONSE ===');
-                return data;
-            } catch (e) {
-                console.error('JSON parse error:', e);
-                console.error('Raw text:', text);
-                throw new Error('Invalid JSON response: ' + e.message);
-            }
-        });
+        return response.json();
     })
     .then(data => {
-        console.log('=== PAYMENT VERIFICATION RESPONSE ===');
-        console.log('Success:', data.success);
-        console.log('Status:', data.status);
-        console.log('Verified:', data.verified);
-        console.log('Message:', data.message);
+        console.log('Verification response:', data);
         
-        // Log diagnostic information
-        if (data.diagnostic) {
-            console.log('=== DIAGNOSTIC INFORMATION ===');
-            console.log('Timestamp:', data.diagnostic.timestamp);
-            console.log('Steps completed:', data.diagnostic.steps?.length || 0);
-            console.log('Errors:', data.diagnostic.errors?.length || 0);
-            console.log('Paystack API called:', data.diagnostic.paystack_api_called);
-            console.log('Payment verified:', data.diagnostic.payment_verified);
-            console.log('Database connected:', data.diagnostic.database_connected);
-            console.log('Payment inserted:', data.diagnostic.payment_inserted);
-            console.log('Order created:', data.diagnostic.order_created);
-            console.log('Order items added:', data.diagnostic.order_items_added);
-            console.log('Order updated:', data.diagnostic.order_updated);
+        if (data.status === 'success' && data.verified) {
+            // Success!
+            console.log('✓ Payment verified');
             
-            if (data.diagnostic.errors && data.diagnostic.errors.length > 0) {
-                console.error('=== ERRORS DETECTED ===');
-                data.diagnostic.errors.forEach((error, index) => {
-                    console.error(`Error ${index + 1}:`, error);
-                });
-            }
-            
-            if (data.diagnostic.steps && data.diagnostic.steps.length > 0) {
-                console.log('=== ALL STEPS ===');
-                data.diagnostic.steps.forEach((step, index) => {
-                    console.log(`Step ${index + 1}:`, step);
-                });
-            }
-        }
-        
-        console.log('Full response object:', data);
-        
-        // CRITICAL: Only show success if backend explicitly verifies payment
-        // Diagnostic version uses 'success' key instead of 'status'
-        const isSuccess = (data.success === true || (data.status === 'success' && data.verified === true));
-        
-        if (isSuccess) {
-            console.log('✓ Payment verified successfully by backend');
-            
-            // Dismiss any loading toasts
             if (typeof Toast !== 'undefined') {
-                Toast.success('Payment verified! Redirecting...');
+                Toast.success('Payment successful!');
             }
             
-            // Redirect to success page ONLY after verification
-            const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
-                             '/view/payment/payment_success.php?reference=' + 
-                             encodeURIComponent(reference) + 
-                             '&invoice=' + encodeURIComponent(data.invoice_no || reference);
-            
-            console.log('Redirecting to:', successUrl);
-            window.location.href = successUrl;
-        } else {
-            // Payment verification failed - DO NOT show success
-            console.error('✗ Payment verification FAILED');
-            console.error('Response:', data);
-            
-            const errorMsg = data.message || 'Payment verification failed. Please contact support.';
-            
-            // Show detailed error for diagnostic
-            if (data.diagnostic && data.diagnostic.errors && data.diagnostic.errors.length > 0) {
-                const diagnosticError = data.diagnostic.errors.join('; ');
-                console.error('Diagnostic errors:', diagnosticError);
-                alert('Payment Error:\n\n' + errorMsg + '\n\nDiagnostic: ' + diagnosticError + '\n\nCheck browser console and PHP error logs for details.');
-            } else {
-                // Show error message
-                if (typeof Toast !== 'undefined') {
-                    Toast.error(errorMsg);
-                } else {
-                    alert('Payment Error: ' + errorMsg);
-                }
-            }
-            
-            // Redirect to checkout with error
+            // Redirect to success page
             setTimeout(() => {
-                window.location.href = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
-                                     '/view/payment/checkout.php?error=verification_failed';
-            }, 5000); // Increased timeout to allow user to read diagnostic info
+                const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
+                                 '/view/payment/payment_success.php?reference=' + 
+                                 encodeURIComponent(reference) + 
+                                 '&invoice=' + encodeURIComponent(data.invoice_no || reference);
+                window.location.href = successUrl;
+            }, 1000);
+            
+        } else {
+            // Verification failed
+            console.error('Verification failed:', data.message);
+            
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Payment verification failed');
+            } else {
+                alert('Payment verification failed: ' + (data.message || 'Unknown error'));
+            }
+            
+            setTimeout(() => {
+                const checkoutUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
+                                  '/view/payment/checkout.php?error=verification_failed';
+                window.location.href = checkoutUrl;
+            }, 3000);
         }
     })
     .catch(error => {
-        console.error('=== VERIFICATION ERROR ===');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        console.error('Full error:', error);
+        console.error('Verification error:', error);
         
         if (typeof Toast !== 'undefined') {
-            Toast.error('Payment verification error. Please contact support. Check console for details.');
+            Toast.error('Verification error. Please contact support.');
         } else {
-            alert('Payment verification error. Please contact support.\n\nError: ' + error.message + '\n\nCheck browser console for details.');
+            alert('Verification error: ' + error.message);
         }
     });
 }
