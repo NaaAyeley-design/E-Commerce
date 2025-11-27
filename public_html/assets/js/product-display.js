@@ -876,4 +876,318 @@ function updateProductsCount(count) {
     }
 }
 
+/**
+ * Initialize Product Detail Page Functionality
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    initializeProductDetailPage();
+});
+
+function initializeProductDetailPage() {
+    // Only initialize if we're on the product detail page
+    if (!document.querySelector('.product-detail-page')) {
+        return;
+    }
+
+    initializeThumbnails();
+    initializeColorSelection();
+    initializeSizeSelection();
+    initializeQuantityControls();
+    initializeAddToCart();
+    initializeAddToWishlist();
+}
+
+/**
+ * Initialize Thumbnail Gallery
+ */
+function initializeThumbnails() {
+    const thumbnails = document.querySelectorAll('.thumbnail-item');
+    const mainImage = document.getElementById('product-main-image');
+
+    if (!thumbnails.length || !mainImage) return;
+
+    thumbnails.forEach(thumbnail => {
+        thumbnail.addEventListener('click', function() {
+            // Remove active class from all thumbnails
+            thumbnails.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked thumbnail
+            this.classList.add('active');
+            
+            // Update main image
+            const imageUrl = this.getAttribute('data-image');
+            if (imageUrl) {
+                mainImage.style.opacity = '0';
+                setTimeout(() => {
+                    mainImage.src = imageUrl;
+                    mainImage.style.opacity = '1';
+                }, 150);
+            }
+        });
+    });
+}
+
+/**
+ * Initialize Color Selection
+ */
+function initializeColorSelection() {
+    const colorSwatches = document.querySelectorAll('.color-swatch');
+    const selectedColorInput = document.getElementById('selected-color');
+
+    if (!colorSwatches.length) return;
+
+    colorSwatches.forEach(swatch => {
+        swatch.addEventListener('click', function() {
+            // Remove active class from all swatches
+            colorSwatches.forEach(s => s.classList.remove('active'));
+            
+            // Add active class to clicked swatch
+            this.classList.add('active');
+            
+            // Update hidden input
+            const color = this.getAttribute('data-color');
+            if (selectedColorInput) {
+                selectedColorInput.value = color;
+            }
+            
+            // Optional: Update product image based on color (if different images available)
+            // This would require product data with color-specific images
+        });
+    });
+}
+
+/**
+ * Initialize Size Selection
+ */
+function initializeSizeSelection() {
+    const sizeButtons = document.querySelectorAll('.size-btn');
+    const selectedSizeInput = document.getElementById('selected-size');
+
+    if (!sizeButtons.length) return;
+
+    sizeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            sizeButtons.forEach(b => b.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Update hidden input
+            const size = this.getAttribute('data-size');
+            if (selectedSizeInput) {
+                selectedSizeInput.value = size;
+            }
+        });
+    });
+}
+
+/**
+ * Initialize Quantity Controls
+ */
+function initializeQuantityControls() {
+    const decreaseBtn = document.getElementById('quantity-decrease');
+    const increaseBtn = document.getElementById('quantity-increase');
+    const quantityInput = document.getElementById('quantity-input');
+
+    if (!decreaseBtn || !increaseBtn || !quantityInput) return;
+
+    decreaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value) || 1;
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
+    });
+
+    increaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value) || 1;
+        const maxValue = parseInt(quantityInput.getAttribute('max')) || 99;
+        if (currentValue < maxValue) {
+            quantityInput.value = currentValue + 1;
+        }
+    });
+
+    quantityInput.addEventListener('input', function() {
+        let value = parseInt(this.value) || 1;
+        const min = parseInt(this.getAttribute('min')) || 1;
+        const max = parseInt(this.getAttribute('max')) || 99;
+        
+        if (value < min) {
+            this.value = min;
+        } else if (value > max) {
+            this.value = max;
+        }
+    });
+
+    quantityInput.addEventListener('blur', function() {
+        if (!this.value || parseInt(this.value) < 1) {
+            this.value = 1;
+        }
+    });
+}
+
+/**
+ * Initialize Add to Cart
+ */
+function initializeAddToCart() {
+    const addToCartBtn = document.getElementById('add-to-cart-btn');
+    
+    if (!addToCartBtn) return;
+
+    addToCartBtn.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product-id');
+        const selectedSize = document.getElementById('selected-size')?.value || 'M';
+        const selectedColor = document.getElementById('selected-color')?.value || 'terracotta';
+        const quantity = parseInt(document.getElementById('quantity-input')?.value) || 1;
+        
+        // Get product info
+        const productTitle = document.querySelector('.product-detail-title')?.textContent || '';
+        const productPrice = document.querySelector('.product-detail-price')?.textContent || '';
+        const productImage = document.getElementById('product-main-image')?.src || '';
+
+        // Validate size and color are selected
+        if (!selectedSize || !selectedColor) {
+            if (typeof Toast !== 'undefined') {
+                Toast.error('Please select a size and color before adding to cart.');
+            } else {
+                alert('Please select a size and color before adding to cart.');
+            }
+            return;
+        }
+
+        // Disable button during request
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+        // Get action URL
+        const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/add_to_cart_action.php';
+
+        // Add to cart via AJAX
+        fetch(actionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                product_id: productId,
+                quantity: quantity
+            })
+        })
+        .then(async response => {
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error('HTTP error! status: ' + response.status + ' - ' + errorText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success animation
+                this.innerHTML = '<i class="fas fa-check"></i> Added!';
+                this.style.background = 'var(--deep-brown)';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.background = '';
+                }, 2000);
+
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(data.message || 'Product added to cart!');
+                } else {
+                    alert(data.message || 'Product added to cart!');
+                }
+                
+                // Update cart count
+                updateCartCount();
+            } else {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(data.message || 'Failed to add product to cart.');
+                } else {
+                    alert(data.message || 'Failed to add product to cart.');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Add to cart error:', error);
+            if (typeof Toast !== 'undefined') {
+                Toast.error('An error occurred while adding to cart. Please try again.');
+            } else {
+                alert('An error occurred while adding to cart. Please try again.');
+            }
+        })
+        .finally(() => {
+            // Re-enable button
+            this.disabled = false;
+        });
+    });
+}
+
+/**
+ * Initialize Add to Wishlist
+ */
+function initializeAddToWishlist() {
+    const wishlistBtn = document.getElementById('add-to-wishlist-btn');
+    
+    if (!wishlistBtn) return;
+
+    let isInWishlist = false;
+
+    // Check if product is already in wishlist (from localStorage or database)
+    // For now, using localStorage
+    const productId = document.getElementById('add-to-cart-btn')?.getAttribute('data-product-id');
+    if (productId) {
+        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        isInWishlist = wishlist.includes(parseInt(productId));
+        if (isInWishlist) {
+            wishlistBtn.classList.add('active');
+            wishlistBtn.querySelector('i').classList.remove('far');
+            wishlistBtn.querySelector('i').classList.add('fas');
+        }
+    }
+
+    wishlistBtn.addEventListener('click', function() {
+        if (!productId) return;
+
+        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        const productIdNum = parseInt(productId);
+        const icon = this.querySelector('i');
+
+        if (isInWishlist) {
+            // Remove from wishlist
+            const index = wishlist.indexOf(productIdNum);
+            if (index > -1) {
+                wishlist.splice(index, 1);
+            }
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            this.classList.remove('active');
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+            isInWishlist = false;
+            
+            if (typeof Toast !== 'undefined') {
+                Toast.success('Removed from wishlist');
+            }
+        } else {
+            // Add to wishlist
+            wishlist.push(productIdNum);
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            this.classList.add('active');
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            isInWishlist = true;
+            
+            // Heart animation
+            this.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 300);
+            
+            if (typeof Toast !== 'undefined') {
+                Toast.success('Added to wishlist');
+            }
+        }
+    });
+}
+
 

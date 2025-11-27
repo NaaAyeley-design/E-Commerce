@@ -9,6 +9,7 @@ let categoriesData = [];
 let brandsData = [];
 let currentProductId = null;
 let uploadedImagePath = null;
+let selectedFiles = []; // Array to store selected files for multiple upload
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize product management
@@ -106,17 +107,8 @@ function initializeProductManagement() {
         cancelBtn.addEventListener('click', handleCancelEdit);
     }
     
-    // Image preview
-    const imageInput = document.getElementById('product_image');
-    if (imageInput) {
-        imageInput.addEventListener('change', handleImagePreview);
-    }
-    
-    // Remove image button
-    const removeImageBtn = document.getElementById('remove-image');
-    if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', handleRemoveImage);
-    }
+    // Initialize multiple file upload
+    initializeMultipleFileUpload();
     
     // Category change handler - ensure it's not blocked
     const categorySelect = document.getElementById('cat_id');
@@ -421,7 +413,9 @@ function handleProductSubmit(e) {
     const formData = new FormData(form);
     
     // Debug: Check if file is in FormData
-    const imageFiles = document.getElementById('product_image').files;
+    // Use selectedFiles array for multiple file uploads
+    const fileInput = document.getElementById('product_image');
+    const imageFiles = selectedFiles.length > 0 ? selectedFiles : (fileInput ? Array.from(fileInput.files) : []);
     console.log('Image files selected:', imageFiles.length);
     if (imageFiles.length > 0) {
         console.log('First file:', imageFiles[0].name, imageFiles[0].size, 'bytes');
@@ -431,15 +425,9 @@ function handleProductSubmit(e) {
     
     // Handle image uploads
     if (imageFiles && imageFiles.length > 0) {
-        // Ensure file is in FormData (sometimes FormData from form doesn't include files properly)
-        if (!formData.has('product_image')) {
-            formData.append('product_image', imageFiles[0]);
-            console.log('Added product_image to FormData');
-        }
-        
-        // For editing existing products, upload image separately first
+        // For editing existing products, upload images separately first
         if (isEdit) {
-            // Editing existing product - upload image first
+            // Editing existing product - upload images first
             uploadProductImages(imageFiles, isEdit)
                 .then(imagePaths => {
                     if (imagePaths && imagePaths.length > 0) {
@@ -516,8 +504,21 @@ function handleProductSubmit(e) {
     // Add AJAX flag
     formData.append('ajax', '1');
     
+    // For new products, add all selected files to FormData
+    if (!isEdit && imageFiles && imageFiles.length > 0) {
+        // Remove any existing product_image entry
+        formData.delete('product_image');
+        
+        // Add all files as images[] array
+        imageFiles.forEach((file, index) => {
+            formData.append('images[]', file);
+        });
+        
+        console.log(`Added ${imageFiles.length} files to FormData for new product`);
+    }
+    
     // New product or no new image - submit form directly (image will be handled server-side)
-    console.log('Submitting form with FormData. Has product_image:', formData.has('product_image'));
+    console.log('Submitting form with FormData. Has product_image:', formData.has('product_image'), 'Has images[]:', Array.from(formData.entries()).some(([key]) => key === 'images[]'));
     submitProductForm(formData, isEdit);
 }
 
@@ -953,6 +954,9 @@ function resetForm() {
     document.getElementById('cancel-btn').style.display = 'none';
     document.getElementById('image-preview').style.display = 'none';
     
+    // Clear multiple file upload
+    clearAllFiles();
+    
     // Reset global variables
     currentProductId = null;
     uploadedImagePath = null;
@@ -1023,107 +1027,253 @@ function handleDeleteProduct(e) {
     );
 }
 
-function handleImagePreview(e) {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-        // Validate all files
-        const validFiles = [];
-        const errors = [];
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            
-            // Validate file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!allowedTypes.includes(file.type)) {
-                errors.push(`${file.name}: Invalid file type`);
-                continue;
-            }
-            
-            // Validate file size (max 5MB)
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            if (file.size > maxSize) {
-                errors.push(`${file.name}: File size must not exceed 5MB`);
-                continue;
-            }
-            
-            validFiles.push(file);
-        }
-        
-        if (errors.length > 0) {
-            showModal('File Validation Error', errors.join('<br>'), 'error');
-            e.target.value = '';
-            return;
-        }
-        
-        if (validFiles.length === 0) {
-            e.target.value = '';
-            return;
-        }
-        
-        // Show preview for multiple files
-        showMultipleImagePreview(validFiles);
-    }
-}
-
-function showMultipleImagePreview(files) {
-    const previewContainer = document.getElementById('image-preview');
-    const previewImg = document.getElementById('preview-img');
+/**
+ * Initialize Multiple File Upload System
+ */
+function initializeMultipleFileUpload() {
+    const fileInput = document.getElementById('product_image');
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const fileCountDisplay = document.getElementById('file-count-display');
+    const fileCountText = document.getElementById('file-count-text');
+    const clearAllBtn = document.getElementById('clear-all-files');
     
-    if (files.length === 1) {
-        // Single file preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewImg.alt = files[0].name;
-            previewContainer.style.display = 'block';
-            
-            // Update preview info
-            const previewInfo = document.getElementById('preview-info');
-            if (previewInfo) {
-                previewInfo.textContent = `Selected: ${files[0].name} (${formatFileSize(files[0].size)})`;
-            }
-        };
-        reader.readAsDataURL(files[0]);
-    } else {
-        // Multiple files preview
-        previewImg.src = '';
-        previewContainer.style.display = 'block';
+    if (!fileInput || !fileUploadArea) return;
+    
+    // Click on upload area to trigger file input
+    fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // Drag and drop functionality
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.add('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.remove('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.remove('drag-over');
         
-        // Create or update multiple files info
-        let multipleFilesInfo = document.getElementById('multiple-files-info');
-        if (!multipleFilesInfo) {
-            multipleFilesInfo = document.createElement('div');
-            multipleFilesInfo.id = 'multiple-files-info';
-            multipleFilesInfo.className = 'multiple-files-preview';
-            previewContainer.appendChild(multipleFilesInfo);
-        }
-        
-        // Show first image as preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewImg.alt = `${files.length} images selected`;
-        };
-        reader.readAsDataURL(files[0]);
-        
-        // Update multiple files info
-        const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-        multipleFilesInfo.innerHTML = `
-            <div class="files-count">${files.length} images selected</div>
-            <div class="files-list">
-                ${files.map((file, index) => `
-                    <div class="file-item">
-                        <span class="file-name">${file.name}</span>
-                        <span class="file-size">(${formatFileSize(file.size)})</span>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="total-size">Total size: ${formatFileSize(totalSize)}</div>
-        `;
+        const files = Array.from(e.dataTransfer.files);
+        handleFileSelection(files);
+    });
+    
+    // File input change event
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleFileSelection(files);
+    });
+    
+    // Clear all files button
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', () => {
+            clearAllFiles();
+        });
     }
 }
 
+/**
+ * Handle file selection
+ */
+function handleFileSelection(files) {
+    if (!files || files.length === 0) return;
+    
+    // Validate files
+    const validationResult = validateFiles(files);
+    
+    if (validationResult.errors.length > 0) {
+        showModal('File Validation Error', validationResult.errors.join('<br>'), 'error');
+        return;
+    }
+    
+    if (validationResult.validFiles.length === 0) {
+        return;
+    }
+    
+    // Add new files to selected files array (avoid duplicates)
+    validationResult.validFiles.forEach(file => {
+        // Check if file already exists (by name and size)
+        const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+            selectedFiles.push(file);
+        }
+    });
+    
+    // Limit to 10 files
+    if (selectedFiles.length > 10) {
+        selectedFiles = selectedFiles.slice(0, 10);
+        showModal('File Limit', 'Maximum 10 files allowed. Only the first 10 files will be kept.', 'warning');
+    }
+    
+    // Update UI
+    displayFilePreviews();
+    updateFileCount();
+}
+
+/**
+ * Validate files
+ */
+function validateFiles(files) {
+    const validFiles = [];
+    const errors = [];
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    
+    let totalSize = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+            errors.push(`${file.name}: Invalid file type. Only JPG, PNG, GIF, WEBP, and SVG are allowed.`);
+            continue;
+        }
+        
+        // Check file size
+        if (file.size > maxFileSize) {
+            errors.push(`${file.name}: File size (${formatFileSize(file.size)}) exceeds 5MB limit.`);
+            continue;
+        }
+        
+        // Check total size
+        if (totalSize + file.size > maxTotalSize) {
+            errors.push(`${file.name}: Adding this file would exceed 50MB total size limit.`);
+            continue;
+        }
+        
+        totalSize += file.size;
+        validFiles.push(file);
+    }
+    
+    return { validFiles, errors };
+}
+
+/**
+ * Display file previews in gallery
+ */
+function displayFilePreviews() {
+    const gallery = document.getElementById('file-preview-gallery');
+    const galleryGrid = document.getElementById('preview-gallery-grid');
+    
+    if (!gallery || !galleryGrid) return;
+    
+    if (selectedFiles.length === 0) {
+        gallery.style.display = 'none';
+        return;
+    }
+    
+    gallery.style.display = 'block';
+    galleryGrid.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+        const previewItem = createFilePreviewItem(file, index);
+        galleryGrid.appendChild(previewItem);
+    });
+}
+
+/**
+ * Create file preview item
+ */
+function createFilePreviewItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'file-preview-item';
+    item.dataset.index = index;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        item.innerHTML = `
+            <div class="file-preview-image">
+                <img src="${e.target.result}" alt="${escapeHtml(file.name)}">
+                <button type="button" class="file-remove-btn" data-index="${index}" aria-label="Remove file">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="file-preview-info">
+                <div class="file-preview-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                <div class="file-preview-size">${formatFileSize(file.size)}</div>
+            </div>
+        `;
+        
+        // Add remove button event listener
+        const removeBtn = item.querySelector('.file-remove-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeFile(index);
+            });
+        }
+    };
+    reader.readAsDataURL(file);
+    
+    return item;
+}
+
+/**
+ * Remove file from selection
+ */
+function removeFile(index) {
+    if (index >= 0 && index < selectedFiles.length) {
+        selectedFiles.splice(index, 1);
+        displayFilePreviews();
+        updateFileCount();
+        
+        // Update file input (create new FileList)
+        const fileInput = document.getElementById('product_image');
+        if (fileInput) {
+            // Create a new DataTransfer to update the file input
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            fileInput.files = dataTransfer.files;
+        }
+    }
+}
+
+/**
+ * Clear all files
+ */
+function clearAllFiles() {
+    selectedFiles = [];
+    displayFilePreviews();
+    updateFileCount();
+    
+    const fileInput = document.getElementById('product_image');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+/**
+ * Update file count display
+ */
+function updateFileCount() {
+    const fileCountDisplay = document.getElementById('file-count-display');
+    const fileCountText = document.getElementById('file-count-text');
+    
+    if (!fileCountDisplay || !fileCountText) return;
+    
+    if (selectedFiles.length > 0) {
+        fileCountText.textContent = `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} selected`;
+        fileCountDisplay.style.display = 'block';
+    } else {
+        fileCountDisplay.style.display = 'none';
+    }
+}
+
+/**
+ * Format file size
+ */
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -1132,15 +1282,28 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+/**
+ * Escape HTML
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Legacy function for backward compatibility
+ */
+function handleImagePreview(e) {
+    const files = Array.from(e.target.files);
+    handleFileSelection(files);
+}
+
+/**
+ * Legacy function for backward compatibility
+ */
 function handleRemoveImage() {
-    document.getElementById('product_image').value = '';
-    document.getElementById('image-preview').style.display = 'none';
-    
-    // Remove multiple files info if it exists
-    const multipleFilesInfo = document.getElementById('multiple-files-info');
-    if (multipleFilesInfo) {
-        multipleFilesInfo.remove();
-    }
+    clearAllFiles();
 }
 
 function handleCategoryChange(e) {

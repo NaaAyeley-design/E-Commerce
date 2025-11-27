@@ -200,15 +200,38 @@ include __DIR__ . '/../templates/header.php';
                 
                 <!-- Image Upload Section -->
                 <div class="form-group">
-                    <label for="product_image">Product Image:</label>
-                    <input type="file" id="product_image" name="product_image" accept="image/*" class="form-input">
-                    <small class="form-help">Upload a JPEG, PNG, GIF, or WebP image (max 5MB)</small>
+                    <label for="product_image">Product Images:</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="product_image" name="product_image" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml" multiple class="file-input-hidden">
+                        <div class="file-upload-area" id="file-upload-area">
+                            <div class="file-upload-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p class="file-upload-text">Choose Files or Drag & Drop</p>
+                                <p class="file-upload-hint">Select multiple images (JPG, PNG, WEBP, SVG) - Max 5MB each, up to 10 files</p>
+                            </div>
+                        </div>
+                        <div class="file-count-display" id="file-count-display" style="display: none;">
+                            <span id="file-count-text">0 files selected</span>
+                        </div>
+                    </div>
+                    <small class="form-help">Upload multiple product images. Hold Ctrl/Cmd to select multiple files at once.</small>
                 </div>
                 
-                <div id="image-preview" class="image-preview">
+                <!-- File Preview Gallery -->
+                <div id="file-preview-gallery" class="file-preview-gallery" style="display: none;">
+                    <div class="preview-gallery-header">
+                        <h4 class="preview-gallery-title">Selected Files</h4>
+                        <button type="button" id="clear-all-files" class="btn-clear-all">Clear All</button>
+                    </div>
+                    <div class="preview-gallery-grid" id="preview-gallery-grid">
+                        <!-- File previews will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Legacy single image preview (hidden, kept for compatibility) -->
+                <div id="image-preview" class="image-preview" style="display: none;">
                     <img id="preview-img" src="" alt="Image preview">
                     <div id="preview-info" class="preview-info"></div>
-                    <button type="button" id="remove-image" class="btn btn-sm btn-danger">Remove Images</button>
                 </div>
                 
                 <div class="form-actions">

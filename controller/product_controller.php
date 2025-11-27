@@ -62,10 +62,7 @@ function add_product_ctr($data) {
             return "Product title must not exceed 200 characters.";
         }
 
-        // Validate product title format (allows letters including accented, numbers, spaces, and common punctuation)
-        if (!preg_match('/^[\p{L}\p{N}\s\'\-_.&,()]+$/u', $data['title'])) {
-            return "Product title contains invalid characters.";
-        }
+        // Product title format validation removed - admins can use any characters
 
         // Validate description length
         if (strlen($data['desc']) < 10) {
@@ -155,10 +152,7 @@ function update_product_ctr($data) {
             return "Product title must not exceed 200 characters.";
         }
 
-        // Validate product title format
-        if (!preg_match('/^[a-zA-Z0-9\s\-_.]+$/', $data['title'])) {
-            return "Product title can only contain letters, numbers, spaces, hyphens, underscores, and periods.";
-        }
+        // Product title format validation removed - admins can use any characters
 
         // Validate description length
         if (strlen($data['desc']) < 10) {
@@ -433,9 +427,7 @@ function validate_product_data($data) {
             $errors[] = "Product title must not exceed 200 characters.";
         }
         
-        if (!preg_match('/^[\p{L}\p{N}\s\'\-_.&,()]+$/u', $title)) {
-            $errors[] = "Product title contains invalid characters.";
-        }
+        // Product title format validation removed - admins can use any characters
     }
     
     // Validate description if provided

@@ -203,7 +203,7 @@ function initAdinkraCursor() {
     body {
       cursor: auto !important;
     }
-
+    
     * {
       /* Allow elements to have their normal cursors */
       cursor: inherit;
@@ -285,7 +285,7 @@ function initAdinkraCursor() {
       display: block !important;
     }
 
-      .adinkra-cursor.active {
+    .adinkra-cursor.active {
       transform: translate(-50%, -50%) scale(1) !important;
       opacity: 1 !important;
       display: block !important;
@@ -629,12 +629,12 @@ function setupAdinkraCursor() {
       
       console.log('Hover detected on interactive element:', target.tagName, target.className, 'Color scheme:', colors);
       
-      adinkraCursor.classList.add('active');
-      cursor.classList.add('hover');
-      cursorRing.classList.add('hover');
+        adinkraCursor.classList.add('active');
+        cursor.classList.add('hover');
+        cursorRing.classList.add('hover');
 
       // Change to next Adinkra symbol (update image src)
-      currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
+        currentSymbolIndex = (currentSymbolIndex + 1) % ADINKRA_SYMBOLS.length;
       const adinkraImg = adinkraCursor.querySelector('.adinkra-img');
       if (adinkraImg) {
         const newSrc = ADINKRA_SYMBOLS[currentSymbolIndex];
@@ -710,9 +710,9 @@ function setupAdinkraCursor() {
     if (isInteractive && !isStillOnInteractive && adinkraCursor.classList.contains('active')) {
       console.log('Mouse leave from interactive element:', target.tagName, target.className);
       
-      adinkraCursor.classList.remove('active');
-      cursor.classList.remove('hover');
-      cursorRing.classList.remove('hover');
+        adinkraCursor.classList.remove('active');
+        cursor.classList.remove('hover');
+        cursorRing.classList.remove('hover');
       
       // Keep custom cursor and ring hidden
       cursor.style.display = 'none';
@@ -825,7 +825,7 @@ function initializeCursor() {
       setTimeout(() => {
         if (!document.querySelector('.custom-cursor') && document.body) {
           console.log('Retrying cursor initialization...');
-          initAdinkraCursor();
+    initAdinkraCursor();
           setTimeout(() => {
             const retryCursor = document.querySelector('.custom-cursor');
             const retryRing = document.querySelector('.cursor-ring');
