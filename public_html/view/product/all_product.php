@@ -150,79 +150,210 @@ include __DIR__ . '/../templates/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Filters Section -->
-    <div class="filters-section">
-        <?php if ($is_search): ?>
-            <h3>Refine Your Search</h3>
-        <?php endif; ?>
-        <form method="GET" action="" class="filter-form" id="search-filter-form">
+    <!-- Top Filter Dropdowns -->
+    <div class="top-filters-row">
+        <form method="GET" action="" class="top-filters-form" id="top-filters-form">
             <?php if (!empty($query)): ?>
                 <input type="hidden" name="query" value="<?php echo escape_html($query); ?>">
             <?php endif; ?>
-            <div class="filters-container">
-                <div class="filter-group">
-                    <label for="filter-category"><?php echo $is_search ? 'Category:' : 'Filter by Category:'; ?></label>
-                    <select id="filter-category" name="cat_id" class="form-select">
-                        <option value="0">All Categories</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?php echo $cat['cat_id']; ?>" <?php echo ($filter_cat_id == $cat['cat_id']) ? 'selected' : ''; ?>>
-                                <?php echo escape_html($cat['cat_name']); ?>
+            <div class="top-filter-group">
+                <label for="top-filter-category" class="top-filter-label">Filter by Category:</label>
+                <select id="top-filter-category" name="cat_id" class="top-filter-select">
+                    <option value="0">All Categories</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?php echo $cat['cat_id']; ?>" <?php echo ($filter_cat_id == $cat['cat_id']) ? 'selected' : ''; ?>>
+                            <?php echo escape_html($cat['cat_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="top-filter-group">
+                <label for="top-filter-brand" class="top-filter-label">Filter by Brand:</label>
+                <select id="top-filter-brand" name="brand_id" class="top-filter-select" <?php echo ($filter_cat_id > 0) ? '' : 'disabled'; ?>>
+                    <option value="0"><?php echo ($filter_cat_id > 0) ? 'All Brands' : 'Select a category first'; ?></option>
+                    <?php if ($filter_cat_id > 0): ?>
+                        <?php 
+                        // Get brands for selected category
+                        $brands_for_category = [];
+                        if ($filter_cat_id > 0) {
+                            try {
+                                $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
+                                if ($user_id) {
+                                    $brands_result = get_brands_by_category_ctr($user_id, $filter_cat_id);
+                                    if (is_array($brands_result)) {
+                                        $brands_for_category = $brands_result;
+                                    } else {
+                                        $brands_for_category = [];
+                                    }
+                                }
+                            } catch (Exception $e) {
+                                error_log("Error getting brands by category: " . $e->getMessage());
+                                $brands_for_category = [];
+                            }
+                        }
+                        ?>
+                        <?php foreach ($brands_for_category as $brand): ?>
+                            <option value="<?php echo $brand['brand_id']; ?>" <?php echo ($filter_brand_id == $brand['brand_id']) ? 'selected' : ''; ?>>
+                                <?php echo escape_html($brand['brand_name']); ?>
                             </option>
                         <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filter-brand"><?php echo $is_search ? 'Brand:' : 'Filter by Brand:'; ?></label>
-                    <select id="filter-brand" name="brand_id" class="form-select" <?php echo ($filter_cat_id > 0) ? '' : 'disabled'; ?>>
-                        <option value="0"><?php echo ($filter_cat_id > 0) ? 'All Brands' : 'Select a category first'; ?></option>
-                        <?php if ($filter_cat_id > 0): ?>
-                            <?php 
-                            // Get brands for selected category
-                            $brands_for_category = [];
-                            if ($filter_cat_id > 0) {
-                                try {
-                                    $user_id = $_SESSION['user_id'] ?? $_SESSION['customer_id'] ?? null;
-                                    if ($user_id) {
-                                        $brands_result = get_brands_by_category_ctr($user_id, $filter_cat_id);
-                                        if (is_array($brands_result)) {
-                                            $brands_for_category = $brands_result;
-                                        } else {
-                                            $brands_for_category = [];
-                                        }
-                                    }
-                                } catch (Exception $e) {
-                                    error_log("Error getting brands by category: " . $e->getMessage());
-                                    $brands_for_category = [];
-                                }
-                            }
-                            ?>
-                            <?php foreach ($brands_for_category as $brand): ?>
-                                <option value="<?php echo $brand['brand_id']; ?>" <?php echo ($filter_brand_id == $brand['brand_id']) ? 'selected' : ''; ?>>
-                                    <?php echo escape_html($brand['brand_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-
-                <?php if ($is_search): ?>
-                <div class="filter-group">
-                    <label for="max-price">Max Price:</label>
-                    <input type="number" id="max-price" name="max_price" 
-                           value="<?php echo $max_price > 0 ? $max_price : ''; ?>" 
-                           class="form-input" placeholder="e.g., 100" min="0" step="0.01">
-                </div>
-                <?php endif; ?>
-
-                <button type="submit" class="btn btn-primary"><?php echo $is_search ? 'Apply Filters' : 'Filter'; ?></button>
-                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn btn-outline">Clear Filters</a>
+                    <?php endif; ?>
+                </select>
             </div>
         </form>
     </div>
 
-    <!-- Products Grid -->
-    <div id="products-container">
+    <!-- Filter Sidebar Overlay (Mobile) -->
+    <div class="filter-sidebar-overlay" id="filter-sidebar-overlay"></div>
+
+    <!-- Products Layout with Sidebar -->
+    <div class="products-layout">
+        <!-- Filter Sidebar -->
+        <aside class="filter-sidebar" id="filter-sidebar">
+            <div class="filter-sidebar-header">
+                <h2 class="filter-sidebar-title">Filters</h2>
+                <button type="button" class="filter-sidebar-close" id="filter-sidebar-close" aria-label="Close filters">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form method="GET" action="" class="filter-sidebar-form" id="filter-sidebar-form">
+                <?php if (!empty($query)): ?>
+                    <input type="hidden" name="query" value="<?php echo escape_html($query); ?>">
+                <?php endif; ?>
+
+                <!-- Categories Section -->
+                <div class="filter-section">
+                    <h3 class="filter-section-title">
+                        <i class="fas fa-tags"></i>
+                        Categories
+                    </h3>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="radio" name="cat_id" value="0" class="filter-radio" <?php echo ($filter_cat_id == 0) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">All Products</span>
+                        </label>
+                        <?php foreach ($categories as $cat): ?>
+                            <label class="filter-option">
+                                <input type="radio" name="cat_id" value="<?php echo $cat['cat_id']; ?>" class="filter-radio" <?php echo ($filter_cat_id == $cat['cat_id']) ? 'checked' : ''; ?>>
+                                <span class="filter-option-label"><?php echo escape_html($cat['cat_name']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <!-- Artisan/Brand Section -->
+                <div class="filter-section">
+                    <h3 class="filter-section-title">
+                        <i class="fas fa-user-tie"></i>
+                        Artisan
+                    </h3>
+                    <div class="filter-options" id="artisan-options">
+                        <?php foreach ($brands as $brand): ?>
+                            <label class="filter-option">
+                                <input type="checkbox" name="brand_ids[]" value="<?php echo $brand['brand_id']; ?>" class="filter-checkbox" 
+                                       <?php echo (is_array($filter_brand_id) && in_array($brand['brand_id'], $filter_brand_id)) || $filter_brand_id == $brand['brand_id'] ? 'checked' : ''; ?>>
+                                <span class="filter-option-label"><?php echo escape_html($brand['brand_name']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <!-- Price Range Section -->
+                <div class="filter-section">
+                    <h3 class="filter-section-title">
+                        <i class="fas fa-dollar-sign"></i>
+                        Price Range
+                    </h3>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="radio" name="price_range" value="all" class="filter-radio" <?php echo ($max_price == 0) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">All Prices</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="price_range" value="50" class="filter-radio" <?php echo ($max_price == 50) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">Under ₵50</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="price_range" value="100" class="filter-radio" <?php echo ($max_price == 100) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">₵50 - ₵100</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="price_range" value="200" class="filter-radio" <?php echo ($max_price == 200) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">₵100 - ₵200</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="price_range" value="200+" class="filter-radio" <?php echo ($max_price > 200) ? 'checked' : ''; ?>>
+                            <span class="filter-option-label">Over ₵200</span>
+                        </label>
+                    </div>
+                    <input type="hidden" name="max_price" id="max-price-input" value="<?php echo $max_price; ?>">
+                </div>
+
+                <!-- Size Section -->
+                <div class="filter-section">
+                    <h3 class="filter-section-title">
+                        <i class="fas fa-ruler"></i>
+                        Size
+                    </h3>
+                    <div class="size-buttons-grid">
+                        <button type="button" class="size-button" data-size="XS">XS</button>
+                        <button type="button" class="size-button" data-size="S">S</button>
+                        <button type="button" class="size-button" data-size="M">M</button>
+                        <button type="button" class="size-button" data-size="L">L</button>
+                        <button type="button" class="size-button" data-size="XL">XL</button>
+                        <button type="button" class="size-button" data-size="XXL">XXL</button>
+                    </div>
+                    <input type="hidden" name="sizes[]" id="selected-sizes" value="">
+                </div>
+
+                <!-- Colors Section -->
+                <div class="filter-section">
+                    <h3 class="filter-section-title">
+                        <i class="fas fa-palette"></i>
+                        Colors
+                    </h3>
+                    <div class="color-swatches-grid">
+                        <button type="button" class="color-swatch" data-color="brown" style="background-color: #8B4513;" aria-label="Brown"></button>
+                        <button type="button" class="color-swatch" data-color="terracotta" style="background-color: #C67D5C;" aria-label="Terracotta"></button>
+                        <button type="button" class="color-swatch" data-color="beige" style="background-color: #F4EDE4;" aria-label="Beige"></button>
+                        <button type="button" class="color-swatch" data-color="black" style="background-color: #000000;" aria-label="Black"></button>
+                        <button type="button" class="color-swatch" data-color="white" style="background-color: #FFFFFF; border: 1px solid #ddd;" aria-label="White"></button>
+                        <button type="button" class="color-swatch" data-color="gold" style="background-color: #FFD700;" aria-label="Gold"></button>
+                        <button type="button" class="color-swatch" data-color="navy" style="background-color: #2C3E50;" aria-label="Navy"></button>
+                        <button type="button" class="color-swatch" data-color="red" style="background-color: #E74C3C;" aria-label="Red"></button>
+                        <button type="button" class="color-swatch" data-color="olive" style="background-color: #808000;" aria-label="Olive"></button>
+                        <button type="button" class="color-swatch" data-color="orange" style="background-color: #FF6347;" aria-label="Orange"></button>
+                    </div>
+                    <input type="hidden" name="colors[]" id="selected-colors" value="">
+                </div>
+
+                <!-- Clear All Filters Button -->
+                <div class="filter-section filter-section-last">
+                    <button type="button" class="btn-clear-filters" id="clear-all-filters">
+                        <i class="fas fa-times-circle"></i>
+                        Clear All Filters
+                    </button>
+                </div>
+            </form>
+        </aside>
+
+        <!-- Products Section -->
+        <div class="products-section">
+            <div class="products-header">
+                <h2 class="products-title">Products</h2>
+                <span class="products-count" id="products-count"><?php echo $total; ?> products</span>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button type="button" class="mobile-filter-toggle" id="mobile-filter-toggle" aria-label="Toggle filters">
+                <i class="fas fa-filter"></i>
+                <span>Filters</span>
+            </button>
+
+            <!-- Products Grid -->
+            <div id="products-container">
         <?php if (empty($products)): ?>
             <div class="no-products">
                 <p>No products found.</p>
@@ -315,6 +446,8 @@ include __DIR__ . '/../templates/header.php';
                 </div>
             <?php endif; ?>
         <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
 

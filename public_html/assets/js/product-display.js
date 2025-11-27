@@ -583,4 +583,297 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+/**
+ * Initialize Filter Sidebar Functionality
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFilterSidebar();
+    initializeSizeButtons();
+    initializeColorSwatches();
+    initializeTopFilters();
+    initializeClearFilters();
+});
+
+/**
+ * Initialize Filter Sidebar
+ */
+function initializeFilterSidebar() {
+    const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+    const filterSidebar = document.getElementById('filter-sidebar');
+    const filterSidebarClose = document.getElementById('filter-sidebar-close');
+    
+    // Create overlay for mobile
+    let overlay = document.querySelector('.filter-sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'filter-sidebar-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    // Mobile filter toggle
+    if (mobileFilterToggle && filterSidebar) {
+        mobileFilterToggle.addEventListener('click', function() {
+            filterSidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+    
+    // Close sidebar
+    if (filterSidebarClose) {
+        filterSidebarClose.addEventListener('click', function() {
+            filterSidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Close on overlay click
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            filterSidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Handle sidebar form changes
+    const sidebarForm = document.getElementById('filter-sidebar-form');
+    if (sidebarForm) {
+        const radioInputs = sidebarForm.querySelectorAll('input[type="radio"]');
+        const checkboxInputs = sidebarForm.querySelectorAll('input[type="checkbox"]');
+        
+        // Auto-submit on radio change
+        radioInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                // Update top filters to match
+                if (this.name === 'cat_id') {
+                    const topCategoryFilter = document.getElementById('top-filter-category');
+                    if (topCategoryFilter) {
+                        topCategoryFilter.value = this.value;
+                        if (topCategoryFilter.value !== '0') {
+                            loadBrandsByCategory(this.value);
+                        } else {
+                            const topBrandFilter = document.getElementById('top-filter-brand');
+                            if (topBrandFilter) {
+                                topBrandFilter.disabled = true;
+                                topBrandFilter.innerHTML = '<option value="0">Select a category first</option>';
+                            }
+                        }
+                    }
+                }
+                
+                // Handle price range
+                if (this.name === 'price_range') {
+                    const maxPriceInput = document.getElementById('max-price-input');
+                    if (maxPriceInput) {
+                        if (this.value === 'all') {
+                            maxPriceInput.value = '0';
+                        } else if (this.value === '200+') {
+                            maxPriceInput.value = '9999';
+                        } else {
+                            maxPriceInput.value = this.value;
+                        }
+                    }
+                }
+                
+                // Submit form after a short delay
+                setTimeout(() => {
+                    sidebarForm.submit();
+                }, 300);
+            });
+        });
+        
+        // Auto-submit on checkbox change
+        checkboxInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                setTimeout(() => {
+                    sidebarForm.submit();
+                }, 300);
+            });
+        });
+    }
+}
+
+/**
+ * Initialize Size Buttons
+ */
+function initializeSizeButtons() {
+    const sizeButtons = document.querySelectorAll('.size-button');
+    const selectedSizesInput = document.getElementById('selected-sizes');
+    let selectedSizes = [];
+    
+    sizeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const size = this.getAttribute('data-size');
+            
+            if (this.classList.contains('active')) {
+                this.classList.remove('active');
+                selectedSizes = selectedSizes.filter(s => s !== size);
+            } else {
+                this.classList.add('active');
+                selectedSizes.push(size);
+            }
+            
+            // Update hidden input
+            if (selectedSizesInput) {
+                selectedSizesInput.value = selectedSizes.join(',');
+            }
+            
+            // Auto-submit form
+            const sidebarForm = document.getElementById('filter-sidebar-form');
+            if (sidebarForm) {
+                setTimeout(() => {
+                    sidebarForm.submit();
+                }, 300);
+            }
+        });
+    });
+}
+
+/**
+ * Initialize Color Swatches
+ */
+function initializeColorSwatches() {
+    const colorSwatches = document.querySelectorAll('.color-swatch');
+    const selectedColorsInput = document.getElementById('selected-colors');
+    let selectedColors = [];
+    
+    colorSwatches.forEach(swatch => {
+        swatch.addEventListener('click', function() {
+            const color = this.getAttribute('data-color');
+            
+            if (this.classList.contains('active')) {
+                this.classList.remove('active');
+                selectedColors = selectedColors.filter(c => c !== color);
+            } else {
+                this.classList.add('active');
+                selectedColors.push(color);
+            }
+            
+            // Update hidden input
+            if (selectedColorsInput) {
+                selectedColorsInput.value = selectedColors.join(',');
+            }
+            
+            // Auto-submit form
+            const sidebarForm = document.getElementById('filter-sidebar-form');
+            if (sidebarForm) {
+                setTimeout(() => {
+                    sidebarForm.submit();
+                }, 300);
+            }
+        });
+    });
+}
+
+/**
+ * Initialize Top Filters
+ */
+function initializeTopFilters() {
+    const topCategoryFilter = document.getElementById('top-filter-category');
+    const topBrandFilter = document.getElementById('top-filter-brand');
+    const topFiltersForm = document.getElementById('top-filters-form');
+    
+    // Sync top category filter with sidebar
+    if (topCategoryFilter) {
+        topCategoryFilter.addEventListener('change', function() {
+            const value = this.value;
+            
+            // Update sidebar radio
+            const sidebarRadio = document.querySelector(`#filter-sidebar-form input[name="cat_id"][value="${value}"]`);
+            if (sidebarRadio) {
+                sidebarRadio.checked = true;
+            }
+            
+            // Load brands for category
+            if (value !== '0') {
+                loadBrandsByCategory(value);
+            } else {
+                if (topBrandFilter) {
+                    topBrandFilter.disabled = true;
+                    topBrandFilter.innerHTML = '<option value="0">Select a category first</option>';
+                }
+            }
+            
+            // Submit form
+            if (topFiltersForm) {
+                topFiltersForm.submit();
+            }
+        });
+    }
+    
+    // Sync top brand filter with sidebar
+    if (topBrandFilter) {
+        topBrandFilter.addEventListener('change', function() {
+            const value = this.value;
+            
+            // Update sidebar checkboxes
+            const sidebarCheckboxes = document.querySelectorAll('#filter-sidebar-form input[name="brand_ids[]"]');
+            sidebarCheckboxes.forEach(checkbox => {
+                checkbox.checked = (checkbox.value === value);
+            });
+            
+            // Submit form
+            if (topFiltersForm) {
+                topFiltersForm.submit();
+            }
+        });
+    }
+}
+
+/**
+ * Initialize Clear Filters
+ */
+function initializeClearFilters() {
+    const clearFiltersBtn = document.getElementById('clear-all-filters');
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            // Reset all filters
+            const sidebarForm = document.getElementById('filter-sidebar-form');
+            if (sidebarForm) {
+                sidebarForm.reset();
+            }
+            
+            // Reset size buttons
+            const sizeButtons = document.querySelectorAll('.size-button');
+            sizeButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Reset color swatches
+            const colorSwatches = document.querySelectorAll('.color-swatch');
+            colorSwatches.forEach(swatch => swatch.classList.remove('active'));
+            
+            // Reset hidden inputs
+            const selectedSizesInput = document.getElementById('selected-sizes');
+            const selectedColorsInput = document.getElementById('selected-colors');
+            if (selectedSizesInput) selectedSizesInput.value = '';
+            if (selectedColorsInput) selectedColorsInput.value = '';
+            
+            // Reset top filters
+            const topCategoryFilter = document.getElementById('top-filter-category');
+            const topBrandFilter = document.getElementById('top-filter-brand');
+            if (topCategoryFilter) topCategoryFilter.value = '0';
+            if (topBrandFilter) {
+                topBrandFilter.value = '0';
+                topBrandFilter.disabled = true;
+                topBrandFilter.innerHTML = '<option value="0">Select a category first</option>';
+            }
+            
+            // Redirect to clean URL
+            window.location.href = window.location.pathname;
+        });
+    }
+}
+
+/**
+ * Update products count
+ */
+function updateProductsCount(count) {
+    const productsCountElement = document.getElementById('products-count');
+    if (productsCountElement) {
+        productsCountElement.textContent = count + ' product' + (count !== 1 ? 's' : '');
+    }
+}
+
 
