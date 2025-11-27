@@ -31,6 +31,11 @@ function initializeCart() {
     document.querySelectorAll('.remove-cart-item').forEach(button => {
         button.addEventListener('click', handleRemoveItem);
     });
+    
+    // Save for later buttons
+    document.querySelectorAll('.save-for-later-btn').forEach(button => {
+        button.addEventListener('click', handleSaveForLater);
+    });
 
     // Checkout button
     const checkoutBtn = document.getElementById('checkout-btn');
@@ -176,6 +181,74 @@ function handleRemoveItem(e) {
 
     // Get action URL
     const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/remove_from_cart_action.php';
+
+/**
+ * Handle save for later (move to wishlist)
+ */
+function handleSaveForLater(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const button = e.target.closest('.save-for-later-btn');
+    const productId = button.getAttribute('data-product-id');
+    const cartId = button.getAttribute('data-cart-id');
+    
+    if (!productId || !cartId) {
+        return;
+    }
+    
+    // Get product data from cart row
+    const row = button.closest('tr');
+    if (!row) return;
+    
+    const productData = {
+        id: productId,
+        name: row.querySelector('.cart-product-title, .product-title, .product-name')?.textContent?.trim() || '',
+        brand: row.querySelector('.brand, .product-brand')?.textContent?.trim() || '',
+        price: parseFloat(row.querySelector('.product-price')?.textContent?.replace(/[^0-9.]/g, '') || 0),
+        image: row.querySelector('.cart-product-image img, .product-image img, img')?.src || '',
+        category: row.querySelector('.category, .product-category')?.textContent?.trim() || '',
+        inStock: true
+    };
+    
+    // Add to wishlist using wishlist.js functions
+    if (window.wishlist && typeof window.wishlist.add === 'function') {
+        window.wishlist.add(productId, productData);
+    } else if (typeof addToWishlist === 'function') {
+        addToWishlist(productId, productData);
+    }
+    
+    // Remove from cart
+    const removeBtn = document.querySelector(`.remove-cart-item[data-cart-id="${cartId}"]`);
+    if (removeBtn) {
+        // Trigger remove item
+        button.disabled = true;
+        const actionUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/remove_from_cart_action.php';
+        
+        fetch(actionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            credentials: 'same-origin',
+            body: new URLSearchParams({
+                cart_id: cartId
+            })
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (data.success) {
+                // Reload page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Remove from cart error:', error);
+        });
+    }
+}
 
     // Remove via AJAX
     fetch(actionUrl, {

@@ -492,8 +492,18 @@ class product_class extends db_class {
             $params[] = (int)$filters['cat_id'];
         }
         
-        // Brand filter
-        if (!empty($filters['brand_id'])) {
+        // Brand filter - handle both single brand_id and array of brand_ids
+        if (!empty($filters['brand_ids']) && is_array($filters['brand_ids'])) {
+            // Multiple brand IDs
+            $brand_ids = array_map('intval', $filters['brand_ids']);
+            $brand_ids = array_filter($brand_ids, function($id) { return $id > 0; });
+            if (!empty($brand_ids)) {
+                $placeholders = implode(',', array_fill(0, count($brand_ids), '?'));
+                $sql .= " AND p.product_brand IN ($placeholders)";
+                $params = array_merge($params, $brand_ids);
+            }
+        } elseif (!empty($filters['brand_id'])) {
+            // Single brand ID (backward compatibility)
             $sql .= " AND p.product_brand = ?";
             $params[] = (int)$filters['brand_id'];
         }
@@ -555,8 +565,18 @@ class product_class extends db_class {
             $params[] = (int)$filters['cat_id'];
         }
         
-        // Brand filter
-        if (!empty($filters['brand_id'])) {
+        // Brand filter - handle both single brand_id and array of brand_ids
+        if (!empty($filters['brand_ids']) && is_array($filters['brand_ids'])) {
+            // Multiple brand IDs
+            $brand_ids = array_map('intval', $filters['brand_ids']);
+            $brand_ids = array_filter($brand_ids, function($id) { return $id > 0; });
+            if (!empty($brand_ids)) {
+                $placeholders = implode(',', array_fill(0, count($brand_ids), '?'));
+                $sql .= " AND p.product_brand IN ($placeholders)";
+                $params = array_merge($params, $brand_ids);
+            }
+        } elseif (!empty($filters['brand_id'])) {
+            // Single brand ID (backward compatibility)
             $sql .= " AND p.product_brand = ?";
             $params[] = (int)$filters['brand_id'];
         }

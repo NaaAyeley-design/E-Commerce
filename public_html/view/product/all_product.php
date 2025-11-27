@@ -24,7 +24,7 @@ try {
 $page_title = 'All Products';
 $page_description = 'Browse all available products';
 $body_class = 'products-page';
-$additional_css = ['products.css'];
+$additional_css = ['products.css', 'wishlist.css'];
 
 // Get pagination parameters
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -34,11 +34,23 @@ $offset = ($page - 1) * $limit;
 // Get search and filter parameters
 $query = isset($_GET['query']) ? trim($_GET['query']) : '';
 $filter_cat_id = isset($_GET['cat_id']) ? (int)$_GET['cat_id'] : 0;
-$filter_brand_id = isset($_GET['brand_id']) ? (int)$_GET['brand_id'] : 0;
+// Handle both brand_id (single) and brand_ids[] (array)
+$filter_brand_id = 0;
+$filter_brand_ids = [];
+if (isset($_GET['brand_id']) && $_GET['brand_id'] > 0) {
+    $filter_brand_id = (int)$_GET['brand_id'];
+    $filter_brand_ids = [$filter_brand_id];
+} elseif (isset($_GET['brand_ids']) && is_array($_GET['brand_ids'])) {
+    $filter_brand_ids = array_map('intval', $_GET['brand_ids']);
+    $filter_brand_ids = array_filter($filter_brand_ids, function($id) { return $id > 0; });
+    if (!empty($filter_brand_ids)) {
+        $filter_brand_id = $filter_brand_ids[0]; // For backward compatibility
+    }
+}
 $max_price = isset($_GET['max_price']) ? (float)$_GET['max_price'] : 0;
 
 // Determine page title
-$is_search = !empty($query) || $filter_cat_id > 0 || $filter_brand_id > 0 || $max_price > 0;
+$is_search = !empty($query) || $filter_cat_id > 0 || !empty($filter_brand_ids) || $max_price > 0;
 $page_title = $is_search ? 'Search Results' : 'All Products';
 
 // Get products
@@ -56,7 +68,9 @@ try {
         if ($filter_cat_id > 0) {
             $filters['cat_id'] = $filter_cat_id;
         }
-        if ($filter_brand_id > 0) {
+        if (!empty($filter_brand_ids)) {
+            $filters['brand_ids'] = $filter_brand_ids;
+        } elseif ($filter_brand_id > 0) {
             $filters['brand_id'] = $filter_brand_id;
         }
         if ($max_price > 0) {
@@ -396,6 +410,17 @@ include __DIR__ . '/../templates/header.php';
                                 <img src="<?php echo $image_url; ?>" 
                                      alt="<?php echo escape_html($product['product_title']); ?>"
                                      onerror="this.src='<?php echo ASSETS_URL; ?>/images/placeholder-product.svg'">
+                            
+                            <!-- Wishlist Heart Icon -->
+                            <button class="wishlist-btn" 
+                                    data-product-id="<?php echo $product['product_id']; ?>" 
+                                    aria-label="Add to wishlist"
+                                    aria-pressed="false"
+                                    title="Add to wishlist">
+                                <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
                         </div>
                         <div class="product-info">
                             <h3 class="product-title">
@@ -428,7 +453,13 @@ include __DIR__ . '/../templates/header.php';
                     $pagination_params = [];
                     if (!empty($query)) $pagination_params[] = 'query=' . urlencode($query);
                     if ($filter_cat_id > 0) $pagination_params[] = 'cat_id=' . $filter_cat_id;
-                    if ($filter_brand_id > 0) $pagination_params[] = 'brand_id=' . $filter_brand_id;
+                    if (!empty($filter_brand_ids)) {
+                        foreach ($filter_brand_ids as $bid) {
+                            $pagination_params[] = 'brand_ids[]=' . $bid;
+                        }
+                    } elseif ($filter_brand_id > 0) {
+                        $pagination_params[] = 'brand_id=' . $filter_brand_id;
+                    }
                     if ($max_price > 0) $pagination_params[] = 'max_price=' . $max_price;
                     $param_string = !empty($pagination_params) ? '&' . implode('&', $pagination_params) : '';
                     ?>
@@ -457,6 +488,7 @@ include __DIR__ . '/../templates/header.php';
         var BASE_URL = '<?php echo BASE_URL; ?>';
     }
 </script>
+<script src="<?php echo ASSETS_URL; ?>/js/wishlist.js?v=<?php echo time(); ?>"></script>
 <script src="<?php echo ASSETS_URL; ?>/js/product-display.js?v=<?php echo time(); ?>"></script>
 
 <?php

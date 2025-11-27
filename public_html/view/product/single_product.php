@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../../controller/product_controller.php';
 $page_title = 'Product Details';
 $page_description = 'View product details';
 $body_class = 'single-product-page';
-$additional_css = ['products.css'];
+$additional_css = ['products.css', 'wishlist.css'];
 
 // Get product ID
 $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -208,8 +208,11 @@ include __DIR__ . '/../templates/header.php';
                 <button type="button" class="btn-add-to-cart" id="add-to-cart-btn" data-product-id="<?php echo $product['product_id']; ?>">
                     <i class="fas fa-shopping-cart"></i> Add to Cart
                 </button>
-                <button type="button" class="btn-add-to-wishlist" id="add-to-wishlist-btn">
-                    <i class="far fa-heart"></i> Add to Wishlist
+                <button type="button" class="btn-wishlist" id="add-to-wishlist-btn" data-product-id="<?php echo $product['product_id']; ?>" aria-label="Add to wishlist" aria-pressed="false">
+                    <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span class="btn-text">Add to Wishlist</span>
                 </button>
             </div>
 

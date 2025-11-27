@@ -16,7 +16,7 @@ if (!function_exists('get_cart_items_ctr')) {
 $page_title = 'Shopping Cart';
 $page_description = 'View and manage your shopping cart';
 $body_class = 'cart-page';
-$additional_css = ['cart.css'];
+$additional_css = ['cart.css', 'wishlist.css'];
 
 // Check if user is logged in
 if (!is_logged_in()) {
@@ -209,13 +209,25 @@ include __DIR__ . '/../templates/header.php';
                                         <span class="item-subtotal">₵<?php echo number_format($item_total, 2); ?></span>
                                     </td>
                                     <td class="action-cell" data-label="Action">
-                                        <button class="remove-cart-item" 
-                                                data-cart-id="<?php echo $item['cart_id']; ?>"
-                                                title="Remove from cart"
-                                                aria-label="Remove item from cart">
-                                            <i class="fas fa-trash"></i>
-                                            <span class="remove-text">Remove</span>
-                                        </button>
+                                        <div class="cart-item-actions">
+                                            <button class="save-for-later-btn" 
+                                                    data-product-id="<?php echo $item['product_id']; ?>"
+                                                    data-cart-id="<?php echo $item['cart_id']; ?>"
+                                                    title="Save for later"
+                                                    aria-label="Save item for later">
+                                                <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                                </svg>
+                                                <span>Save for Later</span>
+                                            </button>
+                                            <button class="remove-cart-item" 
+                                                    data-cart-id="<?php echo $item['cart_id']; ?>"
+                                                    title="Remove from cart"
+                                                    aria-label="Remove item from cart">
+                                                <i class="fas fa-trash"></i>
+                                                <span class="remove-text">Remove</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -261,6 +273,7 @@ include __DIR__ . '/../templates/header.php';
         var BASE_URL = '<?php echo BASE_URL; ?>';
     }
 </script>
+<script src="<?php echo ASSETS_URL; ?>/js/wishlist.js?v=<?php echo time(); ?>"></script>
 <script src="<?php echo ASSETS_URL; ?>/js/cart.js?v=<?php echo time(); ?>"></script>
 
 <?php

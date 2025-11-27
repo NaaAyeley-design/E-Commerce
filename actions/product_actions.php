@@ -176,7 +176,17 @@ try {
                 }
             }
             
-            if (isset($_GET['brand_id']) || isset($_POST['brand_id'])) {
+            // Handle both brand_id (single) and brand_ids[] (array)
+            if (isset($_GET['brand_ids']) || isset($_POST['brand_ids'])) {
+                $brand_ids = $_GET['brand_ids'] ?? $_POST['brand_ids'] ?? [];
+                if (is_array($brand_ids) && !empty($brand_ids)) {
+                    $brand_ids = array_map('intval', $brand_ids);
+                    $brand_ids = array_filter($brand_ids, function($id) { return $id > 0; });
+                    if (!empty($brand_ids)) {
+                        $filters['brand_ids'] = array_values($brand_ids);
+                    }
+                }
+            } elseif (isset($_GET['brand_id']) || isset($_POST['brand_id'])) {
                 $brand_id = (int)($_GET['brand_id'] ?? $_POST['brand_id'] ?? 0);
                 if ($brand_id > 0) {
                     $filters['brand_id'] = $brand_id;
