@@ -156,6 +156,7 @@ try {
                     'product_id' => $product_id,
                     'title' => $title,
                     'price' => $price,
+                    'image_path' => $image_path,
                     'updated_at' => date('Y-m-d H:i:s')
                 ]
             ]);
@@ -163,7 +164,17 @@ try {
             echo 'Product updated successfully!';
         }
     } else {
-        if ($is_ajax) {
+        // Even if update fails, if image was uploaded, return partial success
+        if (!empty($image_path) && $is_ajax) {
+            echo json_encode([
+                'success' => false, 
+                'message' => $result . ' However, the image was uploaded successfully.',
+                'data' => [
+                    'product_id' => $product_id,
+                    'image_path' => $image_path
+                ]
+            ]);
+        } else if ($is_ajax) {
             echo json_encode(['success' => false, 'message' => $result]);
         } else {
             echo $result;

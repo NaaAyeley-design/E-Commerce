@@ -443,15 +443,21 @@ function handleProductSubmit(e) {
             uploadProductImages(imageFiles, isEdit)
                 .then(imagePaths => {
                     if (imagePaths && imagePaths.length > 0) {
+                        const uploadedImagePath = imagePaths[0];
+                        
+                        // Update image preview immediately
+                        updateImagePreview(uploadedImagePath);
+                        
                         // Create new FormData with the uploaded image path
                         const updateFormData = new FormData(form);
-                        updateFormData.set('image_path', imagePaths[0]);
+                        updateFormData.set('image_path', uploadedImagePath);
                         updateFormData.append('ajax', '1');
                         
                         // Remove the file from FormData since we already uploaded it
                         updateFormData.delete('product_image');
                         
-                        submitProductForm(updateFormData, isEdit);
+                        // Submit form update
+                        submitProductForm(updateFormData, isEdit, uploadedImagePath);
                     } else {
                         showModal('Error', 'Failed to upload images. Please try again.', 'error');
                     }
@@ -565,6 +571,11 @@ function uploadProductImages(imageFiles, isEdit) {
                 const imagePaths = data.data.uploaded_files.map(file => file.file_path);
                 uploadedImagePath = imagePaths[0]; // Set first image as primary
                 
+                // Update image preview immediately after upload
+                if (imagePaths.length > 0) {
+                    updateImagePreview(imagePaths[0]);
+                }
+                
                 // Show detailed results
                 if (data.data.error_count > 0) {
                     const errorMessages = data.data.upload_results
@@ -576,7 +587,10 @@ function uploadProductImages(imageFiles, isEdit) {
                         `${data.data.success_count} image(s) uploaded successfully.<br><br>Errors:<br>${errorMessages}`, 
                         'warning');
                 } else {
-                    showModal('Success', `All ${data.data.success_count} image(s) uploaded successfully!`, 'success');
+                    // Don't show modal for single image upload during edit - it will show after update
+                    if (!isEdit || imageFiles.length > 1) {
+                        showModal('Success', `All ${data.data.success_count} image(s) uploaded successfully!`, 'success');
+                    }
                 }
                 
                 resolve(imagePaths);
@@ -683,7 +697,7 @@ function validateImageFile(file) {
     return true;
 }
 
-function submitProductForm(formData, isEdit) {
+function submitProductForm(formData, isEdit, uploadedImagePath = null) {
     // Use absolute path with BASE_URL (actions folder is at root, not in public_html)
     let actionUrl;
     if (typeof BASE_URL !== 'undefined' && BASE_URL) {
@@ -707,9 +721,14 @@ function submitProductForm(formData, isEdit) {
     .then(response => {
         // Try to parse JSON even if status is not OK
         return response.text().then(text => {
+            console.log('Response text:', text.substring(0, 500));
             try {
                 return JSON.parse(text);
             } catch (e) {
+                // If response is not JSON, check if it's a success message
+                if (text.includes('successfully') || text.includes('success')) {
+                    return { success: true, message: text };
+                }
                 throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
             }
         });
@@ -720,19 +739,71 @@ function submitProductForm(formData, isEdit) {
         console.log('Product submission response:', data);
         
         if (data.success) {
+            // If image was uploaded, ensure preview is updated
+            if (uploadedImagePath) {
+                updateImagePreview(uploadedImagePath);
+            }
+            
             showModal('Success', isEdit ? 'Product updated successfully!' : 'Product added successfully!', 'success');
-            resetForm();
+            
+            // Only reset form if it's a new product
+            if (!isEdit) {
+                resetForm();
+            }
+            
             // Refresh product list dynamically
             refreshProductList();
         } else {
-            showModal('Error', data.message || 'Failed to process product', 'error');
+            // Even if update failed, if image was uploaded, keep the preview
+            if (uploadedImagePath) {
+                updateImagePreview(uploadedImagePath);
+                showModal('Warning', 'Image uploaded successfully, but product update had issues: ' + (data.message || 'Unknown error') + '. Please refresh the page to see changes.', 'warning');
+            } else {
+                showModal('Error', data.message || 'Failed to process product', 'error');
+            }
         }
     })
     .catch(error => {
         hideLoading();
         console.error('Error:', error);
-        showModal('Error', 'An error occurred while processing the product. Please try again.', 'error');
+        
+        // Even if there's an error, if image was uploaded, keep the preview
+        if (uploadedImagePath) {
+            updateImagePreview(uploadedImagePath);
+            showModal('Warning', 'Image uploaded successfully, but product update failed. Please refresh the page to see changes.', 'warning');
+        } else {
+            showModal('Error', 'An error occurred while processing the product. Please try again.', 'error');
+        }
     });
+}
+
+/**
+ * Update image preview with uploaded image path
+ */
+function updateImagePreview(imagePath) {
+    const previewDiv = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (previewDiv && previewImg && imagePath) {
+        // Construct full image URL
+        let imageUrl = imagePath;
+        if (!imagePath.startsWith('http://') && !imagePath.startsWith('https://')) {
+            // If path doesn't start with http, construct from BASE_URL
+            if (typeof BASE_URL !== 'undefined' && BASE_URL) {
+                const rootUrl = BASE_URL.replace('/public_html', '');
+                imageUrl = rootUrl + '/' + imagePath.replace(/^\//, '');
+            } else {
+                imageUrl = '/' + imagePath.replace(/^\//, '');
+            }
+        }
+        
+        previewImg.src = imageUrl;
+        previewImg.alt = 'Uploaded product image';
+        previewDiv.style.display = 'block';
+        previewDiv.classList.add('active');
+        
+        console.log('Image preview updated with:', imageUrl);
+    }
 }
 
 function handleEditProduct(e) {
