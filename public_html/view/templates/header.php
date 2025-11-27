@@ -111,14 +111,12 @@
                 <ul class="top-navbar-menu" id="top-navbar-menu">
                     <li class="top-navbar-item">
                         <a href="<?php echo url('index.php'); ?>" class="top-navbar-link">
-                            <i class="fas fa-home"></i>
                             <span>Home</span>
                         </a>
                     </li>
                     <?php if (!is_logged_in() || !is_admin()): ?>
                     <li class="top-navbar-item">
                         <a href="<?php echo url('view/product/all_product.php'); ?>" class="top-navbar-link">
-                            <i class="fas fa-shopping-bag"></i>
                             <span>Products</span>
                         </a>
                     </li>
@@ -127,59 +125,51 @@
                     <?php if (is_logged_in()): ?>
                         <?php if (!is_admin()): ?>
                             <li class="top-navbar-item">
-                                <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-shopping-cart"></i>
-                                    <span>Cart</span>
+                                <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link">
+                                    <span>Dashboard</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
-                                <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-user"></i>
-                                    <span>Dashboard</span>
+                                <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="top-navbar-link top-navbar-link-cart" aria-label="Shopping Cart">
+                                    <i class="fas fa-shopping-cart"></i>
                                 </a>
                             </li>
                         <?php else: ?>
                             <!-- Admin Navigation Links -->
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/dashboard.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-tachometer-alt"></i>
                                     <span>Dashboard</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/categories.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-tags"></i>
                                     <span>Categories</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/brands.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-trademark"></i>
                                     <span>Brands</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/products.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-box"></i>
                                     <span>Products</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/orders.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-shopping-cart"></i>
                                     <span>Orders</span>
                                 </a>
                             </li>
                             <li class="top-navbar-item">
                                 <a href="<?php echo url('view/admin/users.php'); ?>" class="top-navbar-link">
-                                    <i class="fas fa-users"></i>
                                     <span>Users</span>
                                 </a>
                             </li>
                         <?php endif; ?>
                         
                         <li class="top-navbar-item">
-                            <a href="<?php echo url('actions/logout_action.php'); ?>" class="top-navbar-link">
+                            <a href="<?php echo url('actions/logout_action.php'); ?>" class="top-navbar-link top-navbar-link-logout">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>Logout</span>
                             </a>
@@ -187,13 +177,11 @@
                     <?php else: ?>
                         <li class="top-navbar-item">
                             <a href="<?php echo url('view/user/login.php'); ?>" class="top-navbar-link">
-                                <i class="fas fa-sign-in-alt"></i>
                                 <span>Login</span>
                             </a>
                         </li>
                         <li class="top-navbar-item">
                             <a href="<?php echo url('view/user/register.php'); ?>" class="top-navbar-link top-navbar-link-primary">
-                                <i class="fas fa-user-plus"></i>
                                 <span>Register</span>
                             </a>
                         </li>

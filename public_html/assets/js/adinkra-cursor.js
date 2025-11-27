@@ -64,43 +64,43 @@ const CURSOR_COLORS = {
   dark: '#6B4423'        // Earth Brown
 };
 
-// Color schemes for different element types
+// Color schemes for different element types - Rusty Orange Theme
 const SYMBOL_COLORS = {
   button: {
-    primary: 'rgba(255, 154, 86, 0.9)',   // Amber
-    secondary: 'rgba(183, 65, 14, 0.7)',   // Rust
-    hueRotate: '0deg',
-    brightness: '0.8'
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust
+    secondary: 'rgba(204, 85, 0, 0.7)',    // Rusty Orange
+    hueRotate: '-15deg',
+    brightness: '0.85'
   },
   link: {
-    primary: 'rgba(183, 65, 14, 0.9)',     // Rust/Red
-    secondary: 'rgba(255, 154, 86, 0.7)',  // Amber
-    hueRotate: '-20deg',
-    brightness: '0.8'
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust
+    secondary: 'rgba(204, 85, 0, 0.7)',   // Rusty Orange
+    hueRotate: '-15deg',
+    brightness: '0.85'
   },
   card: {
-    primary: 'rgba(107, 68, 35, 0.9)',     // Brown
-    secondary: 'rgba(139, 90, 43, 0.7)',   // Light brown
-    hueRotate: '-30deg',
-    brightness: '0.7'
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust
+    secondary: 'rgba(204, 85, 0, 0.7)',    // Rusty Orange
+    hueRotate: '-15deg',
+    brightness: '0.85'
   },
   input: {
-    primary: 'rgba(100, 150, 200, 0.9)',   // Blue
-    secondary: 'rgba(70, 120, 180, 0.7)',  // Dark blue
-    hueRotate: '180deg',
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust
+    secondary: 'rgba(204, 85, 0, 0.7)',   // Rusty Orange
+    hueRotate: '-15deg',
     brightness: '0.85'
   },
   product: {
-    primary: 'rgba(76, 175, 80, 0.9)',     // Green
-    secondary: 'rgba(56, 142, 60, 0.7)',   // Dark green
-    hueRotate: '100deg',
-    brightness: '0.8'
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust
+    secondary: 'rgba(204, 85, 0, 0.7)',   // Rusty Orange
+    hueRotate: '-15deg',
+    brightness: '0.85'
   },
   default: {
-    primary: 'rgba(255, 154, 86, 0.9)',   // Amber (default)
-    secondary: 'rgba(183, 65, 14, 0.7)',   // Rust
-    hueRotate: '0deg',
-    brightness: '0.8'
+    primary: 'rgba(183, 65, 14, 0.9)',     // Rust (default)
+    secondary: 'rgba(204, 85, 0, 0.7)',    // Rusty Orange
+    hueRotate: '-15deg',
+    brightness: '0.85'
   }
 };
 
@@ -251,8 +251,8 @@ function initAdinkraCursor() {
 
     .adinkra-cursor {
       position: fixed !important;
-      width: 50px !important;
-      height: 50px !important;
+      width: 35px !important;
+      height: 35px !important;
       pointer-events: none !important;
       z-index: 100000 !important;
       transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
@@ -270,29 +270,29 @@ function initAdinkraCursor() {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
-      /* Default brown/rust color - will be overridden by JavaScript for different elements */
+      /* Rusty orange color - will be overridden by JavaScript for different elements */
       filter: 
-        brightness(0.8)
+        brightness(0.85)
         sepia(100%)
-        saturate(300%)
-        hue-rotate(0deg)
-        drop-shadow(0 2px 12px rgba(255, 154, 86, 0.9))
-        drop-shadow(0 0 20px rgba(183, 65, 14, 0.7))
-        drop-shadow(0 0 30px rgba(255, 154, 86, 0.5)) !important;
+        saturate(400%)
+        hue-rotate(-15deg)
+        drop-shadow(0 2px 10px rgba(183, 65, 14, 0.9))
+        drop-shadow(0 0 18px rgba(204, 85, 0, 0.7))
+        drop-shadow(0 0 25px rgba(183, 65, 14, 0.6)) !important;
       /* Smooth transitions for color changes */
       transition: filter 0.3s ease-in-out !important;
       /* Ensure image is centered */
       display: block !important;
     }
 
-    .adinkra-cursor.active {
+      .adinkra-cursor.active {
       transform: translate(-50%, -50%) scale(1) !important;
       opacity: 1 !important;
       display: block !important;
       visibility: visible !important;
       animation: adinkra-rotate 0.4s ease-out !important;
-      /* Make symbol more prominent since it's replacing the cursor */
-      filter: drop-shadow(0 0 25px rgba(255, 154, 86, 0.6)) !important;
+      /* Make symbol more prominent since it's replacing the cursor - rusty orange */
+      filter: drop-shadow(0 0 20px rgba(183, 65, 14, 0.7)) !important;
     }
     
     /* Ensure cursor is visible when hovering interactive elements */
@@ -760,10 +760,10 @@ function setupAdinkraCursor() {
     cursorRing.style.transform = 'translate(-50%, -50%) scale(0.9)';
     if (adinkraCursor.classList.contains('active')) {
       adinkraCursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
-      // Enhance glow on click
-      if (adinkraImg) {
-        adinkraImg.style.filter = 'drop-shadow(0 6px 20px rgba(255, 154, 86, 1)) drop-shadow(0 0 24px rgba(255, 154, 86, 1)) drop-shadow(0 0 36px rgba(183, 65, 14, 1)) drop-shadow(0 0 60px rgba(255, 154, 86, 0.9)) brightness(1.4) contrast(1.2) saturate(1.5)';
-      }
+        // Enhance glow on click - rusty orange
+        if (adinkraImg) {
+          adinkraImg.style.filter = 'drop-shadow(0 6px 20px rgba(183, 65, 14, 1)) drop-shadow(0 0 24px rgba(204, 85, 0, 1)) drop-shadow(0 0 36px rgba(183, 65, 14, 1)) drop-shadow(0 0 60px rgba(204, 85, 0, 0.9)) brightness(1.3) contrast(1.2) saturate(1.4)';
+        }
     }
   });
 
