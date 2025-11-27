@@ -89,21 +89,56 @@ class product_class extends db_class {
             return ['success' => false, 'message' => 'Product title already exists in this category and brand combination.'];
         }
         
-        $sql = "UPDATE products 
-                SET product_cat = ?, product_brand = ?, product_title = ?, 
-                    product_price = ?, product_desc = ?, product_image = ?, product_keywords = ?
-                WHERE product_id = ?";
-        
-        $params = [
-            $cat_id, $brand_id, $title, $price, $desc, $image_path, $keyword, $product_id
-        ];
-        
-        $stmt = $this->execute($sql, $params);
-        
-        if ($stmt && $stmt->rowCount() > 0) {
-            return ['success' => true, 'message' => 'Product updated successfully.'];
+        // If image_path is provided and not empty, use it; otherwise keep the existing image
+        if ($image_path === null || $image_path === '') {
+            // Keep existing image - don't update it
+            $sql = "UPDATE products 
+                    SET product_cat = ?, product_brand = ?, product_title = ?, 
+                        product_price = ?, product_desc = ?, product_keywords = ?
+                    WHERE product_id = ?";
+            
+            $params = [
+                $cat_id, $brand_id, $title, $price, $desc, $keyword, $product_id
+            ];
         } else {
-            return ['success' => false, 'message' => 'Failed to update product or no changes made.'];
+            // Update with new image path
+            $sql = "UPDATE products 
+                    SET product_cat = ?, product_brand = ?, product_title = ?, 
+                        product_price = ?, product_desc = ?, product_image = ?, product_keywords = ?
+                    WHERE product_id = ?";
+            
+            $params = [
+                $cat_id, $brand_id, $title, $price, $desc, $image_path, $keyword, $product_id
+            ];
+        }
+        
+        try {
+            $stmt = $this->execute($sql, $params);
+            
+            // Check if statement executed successfully
+            if ($stmt !== false) {
+                // Get row count to check if update actually affected rows
+                $rowCount = $stmt->rowCount();
+                
+                // Log for debugging
+                error_log("Product update executed. Product ID: $product_id, Image path: " . ($image_path ?? 'null') . ", Rows affected: $rowCount");
+                
+                // Even if rowCount is 0 (no changes detected), if we got here without error, consider it success
+                // This handles cases where values are the same but we still want to confirm the update
+                // However, if image_path was provided and rowCount is 0, that's still success (image was updated)
+                if ($rowCount > 0 || !empty($image_path)) {
+                    return ['success' => true, 'message' => 'Product updated successfully.'];
+                } else {
+                    // If no rows were affected and no image was updated, it means no changes were made
+                    return ['success' => true, 'message' => 'Product update completed. (No changes detected - values may be the same)'];
+                }
+            } else {
+                error_log("Product update failed - execute returned false. Product ID: $product_id");
+                return ['success' => false, 'message' => 'Failed to update product - database error.'];
+            }
+        } catch (Exception $e) {
+            error_log("Product update exception: " . $e->getMessage() . " - Product ID: $product_id");
+            return ['success' => false, 'message' => 'Failed to update product: ' . $e->getMessage()];
         }
     }
 

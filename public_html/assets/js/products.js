@@ -449,12 +449,47 @@ function handleProductSubmit(e) {
                         updateImagePreview(uploadedImagePath);
                         
                         // Create new FormData with the uploaded image path
-                        const updateFormData = new FormData(form);
+                        // Get all form fields explicitly to ensure nothing is missing
+                        const updateFormData = new FormData();
+                        
+                        // Get all form inputs
+                        const formInputs = form.querySelectorAll('input, select, textarea');
+                        formInputs.forEach(input => {
+                            // Skip file inputs (we handle image separately)
+                            if (input.type === 'file') {
+                                return;
+                            }
+                            
+                            // Get the value
+                            let value = input.value;
+                            
+                            // Handle checkboxes and radios
+                            if (input.type === 'checkbox' || input.type === 'radio') {
+                                if (!input.checked) {
+                                    return; // Skip unchecked checkboxes/radios
+                                }
+                            }
+                            
+                            // Add to FormData
+                            if (input.name) {
+                                updateFormData.append(input.name, value);
+                            }
+                        });
+                        
+                        // Ensure product_id is included
+                        const productIdInput = form.querySelector('input[name="product_id"]');
+                        if (productIdInput && productIdInput.value) {
+                            updateFormData.set('product_id', productIdInput.value);
+                        } else if (currentProductId) {
+                            updateFormData.set('product_id', currentProductId);
+                        }
+                        
+                        // Set the image path
                         updateFormData.set('image_path', uploadedImagePath);
                         updateFormData.append('ajax', '1');
                         
-                        // Remove the file from FormData since we already uploaded it
-                        updateFormData.delete('product_image');
+                        // Log FormData contents for debugging
+                        console.log('FormData entries for update:', Array.from(updateFormData.entries()).map(([key, val]) => [key, val instanceof File ? val.name : val]));
                         
                         // Submit form update
                         submitProductForm(updateFormData, isEdit, uploadedImagePath);

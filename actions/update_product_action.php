@@ -48,6 +48,10 @@ try {
     $desc = trim($_POST['desc'] ?? '');
     $keyword = trim($_POST['keyword'] ?? '');
     $image_path = trim($_POST['image_path'] ?? '');
+    // Convert empty string to null for proper handling
+    if ($image_path === '') {
+        $image_path = null;
+    }
     
     // Basic validation
     if (empty($product_id)) {
