@@ -912,7 +912,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php
 // Additional JavaScript for register page
-$additional_js = ['assets/js/register.js'];
+$additional_js = ['register.js'];
 
 // Include footer
 include __DIR__ . '/../templates/footer.php';

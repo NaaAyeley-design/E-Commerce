@@ -6,11 +6,18 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
+    
+    // Check if form exists
+    if (!registerForm) {
+        console.error('Registration form not found');
+        return;
+    }
+    
     const submitBtn = registerForm.querySelector('button[type="submit"]');
     const passwordInput = document.getElementById('password');
     const passwordStrength = document.getElementById('passwordStrength');
-    const strengthBar = passwordStrength.querySelector('.strength-bar');
-    const strengthText = passwordStrength.querySelector('.strength-text');
+    const strengthBar = passwordStrength ? passwordStrength.querySelector('.strength-bar') : null;
+    const strengthText = passwordStrength ? passwordStrength.querySelector('.strength-text') : null;
     
     // Mark form as handled to prevent global handler from interfering
     registerForm.setAttribute('data-handled', 'true');
@@ -18,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission handler
     registerForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        console.log('Registration form submitted via AJAX');
         
         // Clear previous errors
         clearErrors();
@@ -55,6 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             setLoadingState(false);
+            
+            console.log('Registration response:', data);
 
             if (data && data.success) {
                 showSuccess(data.message || 'Registration successful. Redirecting...');
@@ -64,15 +77,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 let redirectUrl = null;
                 if (serverRedirect && typeof serverRedirect === 'string') {
                     redirectUrl = serverRedirect;
+                    console.log('Using server-provided redirect URL:', redirectUrl);
                 } else {
                     const newPath = window.location.pathname.replace('register.php', 'login.php');
                     redirectUrl = window.location.origin + newPath + window.location.search + window.location.hash;
+                    console.log('Using fallback redirect URL:', redirectUrl);
                 }
 
                 // Perform redirect after short delay
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 1500);
+                if (redirectUrl) {
+                    console.log('Redirecting to:', redirectUrl);
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500);
+                } else {
+                    console.error('No redirect URL provided');
+                    showError('Registration successful, but redirect failed. Please <a href="' + (data.redirect || 'login.php') + '">click here</a> to continue.');
+                }
             } else {
                 showError((data && data.message) || 'Registration failed. Please try again.');
             }
@@ -85,9 +106,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Password strength indicator
-    passwordInput.addEventListener('input', function() {
-        updatePasswordStrength(this.value);
-    });
+    if (passwordInput && strengthBar && strengthText) {
+        passwordInput.addEventListener('input', function() {
+            updatePasswordStrength(this.value);
+        });
+    }
     
     // Real-time validation
     const inputs = registerForm.querySelectorAll('input[required], select[required]');
@@ -261,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create My Account';
+            submitBtn.innerHTML = '<i class="fas fa-star"></i> BEGIN MY JOURNEY';
         }
     }
     
