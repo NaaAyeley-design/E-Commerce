@@ -6,15 +6,18 @@
 CREATE TABLE IF NOT EXISTS customer (
     customer_id INT(11) NOT NULL AUTO_INCREMENT,
     customer_name VARCHAR(100) NOT NULL,
+    business_name VARCHAR(200) DEFAULT NULL,
+    bio TEXT DEFAULT NULL,
     customer_email VARCHAR(50) NOT NULL,
     customer_pass VARCHAR(150) NOT NULL,
     customer_country VARCHAR(30) NOT NULL,
     customer_city VARCHAR(30) NOT NULL,
     customer_contact VARCHAR(15) NOT NULL,
     customer_image VARCHAR(100) DEFAULT NULL,
-    user_role INT(11) NOT NULL,
+    user_role INT(11) NOT NULL DEFAULT 2,
     PRIMARY KEY (customer_id),
-    UNIQUE KEY customer_email (customer_email)
+    UNIQUE KEY customer_email (customer_email),
+    INDEX idx_user_role (user_role)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Password reset tokens table
@@ -42,7 +45,8 @@ CREATE TABLE IF NOT EXISTS user_roles (
 -- Insert default roles
 INSERT IGNORE INTO user_roles (role_id, role_name, role_description) VALUES
 (1, 'Admin', 'Administrator with full access'),
-(2, 'Customer', 'Regular customer account');
+(2, 'Customer', 'Regular customer account'),
+(3, 'Designer', 'Designer/Producer account for selling products');
 
 -- Categories table
 CREATE TABLE IF NOT EXISTS categories (
@@ -156,16 +160,20 @@ CREATE TABLE IF NOT EXISTS product_images (
 CREATE TABLE IF NOT EXISTS orders (
     order_id INT(11) NOT NULL AUTO_INCREMENT,
     customer_id INT(11) NOT NULL,
+    invoice_no VARCHAR(50) DEFAULT NULL,
     total_amount DECIMAL(10,2) NOT NULL,
     shipping_address TEXT NOT NULL,
     payment_method VARCHAR(50) DEFAULT 'pending',
     order_status VARCHAR(50) DEFAULT 'pending',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (order_id),
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
+    UNIQUE KEY idx_invoice_no (invoice_no),
     INDEX idx_customer_id (customer_id),
     INDEX idx_order_status (order_status),
+    INDEX idx_order_date (order_date),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

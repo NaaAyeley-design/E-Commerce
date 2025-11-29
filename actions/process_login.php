@@ -98,9 +98,25 @@ try {
     if ($result === "success") {
         // Determine redirect URL based on user role
         $redirect_url = url('view/user/dashboard.php');
+        
+        // Check user role from session
         if (is_admin()) {
+            // Role 1: Admin -> Admin dashboard
             $redirect_url = url('view/admin/dashboard.php');
+        } elseif (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 3) {
+            // Role 3: Designer/Producer -> Producer dashboard
+            $producer_dashboard = __DIR__ . '/../view/producer/dashboard.php';
+            if (file_exists($producer_dashboard)) {
+                $redirect_url = url('view/producer/dashboard.php');
+            } else {
+                // Fallback to user dashboard if producer dashboard doesn't exist yet
+                $redirect_url = url('view/user/dashboard.php');
+            }
+        } else {
+            // Role 2: Customer (default) -> Customer dashboard
+            $redirect_url = url('view/user/dashboard.php');
         }
+        
         // Always return JSON with redirect URL, even for non-AJAX
         $response = [
             'success' => true,

@@ -19,7 +19,7 @@ require_once __DIR__ . '/../../../controller/order_controller.php';
 $page_title = 'My Dashboard - KenteKart';
 $page_description = 'View your shopping metrics and order history';
 $body_class = 'dashboard-page';
-$additional_css = ['dashboard-metrics.css']; // Dashboard metrics CSS file
+$additional_css = ['dashboard-metrics.css', 'wishlist.css', 'products.css']; // Dashboard metrics CSS file + wishlist styles
 
 // Check authentication
 if (!is_logged_in()) {
@@ -35,15 +35,31 @@ if (!$customer) {
     exit;
 }
 
-// Check if user is admin and redirect to admin dashboard
-if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 1) {
-    header('Location: ' . BASE_URL . '/view/admin/dashboard.php');
-    exit;
+// Check user role and redirect to appropriate dashboard
+if (isset($_SESSION['user_role'])) {
+    if ($_SESSION['user_role'] == 1) {
+        // Role 1: Admin -> Admin dashboard
+        header('Location: ' . BASE_URL . '/view/admin/dashboard.php');
+        exit;
+    } elseif ($_SESSION['user_role'] == 3) {
+        // Role 3: Designer/Producer -> Producer dashboard
+        $producer_dashboard = __DIR__ . '/../producer/dashboard.php';
+        if (file_exists($producer_dashboard)) {
+            header('Location: ' . BASE_URL . '/view/producer/dashboard.php');
+            exit;
+        }
+        // If producer dashboard doesn't exist, allow access to user dashboard for now
+    }
+    // Role 2: Customer -> Continue to user dashboard (default)
 }
 
-// Get user orders
-$order_result = get_customer_orders_ctr($_SESSION['user_id'], 1, 100); // Get more orders for better analysis
-$all_orders = isset($order_result['orders']) ? $order_result['orders'] : [];
+// Get user orders with enhanced data
+require_once __DIR__ . '/../../../class/order_class.php';
+$order_class = new order_class();
+$customer_id = $_SESSION['user_id'];
+
+// Get all orders for this customer
+$all_orders = $order_class->get_customer_orders($customer_id, 100, 0);
 
 // Calculate metrics from actual orders
 $total_orders = count($all_orders);
@@ -68,12 +84,16 @@ for ($i = 5; $i >= 0; $i--) {
     $monthly_orders[$date] = 0;
 }
 
+// Fetch order items for each order to enhance display
+$orders_with_items = [];
 foreach ($all_orders as $order) {
-    $order_amount = $order['order_total'] ?? 0;
+    // Use correct column name: total_amount (not order_total)
+    $order_amount = isset($order['total_amount']) ? (float)$order['total_amount'] : 0;
     $total_spent += $order_amount;
     
-    // Get order month
-    $order_month = date('Y-m', strtotime($order['created_at']));
+    // Get order month from order_date or created_at
+    $order_date = $order['order_date'] ?? $order['created_at'] ?? date('Y-m-d H:i:s');
+    $order_month = date('Y-m', strtotime($order_date));
     
     // Add to monthly totals if in last 6 months
     if (isset($monthly_spending[$order_month])) {
@@ -87,20 +107,22 @@ foreach ($all_orders as $order) {
         $spending_this_month += $order_amount;
     }
     
-    // Count by status
-    $status = strtolower($order['order_status'] ?? '');
+    // Count by status - more accurate status checking
+    $status = strtolower($order['order_status'] ?? 'pending');
     if ($status === 'delivered' || $status === 'completed') {
         $orders_delivered++;
-    } elseif ($status === 'shipped' || $status === 'processing') {
+    } elseif (in_array($status, ['shipped', 'processing', 'in_transit'])) {
         $orders_in_transit++;
     }
     
-    // TODO: When you have artisan/seller data in orders, extract unique artisan IDs
-    // For now, we'll use a placeholder
-    // if (isset($order['seller_id'])) {
-    //     $unique_artisans[$order['seller_id']] = true;
-    // }
+    // Get order items for enhanced display
+    $order_items = $order_class->get_order_items($order['order_id']);
+    $order['items'] = $order_items;
+    $orders_with_items[] = $order;
 }
+
+// Replace all_orders with enhanced version
+$all_orders = $orders_with_items;
 
 // Calculate average order value
 $average_order_value = $total_orders > 0 ? $total_spent / $total_orders : 0;
@@ -259,6 +281,23 @@ include __DIR__ . '/../templates/header.php';
                     <h1 class="section-title">Your Orders</h1>
                     <p class="section-subtitle">Complete history of your artisan purchases</p>
                 </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <select id="order-filter-status" class="btn-outline-minimal" style="padding: 8px 15px; border-radius: 4px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="order-sort" class="btn-outline-minimal" style="padding: 8px 15px; border-radius: 4px;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="amount-high">Amount: High to Low</option>
+                        <option value="amount-low">Amount: Low to High</option>
+                    </select>
+                </div>
             </header>
 
             <!-- Order Stats -->
@@ -285,31 +324,164 @@ include __DIR__ . '/../templates/header.php';
                 </div>
             </div>
 
-            <!-- Recent Orders -->
-            <div class="orders-list-section">
-                <h3 class="subsection-title">Recent Activity</h3>
+            <!-- Order History Table -->
+            <div class="orders-list-section" style="margin-top: 30px;">
+                <h3 class="subsection-title">Order History</h3>
                 
-                <?php if (empty($recent_orders)): ?>
+                <?php if (empty($all_orders)): ?>
                 <div class="empty-state-minimal">
                     <i class="fas fa-box-open"></i>
                     <p>No orders yet</p>
                     <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn-minimal">Browse Products</a>
                 </div>
                 <?php else: ?>
-                <div class="orders-list-minimal">
-                    <?php foreach ($recent_orders as $index => $order): ?>
-                    <div class="order-item-minimal <?php echo $index < count($recent_orders) - 1 ? 'has-border' : ''; ?>">
-                        <div class="order-item-content">
-                            <div class="order-item-info">
-                                <p class="order-item-title">Order #<?php echo escape_html($order['order_id']); ?></p>
-                                <p class="order-item-meta"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
-                            </div>
+                <div class="orders-table-container" style="overflow-x: auto;">
+                    <table class="orders-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--warm-beige);">
+                                <th style="padding: 15px; text-align: left; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Order #</th>
+                                <th style="padding: 15px; text-align: left; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Date</th>
+                                <th style="padding: 15px; text-align: left; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Items</th>
+                                <th style="padding: 15px; text-align: left; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Amount</th>
+                                <th style="padding: 15px; text-align: left; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Status</th>
+                                <th style="padding: 15px; text-align: right; font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <?php foreach ($all_orders as $order): 
+                                $order_date = $order['order_date'] ?? $order['created_at'] ?? '';
+                                $items_count = count($order['items'] ?? []);
+                                $status = strtolower($order['order_status'] ?? 'pending');
+                                $status_class = 'status-' . $status;
+                                $status_label = ucfirst($status);
+                                
+                                // Status badge colors
+                                $status_colors = [
+                                    'pending' => '#F59E0B',
+                                    'processing' => '#3B82F6',
+                                    'shipped' => '#8B5CF6',
+                                    'in_transit' => '#8B5CF6',
+                                    'delivered' => '#10B981',
+                                    'completed' => '#10B981',
+                                    'cancelled' => '#EF4444'
+                                ];
+                                $status_color = $status_colors[$status] ?? '#6B7280';
+                            ?>
+                            <tr class="order-row" data-order-id="<?php echo $order['order_id']; ?>" data-status="<?php echo $status; ?>" data-amount="<?php echo $order['total_amount']; ?>" data-date="<?php echo strtotime($order_date); ?>" style="border-bottom: 1px solid var(--warm-beige); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--warm-beige)';" onmouseout="this.style.background='transparent';">
+                                <td style="padding: 20px 15px;">
+                                    <div>
+                                        <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; font-weight: 600; color: var(--text-dark); margin: 0;">
+                                            #<?php echo $order['order_id']; ?>
+                                        </p>
+                                        <?php if (!empty($order['invoice_no'])): ?>
+                                        <p style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--text-light); margin: 5px 0 0 0;">
+                                            Invoice: <?php echo escape_html($order['invoice_no']); ?>
+                                        </p>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td style="padding: 20px 15px;">
+                                    <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0;">
+                                        <?php echo $order_date ? date('M j, Y', strtotime($order_date)) : 'N/A'; ?>
+                                    </p>
+                                    <p style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--text-light); margin: 5px 0 0 0;">
+                                        <?php echo $order_date ? date('g:i A', strtotime($order_date)) : ''; ?>
+                                    </p>
+                                </td>
+                                <td style="padding: 20px 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <?php if (!empty($order['items']) && count($order['items']) > 0): 
+                                            $first_item = $order['items'][0];
+                                        ?>
+                                        <div style="display: flex; gap: -10px;">
+                                            <?php foreach (array_slice($order['items'], 0, 3) as $item): ?>
+                                            <img src="<?php echo !empty($item['product_image']) ? url($item['product_image']) : url('assets/images/placeholder-product.svg'); ?>" 
+                                                 alt="<?php echo escape_html($item['product_title'] ?? 'Product'); ?>"
+                                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 2px solid var(--white); margin-left: -8px; background: var(--warm-beige);"
+                                                 onerror="this.src='<?php echo url('assets/images/placeholder-product.svg'); ?>'">
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div>
+                                            <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0; font-weight: 500;">
+                                                <?php echo $items_count; ?> item<?php echo $items_count != 1 ? 's' : ''; ?>
+                                            </p>
+                                            <p style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--text-light); margin: 3px 0 0 0;">
+                                                <?php echo escape_html($first_item['product_title'] ?? 'Product'); ?>
+                                                <?php if ($items_count > 1): ?>
+                                                <span style="color: var(--text-light);">+<?php echo $items_count - 1; ?> more</span>
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                        <?php else: ?>
+                                        <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); margin: 0;">No items</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td style="padding: 20px 15px;">
+                                    <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: var(--terracotta); margin: 0;">
+                                        ₵<?php echo number_format($order['total_amount'] ?? 0, 2); ?>
+                                    </p>
+                                </td>
+                                <td style="padding: 20px 15px;">
+                                    <span class="order-status-badge" style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-family: 'Spectral', serif; font-size: 0.75rem; font-weight: 500; background: <?php echo $status_color; ?>20; color: <?php echo $status_color; ?>; border: 1px solid <?php echo $status_color; ?>40;">
+                                        <?php echo $status_label; ?>
+                                    </span>
+                                </td>
+                                <td style="padding: 20px 15px; text-align: right;">
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button onclick="viewOrderDetails(<?php echo $order['order_id']; ?>)" class="btn-outline-minimal" style="padding: 8px 16px; font-size: 0.875rem;">
+                                            View Details
+                                        </button>
+                                        <button onclick="trackOrder(<?php echo $order['order_id']; ?>)" class="btn-outline-minimal" style="padding: 8px 16px; font-size: 0.875rem;">
+                                            Track
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="orders-list-section" style="margin-top: 40px;">
+                <h3 class="subsection-title">Recent Activity</h3>
+                
+                <?php if (empty($all_orders)): ?>
+                <div class="empty-state-minimal">
+                    <i class="fas fa-box-open"></i>
+                    <p>No recent activity</p>
+                </div>
+                <?php else: 
+                    $recent_activities = [];
+                    foreach (array_slice($all_orders, 0, 5) as $order) {
+                        $order_date = $order['order_date'] ?? $order['created_at'] ?? '';
+                        $recent_activities[] = [
+                            'type' => 'order_placed',
+                            'message' => 'Order #' . $order['order_id'] . ' placed',
+                            'date' => $order_date,
+                            'status' => $order['order_status'],
+                            'amount' => $order['total_amount']
+                        ];
+                    }
+                ?>
+                <div class="activity-timeline" style="margin-top: 20px;">
+                    <?php foreach ($recent_activities as $activity): ?>
+                    <div class="activity-item" style="display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--warm-beige);">
+                        <div class="activity-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--warm-beige); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-box" style="color: var(--terracotta);"></i>
                         </div>
-                        <div class="order-item-actions">
-                            <p class="order-item-amount">₵<?php echo number_format($order['order_total'] ?? 0, 2); ?></p>
-                            <a href="<?php echo url('view/order/order_details.php?id=' . $order['order_id']); ?>" class="btn-outline-minimal">
-                                View
-                            </a>
+                        <div class="activity-content" style="flex: 1;">
+                            <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0; font-weight: 500;">
+                                <?php echo escape_html($activity['message']); ?>
+                            </p>
+                            <p style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--text-light); margin: 5px 0 0 0;">
+                                <?php echo date('M j, Y g:i A', strtotime($activity['date'])); ?> • 
+                                <span style="color: var(--terracotta);">₵<?php echo number_format($activity['amount'], 2); ?></span> • 
+                                <span style="text-transform: capitalize;"><?php echo escape_html($activity['status']); ?></span>
+                            </p>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -453,16 +625,41 @@ include __DIR__ . '/../templates/header.php';
             
             <header class="section-header-minimal">
                 <div>
-                    <h1 class="section-title">Saved Items</h1>
+                    <h1 class="section-title">My Wishlist</h1>
                     <p class="section-subtitle">Your curated collection of favorites</p>
+                    <p class="wishlist-count-text" style="margin-top: 10px; color: var(--text-light); font-size: 0.875rem;">
+                        <span id="dashboard-item-count">0</span> items saved
+                    </p>
                 </div>
             </header>
 
-            <!-- Placeholder for Wishlist -->
-            <div class="empty-state-minimal">
-                <i class="fas fa-heart"></i>
-                <p>Wishlist feature coming soon</p>
-                <p class="text-muted">Save your favorite items and we'll notify you of price drops</p>
+            <!-- Actions Bar -->
+            <div class="wishlist-actions" style="margin-bottom: 30px; display: flex; gap: 15px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline" id="dashboard-clear-wishlist">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+                <button type="button" class="btn btn-primary" id="dashboard-add-all-to-cart">
+                    <i class="fas fa-shopping-cart"></i> Add All to Cart
+                </button>
+            </div>
+
+            <!-- Wishlist Grid -->
+            <div class="wishlist-grid" id="dashboard-wishlist-grid" style="display: none;">
+                <!-- Wishlist items will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Empty Wishlist State -->
+            <div class="empty-wishlist" id="dashboard-empty-wishlist">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </div>
+                <h3>Your Wishlist is Empty</h3>
+                <p>Save items you love to shop later</p>
+                <a href="<?php echo url('view/product/all_product.php'); ?>" class="btn btn-primary">
+                    Browse Products
+                </a>
             </div>
 
         </section>
@@ -471,8 +668,122 @@ include __DIR__ . '/../templates/header.php';
     
 </div>
 
+<!-- Order Details Modal -->
+<div id="order-details-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(58, 47, 38, 0.7); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
+    <div class="modal-content" style="background: var(--white); max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: var(--radius-md); position: relative; box-shadow: 0 20px 60px rgba(139, 111, 71, 0.2);">
+        <button onclick="closeOrderModal()" class="modal-close" style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border: none; background: transparent; cursor: pointer; font-size: 28px; color: var(--text-light); z-index: 10;">
+            &times;
+        </button>
+        <div id="order-details-content" style="padding: 40px;">
+            <!-- Content will be loaded via AJAX -->
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--terracotta);"></i>
+                <p style="margin-top: 15px; color: var(--text-light);">Loading order details...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Tracking Modal -->
+<div id="order-tracking-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(58, 47, 38, 0.7); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
+    <div class="modal-content" style="background: var(--white); max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: var(--radius-md); position: relative; box-shadow: 0 20px 60px rgba(139, 111, 71, 0.2);">
+        <button onclick="closeTrackingModal()" class="modal-close" style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border: none; background: transparent; cursor: pointer; font-size: 28px; color: var(--text-light); z-index: 10;">
+            &times;
+        </button>
+        <div id="order-tracking-content" style="padding: 40px;">
+            <!-- Content will be loaded via AJAX -->
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--terracotta);"></i>
+                <p style="margin-top: 15px; color: var(--text-light);">Loading tracking information...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* Order table styles */
+.orders-table-container {
+    border: 1px solid var(--warm-beige);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.orders-table {
+    background: var(--white);
+}
+
+.orders-table thead {
+    background: var(--warm-beige);
+}
+
+.orders-table tbody tr:hover {
+    background: var(--warm-beige) !important;
+}
+
+.order-status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: 'Spectral', serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.modal-overlay {
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .orders-table {
+        font-size: 0.875rem;
+    }
+    
+    .orders-table th,
+    .orders-table td {
+        padding: 10px 8px !important;
+    }
+    
+    .orders-table th:nth-child(3),
+    .orders-table td:nth-child(3) {
+        display: none;
+    }
+}
+</style>
+
+<!-- Wishlist JavaScript -->
+<script>
+    // Define BASE_URL and ASSETS_URL for wishlist.js if not already defined
+    if (typeof BASE_URL === 'undefined') {
+        var BASE_URL = '<?php echo BASE_URL; ?>';
+    }
+    if (typeof ASSETS_URL === 'undefined') {
+        var ASSETS_URL = '<?php echo ASSETS_URL; ?>';
+    }
+</script>
+<script src="<?php echo ASSETS_URL; ?>/js/wishlist.js?v=<?php echo time(); ?>"></script>
 
 <!-- Dashboard Script -->
 <script>
@@ -505,8 +816,42 @@ document.querySelectorAll('.nav-item').forEach(button => {
         
         // Show corresponding section
         const sectionId = 'section-' + this.dataset.section;
-        document.getElementById(sectionId).classList.add('active');
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.classList.add('active');
+            
+            // If wishlist section, load wishlist content
+            if (this.dataset.section === 'wishlist') {
+                setTimeout(() => {
+                    if (typeof loadDashboardWishlist === 'function') {
+                        loadDashboardWishlist();
+                    } else if (typeof loadWishlistPage === 'function') {
+                        loadWishlistPage();
+                    }
+                }, 100);
+            }
+        }
     });
+});
+
+// Check URL hash or query parameter for section navigation
+window.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    const hash = window.location.hash.replace('#', '');
+    
+    let targetSection = sectionParam || hash || null;
+    
+    if (targetSection) {
+        // Remove 'section-' prefix if present
+        targetSection = targetSection.replace('section-', '');
+        
+        // Find and click the corresponding nav button
+        const navButton = document.querySelector(`.nav-item[data-section="${targetSection}"]`);
+        if (navButton) {
+            navButton.click();
+        }
+    }
 });
 
 // Create Spending Chart (Overview)
@@ -720,7 +1065,423 @@ document.addEventListener('DOMContentLoaded', function() {
     createSpendingChartOverview();
     createCategoriesChart();
     createSpendingChartFull();
+    
+    // Initialize wishlist functionality for dashboard
+    initializeDashboardWishlist();
+    
+    // Initialize orders functionality
+    initializeOrdersSection();
 });
+
+/**
+ * Initialize orders section functionality
+ */
+function initializeOrdersSection() {
+    // Filter by status
+    const statusFilter = document.getElementById('order-filter-status');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            filterAndSortOrders();
+        });
+    }
+    
+    // Sort orders
+    const sortSelect = document.getElementById('order-sort');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            filterAndSortOrders();
+        });
+    }
+    
+    // Close modals on outside click
+    const orderModal = document.getElementById('order-details-modal');
+    const trackingModal = document.getElementById('order-tracking-modal');
+    
+    if (orderModal) {
+        orderModal.addEventListener('click', function(e) {
+            if (e.target === orderModal) {
+                closeOrderModal();
+            }
+        });
+    }
+    
+    if (trackingModal) {
+        trackingModal.addEventListener('click', function(e) {
+            if (e.target === trackingModal) {
+                closeTrackingModal();
+            }
+        });
+    }
+}
+
+/**
+ * Filter and sort orders
+ */
+function filterAndSortOrders() {
+    const statusFilter = document.getElementById('order-filter-status')?.value || '';
+    const sortSelect = document.getElementById('order-sort')?.value || 'newest';
+    const rows = document.querySelectorAll('.order-row');
+    const tbody = document.getElementById('orders-table-body');
+    
+    if (!tbody) return;
+    
+    let filteredRows = Array.from(rows);
+    
+    // Filter by status
+    if (statusFilter) {
+        filteredRows = filteredRows.filter(row => {
+            return row.getAttribute('data-status') === statusFilter;
+        });
+    }
+    
+    // Sort orders
+    filteredRows.sort((a, b) => {
+        switch(sortSelect) {
+            case 'oldest':
+                return parseInt(a.getAttribute('data-date')) - parseInt(b.getAttribute('data-date'));
+            case 'amount-high':
+                return parseFloat(b.getAttribute('data-amount')) - parseFloat(a.getAttribute('data-amount'));
+            case 'amount-low':
+                return parseFloat(a.getAttribute('data-amount')) - parseFloat(b.getAttribute('data-amount'));
+            case 'newest':
+            default:
+                return parseInt(b.getAttribute('data-date')) - parseInt(a.getAttribute('data-date'));
+        }
+    });
+    
+    // Clear and re-append sorted rows
+    tbody.innerHTML = '';
+    filteredRows.forEach(row => tbody.appendChild(row));
+    
+    // Show empty message if no results
+    if (filteredRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No orders found matching your criteria.</td></tr>';
+    }
+}
+
+/**
+ * View order details
+ */
+function viewOrderDetails(orderId) {
+    const modal = document.getElementById('order-details-modal');
+    const content = document.getElementById('order-details-content');
+    
+    if (!modal || !content) return;
+    
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--terracotta);"></i><p style="margin-top: 15px; color: var(--text-light);">Loading order details...</p></div>';
+    
+    // Fetch order details via AJAX
+    fetch('<?php echo url('actions/get_order_details.php'); ?>?order_id=' + orderId, {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            content.innerHTML = generateOrderDetailsHTML(data.order, data.items);
+        } else {
+            content.innerHTML = '<div style="text-align: center; padding: 40px;"><p style="color: var(--terracotta);">' + (data.message || 'Error loading order details') + '</p></div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 40px;"><p style="color: var(--terracotta);">Error loading order details. Please try again.</p></div>';
+    });
+}
+
+/**
+ * Track order
+ */
+function trackOrder(orderId) {
+    const modal = document.getElementById('order-tracking-modal');
+    const content = document.getElementById('order-tracking-content');
+    
+    if (!modal || !content) return;
+    
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--terracotta);"></i><p style="margin-top: 15px; color: var(--text-light);">Loading tracking information...</p></div>';
+    
+    // Fetch order tracking info via AJAX
+    fetch('<?php echo url('actions/get_order_tracking.php'); ?>?order_id=' + orderId, {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            content.innerHTML = generateOrderTrackingHTML(data.order);
+        } else {
+            content.innerHTML = '<div style="text-align: center; padding: 40px;"><p style="color: var(--terracotta);">' + (data.message || 'Error loading tracking information') + '</p></div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 40px;"><p style="color: var(--terracotta);">Error loading tracking information. Please try again.</p></div>';
+    });
+}
+
+/**
+ * Generate order details HTML
+ */
+function generateOrderDetailsHTML(order, items) {
+    const statusColors = {
+        'pending': '#F59E0B',
+        'processing': '#3B82F6',
+        'shipped': '#8B5CF6',
+        'in_transit': '#8B5CF6',
+        'delivered': '#10B981',
+        'completed': '#10B981',
+        'cancelled': '#EF4444'
+    };
+    const status = (order.order_status || 'pending').toLowerCase();
+    const statusColor = statusColors[status] || '#6B7280';
+    
+    let itemsHTML = '';
+    if (items && items.length > 0) {
+        itemsHTML = items.map(item => `
+            <div style="display: flex; gap: 15px; padding: 15px; border-bottom: 1px solid var(--warm-beige);">
+                <img src="${item.product_image || '<?php echo url('assets/images/placeholder-product.svg'); ?>'}" 
+                     alt="${item.product_title || 'Product'}"
+                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; background: var(--warm-beige);"
+                     onerror="this.src='<?php echo url('assets/images/placeholder-product.svg'); ?>'">
+                <div style="flex: 1;">
+                    <h4 style="font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; margin: 0 0 5px 0; color: var(--text-dark);">${item.product_title || 'Product'}</h4>
+                    <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); margin: 0;">Quantity: ${item.quantity}</p>
+                    <p style="font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--terracotta); margin: 5px 0 0 0; font-weight: 600;">₵${parseFloat(item.price).toFixed(2)} each</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; color: var(--text-dark); margin: 0; font-weight: 600;">₵${(parseFloat(item.price) * parseInt(item.quantity)).toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    return `
+        <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; margin: 0 0 30px 0; color: var(--text-dark);">Order Details</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div>
+                <h3 style="font-family: 'Spectral', serif; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); margin: 0 0 10px 0;">Order Information</h3>
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Order #:</strong> ${order.order_id}</p>
+                ${order.invoice_no ? `<p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Invoice #:</strong> ${order.invoice_no}</p>` : ''}
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Date:</strong> ${new Date(order.order_date || order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Status:</strong> 
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">
+                        ${(order.order_status || 'pending').charAt(0).toUpperCase() + (order.order_status || 'pending').slice(1)}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <h3 style="font-family: 'Spectral', serif; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); margin: 0 0 10px 0;">Payment & Shipping</h3>
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Payment Method:</strong> ${(order.payment_method || 'N/A').charAt(0).toUpperCase() + (order.payment_method || 'N/A').slice(1)}</p>
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0;"><strong>Shipping Address:</strong></p>
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-light); margin: 5px 0; white-space: pre-line;">${order.shipping_address || 'N/A'}</p>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+            <h3 style="font-family: 'Spectral', serif; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); margin: 0 0 15px 0;">Order Items</h3>
+            <div style="border: 1px solid var(--warm-beige); border-radius: 4px; overflow: hidden;">
+                ${itemsHTML || '<p style="padding: 20px; text-align: center; color: var(--text-light);">No items found</p>'}
+            </div>
+        </div>
+        
+        <div style="border-top: 2px solid var(--warm-beige); padding-top: 20px; text-align: right;">
+            <div style="margin-bottom: 10px;">
+                <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 5px 0; display: flex; justify-content: space-between;">
+                    <span>Subtotal:</span>
+                    <span>₵${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                </p>
+            </div>
+            <div style="border-top: 1px solid var(--warm-beige); padding-top: 10px; margin-top: 10px;">
+                <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--terracotta); margin: 0; font-weight: 600; display: flex; justify-content: space-between;">
+                    <span>Total:</span>
+                    <span>₵${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate order tracking HTML
+ */
+function generateOrderTrackingHTML(order) {
+    const status = (order.order_status || 'pending').toLowerCase();
+    const statusSteps = [
+        { key: 'pending', label: 'Order Placed', icon: 'fa-shopping-cart' },
+        { key: 'processing', label: 'Processing', icon: 'fa-cog' },
+        { key: 'shipped', label: 'Shipped', icon: 'fa-shipping-fast' },
+        { key: 'delivered', label: 'Delivered', icon: 'fa-check-circle' }
+    ];
+    
+    const currentStepIndex = statusSteps.findIndex(step => step.key === status);
+    const completedSteps = currentStepIndex >= 0 ? currentStepIndex + 1 : 0;
+    
+    let timelineHTML = statusSteps.map((step, index) => {
+        const isCompleted = index <= currentStepIndex;
+        const isCurrent = index === currentStepIndex;
+        const stepColor = isCompleted ? 'var(--terracotta)' : 'var(--text-light)';
+        
+        return `
+            <div style="display: flex; gap: 20px; position: relative; padding-bottom: 30px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: ${isCompleted ? 'var(--terracotta)' : 'var(--warm-beige)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 2;">
+                    <i class="fas ${step.icon}" style="color: ${isCompleted ? 'var(--white)' : 'var(--text-light)'};"></i>
+                </div>
+                <div style="flex: 1; padding-top: 8px;">
+                    <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; color: ${stepColor}; margin: 0 0 5px 0; font-weight: ${isCompleted ? '600' : '400'};">
+                        ${step.label}
+                    </p>
+                    ${isCurrent ? `<p style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--text-light); margin: 0;">Current status</p>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+        <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; margin: 0 0 30px 0; color: var(--text-dark);">Order Tracking</h2>
+        
+        <div style="margin-bottom: 30px; padding: 20px; background: var(--warm-beige); border-radius: 4px;">
+            <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0 0 10px 0;"><strong>Order #:</strong> ${order.order_id}</p>
+            ${order.invoice_no ? `<p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0 0 10px 0;"><strong>Invoice #:</strong> ${order.invoice_no}</p>` : ''}
+            <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0;"><strong>Status:</strong> 
+                <span style="text-transform: capitalize; color: var(--terracotta); font-weight: 600;">${order.order_status || 'pending'}</span>
+            </p>
+        </div>
+        
+        <div style="position: relative; padding-left: 20px;">
+            <div style="position: absolute; left: 39px; top: 40px; bottom: 0; width: 2px; background: var(--warm-beige);"></div>
+            ${timelineHTML}
+        </div>
+        
+        ${order.shipping_address ? `
+        <div style="margin-top: 30px; padding: 20px; background: var(--warm-beige); border-radius: 4px;">
+            <h3 style="font-family: 'Spectral', serif; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); margin: 0 0 10px 0;">Shipping Address</h3>
+            <p style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--text-dark); margin: 0; white-space: pre-line;">${order.shipping_address}</p>
+        </div>
+        ` : ''}
+    `;
+}
+
+/**
+ * Close order modal
+ */
+function closeOrderModal() {
+    const modal = document.getElementById('order-details-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Close tracking modal
+ */
+function closeTrackingModal() {
+    const modal = document.getElementById('order-tracking-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Initialize wishlist functionality in dashboard
+ */
+function initializeDashboardWishlist() {
+    // Load wishlist when wishlist section is shown
+    const wishlistNavBtn = document.querySelector('.nav-item[data-section="wishlist"]');
+    if (wishlistNavBtn) {
+        wishlistNavBtn.addEventListener('click', function() {
+            // Small delay to ensure section is visible
+            setTimeout(() => {
+                loadDashboardWishlist();
+            }, 100);
+        });
+    }
+    
+    // Also load if wishlist section is already active (e.g., direct link)
+    const wishlistSection = document.getElementById('section-wishlist');
+    if (wishlistSection && wishlistSection.classList.contains('active')) {
+        loadDashboardWishlist();
+    }
+    
+    // Setup dashboard-specific wishlist buttons
+    const clearBtn = document.getElementById('dashboard-clear-wishlist');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (typeof handleClearWishlist === 'function') {
+                handleClearWishlist();
+                setTimeout(() => loadDashboardWishlist(), 100);
+            }
+        });
+    }
+    
+    const addAllBtn = document.getElementById('dashboard-add-all-to-cart');
+    if (addAllBtn) {
+        addAllBtn.addEventListener('click', function() {
+            if (typeof handleAddAllToCart === 'function') {
+                handleAddAllToCart();
+            }
+        });
+    }
+}
+
+/**
+ * Load wishlist content in dashboard
+ */
+function loadDashboardWishlist() {
+    // Check if wishlist functions are available
+    if (typeof getWishlistItems !== 'function' || typeof createWishlistItemHTML !== 'function') {
+        console.warn('Wishlist functions not loaded. Make sure wishlist.js is included.');
+        return;
+    }
+    
+    const wishlist = getWishlistItems();
+    const container = document.getElementById('dashboard-wishlist-grid');
+    const emptyState = document.getElementById('dashboard-empty-wishlist');
+    const itemCount = document.getElementById('dashboard-item-count');
+    
+    if (itemCount) {
+        itemCount.textContent = wishlist.length;
+    }
+    
+    if (wishlist.length === 0) {
+        if (container) container.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+    
+    if (container) container.style.display = 'grid';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    if (container) {
+        container.innerHTML = wishlist.map(item => createWishlistItemHTML(item)).join('');
+        
+        // Re-attach event listeners
+        container.querySelectorAll('.remove-wishlist-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const productId = btn.getAttribute('data-product-id');
+                if (productId && typeof removeFromWishlist === 'function') {
+                    removeFromWishlist(productId);
+                    setTimeout(() => loadDashboardWishlist(), 100);
+                }
+            });
+        });
+        
+        container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const productId = btn.getAttribute('data-product-id');
+                if (productId && typeof handleAddToCartFromWishlist === 'function') {
+                    handleAddToCartFromWishlist(e);
+                }
+            });
+        });
+    }
+}
 </script>
 
 <?php

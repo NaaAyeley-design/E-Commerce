@@ -11,6 +11,16 @@ const WISHLIST_STORAGE_KEY = 'kentekart_wishlist';
  */
 document.addEventListener('DOMContentLoaded', function() {
     initializeWishlist();
+    
+    // If on dashboard and wishlist section is active, load it
+    if (document.getElementById('section-wishlist')) {
+        const wishlistSection = document.getElementById('section-wishlist');
+        if (wishlistSection && wishlistSection.classList.contains('active')) {
+            setTimeout(() => {
+                loadWishlistPage();
+            }, 100);
+        }
+    }
 });
 
 /**
@@ -26,9 +36,12 @@ function initializeWishlist() {
     // Set up event listeners for wishlist buttons
     setupWishlistButtons();
     
-    // Initialize wishlist page if on wishlist page
+    // Initialize wishlist page if on wishlist page or dashboard wishlist section
     if (document.getElementById('wishlist-page')) {
         loadWishlistPage();
+    } else if (document.getElementById('dashboard-wishlist-grid')) {
+        // Dashboard wishlist section - will be loaded when section is activated
+        // This is handled by the dashboard's own initialization
     }
 }
 
@@ -48,16 +61,28 @@ function setupWishlistButtons() {
         button.addEventListener('click', handleRemoveFromWishlist);
     });
     
-    // Clear all wishlist button
+    // Clear all wishlist button (standalone page)
     const clearAllBtn = document.getElementById('clear-wishlist');
     if (clearAllBtn) {
         clearAllBtn.addEventListener('click', handleClearWishlist);
     }
     
-    // Add all to cart button
+    // Clear all wishlist button (dashboard)
+    const dashboardClearBtn = document.getElementById('dashboard-clear-wishlist');
+    if (dashboardClearBtn) {
+        dashboardClearBtn.addEventListener('click', handleClearWishlist);
+    }
+    
+    // Add all to cart button (standalone page)
     const addAllToCartBtn = document.getElementById('add-all-to-cart');
     if (addAllToCartBtn) {
         addAllToCartBtn.addEventListener('click', handleAddAllToCart);
+    }
+    
+    // Add all to cart button (dashboard)
+    const dashboardAddAllBtn = document.getElementById('dashboard-add-all-to-cart');
+    if (dashboardAddAllBtn) {
+        dashboardAddAllBtn.addEventListener('click', handleAddAllToCart);
     }
 }
 
@@ -179,7 +204,7 @@ function removeFromWishlist(productId) {
     updateHeartIcon(productId, false);
     updateWishlistCount();
     
-    // If on wishlist page, remove the item from DOM
+    // If on wishlist page or dashboard, remove the item from DOM
     const wishlistItem = document.querySelector(`.wishlist-item[data-product-id="${productId}"]`);
     if (wishlistItem) {
         animateItemRemoval(wishlistItem);
@@ -371,8 +396,8 @@ function handleClearWishlist() {
         // Update count
         updateWishlistCount();
         
-        // Reload wishlist page if on it
-        if (document.getElementById('wishlist-page')) {
+        // Reload wishlist page if on it (standalone or dashboard)
+        if (document.getElementById('wishlist-page') || document.getElementById('dashboard-wishlist-grid')) {
             loadWishlistPage();
         }
         
@@ -463,12 +488,22 @@ function addToCart(productId, quantity) {
 
 /**
  * Load wishlist page content
+ * Works with both standalone wishlist page and dashboard wishlist section
  */
 function loadWishlistPage() {
     const wishlist = getWishlistItems();
-    const container = document.getElementById('wishlist-grid');
-    const emptyState = document.getElementById('empty-wishlist');
-    const itemCount = document.getElementById('item-count');
+    
+    // Check for standalone wishlist page elements
+    let container = document.getElementById('wishlist-grid');
+    let emptyState = document.getElementById('empty-wishlist');
+    let itemCount = document.getElementById('item-count');
+    
+    // If not found, check for dashboard wishlist section elements
+    if (!container) {
+        container = document.getElementById('dashboard-wishlist-grid');
+        emptyState = document.getElementById('dashboard-empty-wishlist');
+        itemCount = document.getElementById('dashboard-item-count');
+    }
     
     if (itemCount) {
         itemCount.textContent = wishlist.length;
@@ -531,10 +566,16 @@ function createWishlistItemHTML(item) {
 
 /**
  * Update wishlist page
+ * Works with both standalone wishlist page and dashboard wishlist section
  */
 function updateWishlistPage() {
     loadWishlistPage();
     updateWishlistCount();
+    
+    // Also update dashboard if it exists
+    if (typeof loadDashboardWishlist === 'function') {
+        loadDashboardWishlist();
+    }
 }
 
 /**

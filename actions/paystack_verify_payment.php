@@ -215,10 +215,14 @@ if ($verification_successful && abs($amount_paid - $total_amount) > 0.01) {
         
         error_log("✓ Payment recorded: $payment_id");
         
-        // 4. Update order status to completed
-        error_log("Updating order status...");
+        // 4. Update order status to completed and set invoice_no to payment reference
+        // This updates:
+        // - invoice_no: Set to payment reference (Paystack transaction reference)
+        // - order_status: Set to 'completed'
+        // Note: order_date and customer_id remain unchanged (set during order creation)
+        error_log("Updating order status and invoice number...");
         $order->update_order_complete($order_id, $reference, 'completed');
-        error_log("✓ Order status updated to completed");
+        error_log("✓ Order status updated to completed with invoice_no: $reference");
         
         // 5. Clear cart
         error_log("Clearing cart...");

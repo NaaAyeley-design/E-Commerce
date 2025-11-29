@@ -42,21 +42,71 @@ class user_class extends db_class {
     }
     
     /**
-     * Add new customer/user
+     * Add new customer/user or designer/producer
+     * 
+     * @param string $name User's full name
+     * @param string $email User's email
+     * @param string $password User's password (will be hashed)
+     * @param string $country User's country
+     * @param string $city User's city
+     * @param string $contact User's contact number
+     * @param int $role User role (2 = Customer, 3 = Designer/Producer)
+     * @param string $business_name Optional business name for designers
+     * @param string $bio Optional bio/description for designers
+     * @return bool True on success, false on failure
      */
-    public function add_customer($name, $email, $password, $country, $city, $contact, $role = 2) {
+    public function add_customer($name, $email, $password, $country, $city, $contact, $role = 2, $business_name = '', $bio = '') {
+        // Validate role - only allow 2 (customer) or 3 (designer)
+        // Role 1 (admin) cannot be set through this method
+        if ($role !== 2 && $role !== 3) {
+            $role = 2; // Default to customer
+        }
+        
         // Encrypt password
         $hashed_pass = password_hash($password, HASH_ALGO, ['cost' => HASH_COST]);
 
-        $sql = "INSERT INTO customer 
-                (customer_name, customer_email, customer_pass, customer_country, customer_city, customer_contact, user_role)
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-        $params = [$name, $email, $hashed_pass, $country, $city, $contact, $role];
+        // Check if designer fields exist in database
+        $has_business_name = $this->column_exists('customer', 'business_name');
+        $has_bio = $this->column_exists('customer', 'bio');
+        
+        // Build SQL based on available columns
+        if ($has_business_name && $has_bio) {
+            // Full version with designer fields
+            $sql = "INSERT INTO customer 
+                    (customer_name, customer_email, customer_pass, customer_country, customer_city, customer_contact, user_role, business_name, bio)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $params = [$name, $email, $hashed_pass, $country, $city, $contact, $role, $business_name, $bio];
+        } else {
+            // Basic version without designer fields (for backward compatibility)
+            $sql = "INSERT INTO customer 
+                    (customer_name, customer_email, customer_pass, customer_country, customer_city, customer_contact, user_role)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $params = [$name, $email, $hashed_pass, $country, $city, $contact, $role];
+        }
         
         $stmt = $this->execute($sql, $params);
         
         return $stmt !== false;
+    }
+    
+    /**
+     * Check if a column exists in a table
+     */
+    private function column_exists($table, $column) {
+        try {
+            $db_name = DB_NAME;
+            $sql = "SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = ? 
+                    AND TABLE_NAME = ? 
+                    AND COLUMN_NAME = ?";
+            
+            $result = $this->fetchRow($sql, [$db_name, $table, $column]);
+            return $result !== false;
+        } catch (Exception $e) {
+            error_log("Column check error: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

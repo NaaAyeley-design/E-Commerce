@@ -9,7 +9,43 @@
 class order_class extends db_class {
     
     /**
+     * Generate unique invoice number
+     * Format: INV-YYYYMMDD-HHMMSS-XXXXX (where XXXXX is a random 5-digit number)
+     */
+    private function generate_invoice_no() {
+        $prefix = 'INV';
+        $date_part = date('Ymd-His');
+        $random_part = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $invoice_no = $prefix . '-' . $date_part . '-' . $random_part;
+        
+        // Ensure uniqueness by checking database
+        $max_attempts = 10;
+        $attempt = 0;
+        while ($attempt < $max_attempts) {
+            $existing = $this->fetchRow("SELECT order_id FROM orders WHERE invoice_no = ?", [$invoice_no]);
+            if (!$existing) {
+                return $invoice_no; // Unique invoice number found
+            }
+            // Regenerate if duplicate found
+            $random_part = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $invoice_no = $prefix . '-' . $date_part . '-' . $random_part;
+            $attempt++;
+        }
+        
+        // Fallback: use timestamp with microseconds for guaranteed uniqueness
+        $invoice_no = $prefix . '-' . date('Ymd-His') . '-' . substr(str_replace('.', '', microtime(true)), -5);
+        return $invoice_no;
+    }
+    
+    /**
      * Create new order
+     * 
+     * Saves the following fields to the database:
+     * - order_id: Auto-generated unique identifier (AUTO_INCREMENT)
+     * - customer_id: ID of the customer placing the order
+     * - invoice_no: Unique invoice/receipt number (generated automatically)
+     * - order_date: Timestamp when the order was placed (current timestamp)
+     * - order_status: Current status of the order (default: 'pending')
      */
     public function create_order($customer_id, $total_amount, $shipping_address, $payment_method = 'pending') {
         try {
@@ -112,11 +148,39 @@ class order_class extends db_class {
                 error_log("WARNING: Cannot describe orders table structure");
             }
             
-            $sql = "INSERT INTO orders 
-                    (customer_id, total_amount, shipping_address, payment_method, order_status)
-                    VALUES (?, ?, ?, ?, 'pending')";
+            // Generate unique invoice number
+            $invoice_no = $this->generate_invoice_no();
+            error_log("Generated invoice_no: " . $invoice_no);
             
-            $params = [(int)$customer_id, (float)$total_amount, $shipping_address, $payment_method];
+            // Set order_date to current timestamp
+            $order_date = date('Y-m-d H:i:s');
+            error_log("Setting order_date: " . $order_date);
+            
+            // Set initial order_status to 'pending'
+            $order_status = 'pending';
+            error_log("Setting order_status: " . $order_status);
+            
+            // INSERT statement with ALL required fields:
+            // - customer_id: ID of the customer placing the order
+            // - invoice_no: Unique invoice/receipt number
+            // - total_amount: Total order amount
+            // - shipping_address: Shipping address
+            // - payment_method: Payment method used
+            // - order_status: Initial status (pending)
+            // - order_date: Timestamp when order was placed
+            $sql = "INSERT INTO orders 
+                    (customer_id, invoice_no, total_amount, shipping_address, payment_method, order_status, order_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            
+            $params = [
+                (int)$customer_id,           // customer_id: ID of the customer placing the order
+                $invoice_no,                 // invoice_no: Unique invoice/receipt number
+                (float)$total_amount,        // total_amount: Total order amount
+                $shipping_address,           // shipping_address: Shipping address
+                $payment_method,              // payment_method: Payment method used
+                $order_status,                // order_status: Initial status (pending)
+                $order_date                   // order_date: Timestamp when order was placed
+            ];
             error_log("Executing SQL: " . $sql);
             error_log("Parameters: " . json_encode($params));
             
@@ -457,23 +521,27 @@ class order_class extends db_class {
     
     /**
      * Update order with invoice number and status
+     * 
+     * Updates the following fields:
+     * - invoice_no: Payment reference/transaction ID (if provided)
+     * - order_status: Order status (e.g., 'completed', 'processing', etc.)
+     * 
+     * Note: order_date is NOT updated here - it remains the original order creation timestamp
      */
-    public function update_order_complete($order_id, $invoice_no, $status = 'completed') {
+    public function update_order_complete($order_id, $invoice_no = null, $status = 'completed') {
         try {
-            error_log("Updating order to complete: order_id=$order_id, invoice_no=$invoice_no, status=$status");
+            error_log("Updating order to complete: order_id=$order_id, invoice_no=" . ($invoice_no ?? 'null') . ", status=$status");
             
-            // Check if invoice_no column exists
+            // Build UPDATE statement
             $sql = "UPDATE orders SET order_status = ?";
             $params = [$status];
             
-            // Try to update invoice_no if column exists
-            // We'll use a try-catch approach since column might not exist
-            try {
+            // Update invoice_no if provided (e.g., payment reference from Paystack)
+            // This allows linking the order to the payment transaction
+            if ($invoice_no !== null && !empty($invoice_no)) {
                 $sql .= ", invoice_no = ?";
                 $params[] = $invoice_no;
-            } catch (Exception $e) {
-                // Column might not exist, continue without it
-                error_log("Note: invoice_no column might not exist, continuing without it");
+                error_log("Updating invoice_no to: $invoice_no");
             }
             
             $sql .= " WHERE order_id = ?";
@@ -485,12 +553,12 @@ class order_class extends db_class {
             $stmt = $this->execute($sql, $params);
             
             if ($stmt !== false && $stmt->rowCount() > 0) {
-                error_log("✓ Order updated successfully: order_id=$order_id, invoice_no=$invoice_no, status=$status");
+                error_log("✓ Order updated successfully: order_id=$order_id, invoice_no=" . ($invoice_no ?? 'unchanged') . ", status=$status");
                 return true;
             } else {
                 error_log("✗ Failed to update order: order_id=$order_id, rowCount=" . ($stmt ? $stmt->rowCount() : 0));
                 // Try without invoice_no if that failed
-                if (count($params) > 2) {
+                if ($invoice_no !== null && count($params) > 2) {
                     error_log("Retrying without invoice_no...");
                     $sql_retry = "UPDATE orders SET order_status = ? WHERE order_id = ?";
                     $stmt_retry = $this->execute($sql_retry, [$status, $order_id]);

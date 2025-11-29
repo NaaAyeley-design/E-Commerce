@@ -46,12 +46,29 @@ try {
     $country = sanitize_input($_POST['country'] ?? '');
     $city = sanitize_input($_POST['city'] ?? '');
     $contact = sanitize_input($_POST['contact'] ?? '');
+    $user_role = isset($_POST['user_role']) ? (int)$_POST['user_role'] : 2;
+    $business_name = sanitize_input($_POST['business_name'] ?? '');
+    $bio = sanitize_input($_POST['bio'] ?? '');
     $terms = isset($_POST['terms']);
 
     // Validate required fields
     if (empty($name) || empty($email) || empty($password) || empty($country) || empty($city) || empty($contact)) {
         ob_clean();
-        echo json_encode(['success' => false, 'message' => 'All fields are required.']);
+        echo json_encode(['success' => false, 'message' => 'All required fields must be filled.']);
+        ob_end_flush();
+        exit;
+    }
+    
+    // Validate and sanitize user role
+    // Only allow role 2 (customer) or 3 (designer) - prevent role 1 (admin) from being set via registration
+    if ($user_role !== 2 && $user_role !== 3) {
+        $user_role = 2; // Default to customer if invalid role provided
+    }
+    
+    // Validate role selection
+    if (!isset($_POST['user_role']) || ($_POST['user_role'] != '2' && $_POST['user_role'] != '3')) {
+        ob_clean();
+        echo json_encode(['success' => false, 'message' => 'Please select a registration type (Customer or Designer/Producer).']);
         ob_end_flush();
         exit;
     }
@@ -89,16 +106,26 @@ try {
     }
 
     // Attempt registration (do NOT log or echo passwords)
-    $result = register_user_ctr($name, $email, $password, $country, $city, $contact);
+    // Pass role and designer-specific fields
+    $result = register_user_ctr($name, $email, $password, $country, $city, $contact, $user_role, $business_name, $bio);
 
     if ($result === 'success') {
-        // Make redirect absolute using BASE_URL to avoid incorrect relative paths
+        // Determine redirect URL based on role
+        // Role 2 (Customer) -> Customer dashboard after login
+        // Role 3 (Designer) -> Designer dashboard after login
+        // For now, redirect to login page - login will handle dashboard routing
         $loginUrl = rtrim(BASE_URL, '/') . '/view/user/login.php';
+        
+        $successMessage = $user_role == 3 
+            ? 'Designer account created successfully! Redirecting to login...'
+            : 'Registration successful! Redirecting to login page...';
+        
         ob_clean();
         echo json_encode([
             'success' => true,
-            'message' => 'Registration successful! Redirecting to login page...',
-            'redirect' => $loginUrl
+            'message' => $successMessage,
+            'redirect' => $loginUrl,
+            'user_role' => $user_role
         ]);
         ob_end_flush();
         exit;

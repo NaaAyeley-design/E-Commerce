@@ -12,11 +12,28 @@ require_once __DIR__ . '/general_controller.php';
 require_once __DIR__ . '/../class/user_class.php';
 
 /**
- * Register new customer
+ * Register new customer or designer/producer
+ * 
+ * @param string $name User's full name
+ * @param string $email User's email address
+ * @param string $password User's password
+ * @param string $country User's country
+ * @param string $city User's city
+ * @param string $contact User's contact number
+ * @param int $user_role User role (2 = Customer, 3 = Designer/Producer)
+ * @param string $business_name Optional business name for designers
+ * @param string $bio Optional bio/description for designers
+ * @return string "success" on success, error message on failure
  */
-function register_user_ctr($name, $email, $password, $country, $city, $contact)
+function register_user_ctr($name, $email, $password, $country, $city, $contact, $user_role = 2, $business_name = '', $bio = '')
 {
     try {
+        // Validate user role - only allow 2 (customer) or 3 (designer)
+        // Role 1 (admin) cannot be set through registration
+        if ($user_role !== 2 && $user_role !== 3) {
+            $user_role = 2; // Default to customer if invalid
+        }
+        
         // Input validation rules
         $validation_rules = [
             'name' => ['required' => true, 'max_length' => 100],
@@ -45,11 +62,12 @@ function register_user_ctr($name, $email, $password, $country, $city, $contact)
             return "Email already registered.";
         }
 
-        $inserted = $user->add_customer($name, $email, $password, $country, $city, $contact, 2);
+        // Add customer/designer with role and optional designer fields
+        $inserted = $user->add_customer($name, $email, $password, $country, $city, $contact, $user_role, $business_name, $bio);
 
         if ($inserted) {
             // Skip logging and email for now to prevent output interference
-            // log_activity('user_registered', "New user registered: $email");
+            // log_activity('user_registered', "New user registered: $email (Role: $user_role)");
             // send_email_notification($email, 'Welcome to ' . APP_NAME, 'Thank you for registering!');
             
             return "success";
