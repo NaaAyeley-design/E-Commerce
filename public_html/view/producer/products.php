@@ -61,9 +61,38 @@ $offset = ($page - 1) * $limit;
 $product_class = new product_class();
 $db = new db_class();
 
-// Build query
-$where_conditions = ["producer_id = ?"];
-$params = [$producer_id];
+// Build query - check both producer_id and products through brands
+// First, get all brand IDs owned by this producer
+$brand_ids_sql = "SELECT brand_id FROM brands WHERE user_id = ?";
+$producer_brands = $db->fetchAll($brand_ids_sql, [$producer_id]);
+$brand_ids = array_column($producer_brands, 'brand_id');
+
+// Build where conditions - check producer_id OR product_brand in producer's brands
+$where_conditions = [];
+$params = [];
+
+// Check if producer_id column exists in products table
+$check_producer_id = $db->fetchRow("SHOW COLUMNS FROM products LIKE 'producer_id'");
+
+if ($check_producer_id && !empty($brand_ids)) {
+    // Use both producer_id and brand-based filtering
+    $placeholders = str_repeat('?,', count($brand_ids) - 1) . '?';
+    $where_conditions[] = "(producer_id = ? OR product_brand IN ($placeholders))";
+    $params = array_merge([$producer_id], $brand_ids);
+} elseif ($check_producer_id) {
+    // Only producer_id exists, no brands yet
+    $where_conditions[] = "producer_id = ?";
+    $params = [$producer_id];
+} elseif (!empty($brand_ids)) {
+    // No producer_id column, use brand-based filtering
+    $placeholders = str_repeat('?,', count($brand_ids) - 1) . '?';
+    $where_conditions[] = "product_brand IN ($placeholders)";
+    $params = $brand_ids;
+} else {
+    // No brands and no producer_id - return empty result
+    $where_conditions[] = "1 = 0"; // Always false condition
+    $params = [];
+}
 
 if (!empty($filter_status)) {
     $where_conditions[] = "product_status = ?";
@@ -109,15 +138,16 @@ $params[] = $offset;
 
 $products = $db->fetchAll($sql, $params);
 
-// Get stats
+// Get stats - use same where clause logic
+$stats_where = implode(' AND ', $where_conditions);
 $stats_sql = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN product_status = 'active' THEN 1 ELSE 0 END) as active,
     SUM(CASE WHEN product_status = 'draft' THEN 1 ELSE 0 END) as draft,
     SUM(CASE WHEN product_status = 'inactive' THEN 1 ELSE 0 END) as inactive,
     SUM(CASE WHEN track_inventory = 1 AND stock_quantity <= low_stock_threshold THEN 1 ELSE 0 END) as low_stock
-    FROM products WHERE producer_id = ?";
-$stats = $db->fetchRow($stats_sql, [$producer_id]);
+    FROM products WHERE $stats_where";
+$stats = $db->fetchRow($stats_sql, $params);
 
 // Get categories and brands for filters
 $category_class = new category_class();
@@ -653,10 +683,10 @@ include __DIR__ . '/../templates/header.php';
             <?php if (empty($products)): ?>
                 <div class="empty-state">
                     <i class="fas fa-box-open"></i>
-                    <h3>No Products Found</h3>
-                    <p>Get started by adding your first product</p>
+                    <h3>You haven't added any products yet</h3>
+                    <p>Get started by adding your first product to your store</p>
                     <a href="<?php echo url('view/producer/add_product.php'); ?>" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-plus"></i> Add New Product
+                        <i class="fas fa-plus"></i> Add Your First Product
                     </a>
                 </div>
             <?php else: ?>

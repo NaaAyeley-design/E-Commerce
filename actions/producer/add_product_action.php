@@ -84,8 +84,8 @@ try {
 
     // Verify brand belongs to producer
     $brand_class = new brand_class();
-    $brand = $brand_class->get_brand_by_id($brand_id);
-    if (!$brand || $brand['user_id'] != $producer_id) {
+    $brand = $brand_class->get_brand_by_id($brand_id, $producer_id);
+    if (!$brand) {
         throw new Exception('Invalid brand selected.');
     }
 
