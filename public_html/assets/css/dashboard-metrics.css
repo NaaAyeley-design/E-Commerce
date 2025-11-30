@@ -94,7 +94,7 @@
     font-weight: 300;
     color: var(--color-dark-brown);
     transition: all var(--transition);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     letter-spacing: 0.02em;
     text-decoration: none;
 }

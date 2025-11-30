@@ -14,6 +14,7 @@ ini_set('display_startup_errors', 0);
 // Include core settings
 require_once __DIR__ . '/../../../settings/core.php';
 require_once __DIR__ . '/../../../controller/order_controller.php';
+require_once __DIR__ . '/../../../class/artisan_class.php';
 
 // Set page variables
 $page_title = 'My Dashboard - KenteKart';
@@ -55,7 +56,9 @@ if (isset($_SESSION['user_role'])) {
 
 // Get user orders with enhanced data
 require_once __DIR__ . '/../../../class/order_class.php';
+require_once __DIR__ . '/../../../class/db_class.php';
 $order_class = new order_class();
+$db = new db_class();
 $customer_id = $_SESSION['user_id'];
 
 // Get all orders for this customer
@@ -127,8 +130,51 @@ $all_orders = $orders_with_items;
 // Calculate average order value
 $average_order_value = $total_orders > 0 ? $total_spent / $total_orders : 0;
 
-// Placeholder for artisans count (TODO: Replace with actual query)
-$artisans_supported = $total_orders > 0 ? min($total_orders, rand(3, 8)) : 0;
+// Get artisans from database
+$artisan_class = new artisan_class();
+$all_artisans = $artisan_class->get_all_artisans(100, 0);
+$total_artisans = $artisan_class->get_total_artisans_count();
+
+// Calculate unique artisans supported by this customer
+// (artisans whose products the customer has ordered)
+$artisans_supported = 0;
+$supported_artisan_ids = [];
+if (!empty($all_orders)) {
+    foreach ($all_orders as $order) {
+        if (!empty($order['items'])) {
+            foreach ($order['items'] as $item) {
+                // Get product's producer/artisan
+                $product_sql = "SELECT producer_id, product_brand FROM products WHERE product_id = ?";
+                $product = $db->fetchRow($product_sql, [$item['product_id']]);
+                
+                if ($product) {
+                    $artisan_id = null;
+                    // Check if product has producer_id
+                    if (!empty($product['producer_id'])) {
+                        $artisan_id = $product['producer_id'];
+                    } elseif (!empty($product['product_brand'])) {
+                        // Get brand owner
+                        $brand_sql = "SELECT user_id FROM brands WHERE brand_id = ?";
+                        $brand = $db->fetchRow($brand_sql, [$product['product_brand']]);
+                        if ($brand) {
+                            $artisan_id = $brand['user_id'];
+                        }
+                    }
+                    
+                    if ($artisan_id && !in_array($artisan_id, $supported_artisan_ids)) {
+                        $supported_artisan_ids[] = $artisan_id;
+                        $artisans_supported++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// If no orders, show total available artisans
+if ($artisans_supported == 0) {
+    $artisans_supported = $total_artisans;
+}
 
 // Format chart data
 $chart_months = [];
@@ -556,12 +602,82 @@ include __DIR__ . '/../templates/header.php';
                 </div>
             </div>
 
-            <!-- Placeholder for Artisans -->
+            <!-- Artisans Grid -->
+            <?php if (empty($all_artisans)): ?>
             <div class="empty-state-minimal">
                 <i class="fas fa-users"></i>
-                <p>Artisan details coming soon</p>
-                <p class="text-muted">We're working on bringing you detailed artisan profiles</p>
+                <p>No artisans available yet</p>
+                <p class="text-muted">Check back soon for amazing artisans to support</p>
             </div>
+            <?php else: ?>
+            <div class="artisans-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                <?php foreach ($all_artisans as $artisan): 
+                    $profile_image = !empty($artisan['profile_image']) 
+                        ? url('uploads/' . $artisan['profile_image']) 
+                        : url('assets/images/placeholder-artisan.svg');
+                    $business_name = !empty($artisan['business_name']) ? $artisan['business_name'] : $artisan['artisan_name'];
+                ?>
+                <div class="artisan-card" style="background: var(--color-white); border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(198, 125, 92, 0.1); transition: all 0.3s ease; border: 1px solid rgba(198, 125, 92, 0.1);">
+                    <div class="artisan-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="artisan-avatar" style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; background: var(--color-warm-beige); flex-shrink: 0;">
+                            <img src="<?php echo escape_html($profile_image); ?>" 
+                                 alt="<?php echo escape_html($artisan['artisan_name']); ?>"
+                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                 onerror="this.src='<?php echo url('assets/images/placeholder-artisan.svg'); ?>'">
+                        </div>
+                        <div class="artisan-info" style="flex: 1; min-width: 0;">
+                            <h3 class="artisan-name" style="font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: var(--color-dark-brown); margin: 0 0 0.25rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <?php echo escape_html($business_name); ?>
+                            </h3>
+                            <p class="artisan-location" style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--color-light-brown); margin: 0;">
+                                <?php echo escape_html($artisan['city'] ?? 'N/A'); ?>, <?php echo escape_html($artisan['country'] ?? 'Ghana'); ?>
+                            </p>
+                        </div>
+                        <?php if ($artisan['featured']): ?>
+                        <span class="featured-badge" style="display: inline-block; padding: 4px 8px; background: linear-gradient(135deg, #FFD700 0%, #D2691E 100%); color: white; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                            <i class="fas fa-star"></i> Featured
+                        </span>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <?php if (!empty($artisan['bio'])): ?>
+                    <p class="artisan-bio" style="font-family: 'Spectral', serif; font-size: 0.875rem; color: var(--color-dark-brown); margin: 0 0 1rem 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        <?php echo escape_html($artisan['bio']); ?>
+                    </p>
+                    <?php endif; ?>
+                    
+                    <div class="artisan-stats" style="display: flex; gap: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(198, 125, 92, 0.1);">
+                        <div class="stat-item">
+                            <p class="stat-value" style="font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; font-weight: 600; color: var(--color-terracotta); margin: 0;">
+                                <?php echo $artisan['total_products'] ?? 0; ?>
+                            </p>
+                            <p class="stat-label" style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--color-light-brown); margin: 0;">
+                                Products
+                            </p>
+                        </div>
+                        <?php if ($artisan['rating'] > 0): ?>
+                        <div class="stat-item">
+                            <p class="stat-value" style="font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; font-weight: 600; color: var(--color-terracotta); margin: 0;">
+                                <?php echo number_format($artisan['rating'], 1); ?>
+                            </p>
+                            <p class="stat-label" style="font-family: 'Spectral', serif; font-size: 0.75rem; color: var(--color-light-brown); margin: 0;">
+                                Rating
+                            </p>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="artisan-actions" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <a href="<?php echo url('view/product/all_product.php?artisan=' . $artisan['customer_id']); ?>" 
+                           class="btn-view-products" 
+                           style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #D2691E 0%, #B8621E 100%); color: white; border-radius: 6px; text-decoration: none; text-align: center; font-family: 'Spectral', serif; font-size: 0.875rem; font-weight: 500; transition: all 0.3s ease;">
+                            View Products
+                        </a>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
 
         </section>
 

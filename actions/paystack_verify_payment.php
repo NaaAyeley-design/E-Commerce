@@ -108,12 +108,20 @@ if ($verification_successful && abs($amount_paid - $total_amount) > 0.01) {
     error_log("⚠ Amount mismatch: Expected $total_amount, got $amount_paid (proceeding anyway)");
     // Don't throw exception - just log the warning
 }
-    
+
+// Initialize variables
+$order_id = null;
+$payment_id = null;
+$items_added = 0;
+$conn = null;
+$order = null;
+
+try {
     // Get cart items
     error_log("Fetching cart items...");
     $cart_items = get_cart_items_ctr($customer_id);
     
-    if (empty($cart_items)) {
+    if (empty($cart_items) || !is_array($cart_items) || count($cart_items) === 0) {
         throw new Exception("Cart is empty. Cannot create order.");
     }
     
@@ -155,111 +163,154 @@ if ($verification_successful && abs($amount_paid - $total_amount) > 0.01) {
         error_log("✓ Transaction started");
     }
     
+    // 1. Create order using order_class
+    error_log("Creating order...");
+    $order_id = $order->create_order($customer_id, $total_amount, $shipping_address, 'paystack');
+    
+    if (!$order_id || $order_id <= 0) {
+        throw new Exception("Failed to create order. Order ID: " . var_export($order_id, true));
+    }
+    
+    error_log("✓ Order created: $order_id");
+    
+    // 2. Add order items
+    error_log("Adding order items...");
+    $items_added = 0;
+    foreach ($cart_items as $item) {
+        $product_id = isset($item['product_id']) ? $item['product_id'] : (isset($item['p_id']) ? $item['p_id'] : null);
+        $quantity = isset($item['quantity']) ? $item['quantity'] : (isset($item['qty']) ? $item['qty'] : 1);
+        $price = isset($item['product_price']) ? $item['product_price'] : (isset($item['price']) ? $item['price'] : 0);
+        
+        if (!$product_id || !$quantity || !$price) {
+            error_log("Skipping invalid cart item: " . json_encode($item));
+            continue;
+        }
+        
+        $item_added = $order->add_order_item($order_id, $product_id, $quantity, $price);
+        
+        if ($item_added) {
+            $items_added++;
+        } else {
+            error_log("Failed to add order item: product_id=$product_id, quantity=$quantity, price=$price");
+        }
+    }
+    
+    if ($items_added === 0) {
+        throw new Exception("Failed to add any order items");
+    }
+    
+    error_log("✓ Order items added: $items_added");
+    
+    // 3. Record payment
+    error_log("Recording payment...");
+    $payment_date = date('Y-m-d H:i:s');
+    $payment_id = $order->record_payment(
+        $total_amount,
+        $customer_id,
+        $order_id,
+        'GHS',
+        $payment_date,
+        'paystack',
+        $reference,
+        $authorization_code,
+        $payment_channel
+    );
+    
+    if (!$payment_id || $payment_id <= 0) {
+        throw new Exception("Failed to record payment. Payment ID: " . var_export($payment_id, true));
+    }
+    
+    error_log("✓ Payment recorded: $payment_id");
+    
+    // 4. Update order status to completed and set invoice_no to payment reference
+    error_log("Updating order status and invoice number...");
+    $update_result = $order->update_order_complete($order_id, $reference, 'completed');
+    if (!$update_result) {
+        error_log("⚠ Warning: Order status update may have failed, but continuing...");
+    }
+    error_log("✓ Order status updated to completed with invoice_no: $reference");
+    
+    // Commit transaction BEFORE clearing cart
+    $conn->commit();
+    error_log("✓ Transaction committed");
+    
+    // 5. Clear cart AFTER transaction is committed (so it happens even if there's an error later)
+    error_log("Clearing cart...");
     try {
-        // 1. Create order using order_class
-        error_log("Creating order...");
-        $order_id = $order->create_order($customer_id, $total_amount, $shipping_address, 'paystack');
-        
-        if (!$order_id || $order_id <= 0) {
-            throw new Exception("Failed to create order");
-        }
-        
-        error_log("✓ Order created: $order_id");
-        
-        // 2. Add order items
-        error_log("Adding order items...");
-        $items_added = 0;
-        foreach ($cart_items as $item) {
-            $product_id = isset($item['product_id']) ? $item['product_id'] : (isset($item['p_id']) ? $item['p_id'] : null);
-            $quantity = isset($item['quantity']) ? $item['quantity'] : (isset($item['qty']) ? $item['qty'] : 1);
-            $price = isset($item['product_price']) ? $item['product_price'] : (isset($item['price']) ? $item['price'] : 0);
-            
-            if (!$product_id || !$quantity || !$price) {
-                error_log("Skipping invalid cart item: " . json_encode($item));
-                continue;
-            }
-            
-            $item_added = $order->add_order_item($order_id, $product_id, $quantity, $price);
-            
-            if ($item_added) {
-                $items_added++;
-            } else {
-                error_log("Failed to add order item: product_id=$product_id");
-            }
-        }
-        
-        if ($items_added === 0) {
-            throw new Exception("Failed to add any order items");
-        }
-        
-        error_log("✓ Order items added: $items_added");
-        
-        // 3. Record payment
-        error_log("Recording payment...");
-        $payment_date = date('Y-m-d H:i:s');
-        $payment_id = $order->record_payment(
-            $total_amount,
-            $customer_id,
-            $order_id,
-            'GHS',
-            $payment_date,
-            'paystack',
-            $reference,
-            $authorization_code,
-            $payment_channel
-        );
-        
-        if (!$payment_id || $payment_id <= 0) {
-            throw new Exception("Failed to record payment");
-        }
-        
-        error_log("✓ Payment recorded: $payment_id");
-        
-        // 4. Update order status to completed and set invoice_no to payment reference
-        // This updates:
-        // - invoice_no: Set to payment reference (Paystack transaction reference)
-        // - order_status: Set to 'completed'
-        // Note: order_date and customer_id remain unchanged (set during order creation)
-        error_log("Updating order status and invoice number...");
-        $order->update_order_complete($order_id, $reference, 'completed');
-        error_log("✓ Order status updated to completed with invoice_no: $reference");
-        
-        // 5. Clear cart
-        error_log("Clearing cart...");
         $cart_cleared = clear_cart_ctr($customer_id);
         if ($cart_cleared) {
-            error_log("✓ Cart cleared");
+            error_log("✓ Cart cleared successfully");
         } else {
-            error_log("⚠ Cart clear returned false (may already be empty)");
+            error_log("⚠ Cart clear returned false - attempting direct clear...");
+            // Try direct clear as fallback
+            require_once __DIR__ . '/../class/cart_class.php';
+            $cart = new cart_class();
+            $cart_cleared = $cart->clear_cart($customer_id);
+            if ($cart_cleared) {
+                error_log("✓ Cart cleared using direct method");
+            } else {
+                error_log("⚠ Cart clear failed - may need manual intervention");
+            }
         }
-        
-        // Commit transaction
-        $conn->commit();
-        error_log("✓ Transaction committed");
-        error_log("=== PAYMENT VERIFICATION SUCCESS ===");
-        
-        // Success response
-        ob_clean();
-        echo json_encode([
-            'status' => 'success',
-            'verified' => true,
-            'message' => 'Payment verified successfully',
-            'order_id' => $order_id,
-            'payment_id' => $payment_id,
-            'invoice_no' => $reference,
-            'total_amount' => number_format($total_amount, 2),
-            'items_count' => $items_added
-        ]);
-        ob_end_flush();
-        
-    } catch (Exception $e) {
-        if ($conn->inTransaction()) {
-            $conn->rollBack();
-            error_log("✓ Transaction rolled back");
-        }
-        error_log("Transaction failed: " . $e->getMessage());
-        throw $e;
+    } catch (Exception $cart_error) {
+        error_log("⚠ Error clearing cart (non-critical): " . $cart_error->getMessage());
+        // Don't throw - order is already created and committed
     }
+    
+    error_log("=== PAYMENT VERIFICATION SUCCESS ===");
+    
+    // Success response
+    ob_clean();
+    echo json_encode([
+        'status' => 'success',
+        'verified' => true,
+        'message' => 'Payment verified successfully',
+        'order_id' => $order_id,
+        'payment_id' => $payment_id,
+        'invoice_no' => $reference,
+        'total_amount' => number_format($total_amount, 2),
+        'items_count' => $items_added
+    ]);
+    ob_end_flush();
+    exit;
+    
+} catch (Exception $e) {
+    // Rollback transaction if it was started
+    if ($conn && $conn->inTransaction()) {
+        try {
+            $conn->rollBack();
+            error_log("✓ Transaction rolled back due to error");
+        } catch (Exception $rollback_error) {
+            error_log("⚠ Error during rollback: " . $rollback_error->getMessage());
+        }
+    }
+    
+    error_log("=== PAYMENT VERIFICATION ERROR ===");
+    error_log("Error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    error_log("Order ID (if created): " . ($order_id ? $order_id : 'N/A'));
+    
+    // If order was created but something else failed, try to clear cart anyway
+    if ($order_id && $order_id > 0) {
+        error_log("⚠ Order was created but process failed - attempting to clear cart...");
+        try {
+            clear_cart_ctr($customer_id);
+            error_log("✓ Cart cleared despite error");
+        } catch (Exception $cart_error) {
+            error_log("⚠ Could not clear cart: " . $cart_error->getMessage());
+        }
+    }
+    
+    ob_clean();
+    echo json_encode([
+        'status' => 'error',
+        'verified' => false,
+        'message' => $e->getMessage(),
+        'order_id' => $order_id ? $order_id : null
+    ]);
+    ob_end_flush();
+    exit;
+}
     
 } catch (Exception $e) {
     error_log("=== PAYMENT VERIFICATION ERROR ===");

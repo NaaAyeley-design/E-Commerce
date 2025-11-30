@@ -650,9 +650,19 @@ function createOrderAfterPayment(reference, amount) {
         Toast.info('Processing order...', { duration: 0 });
     }
     
-    // Use the existing verification endpoint but treat it as order creation
-    // It already creates orders, we just won't fail if verification has issues
-    const orderUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '') + '/actions/paystack_verify_payment.php';
+    // Construct the correct URL for the payment verification endpoint
+    let orderUrl;
+    if (typeof BASE_URL !== 'undefined') {
+        // Remove /public_html if present, then add the actions path
+        orderUrl = BASE_URL.replace('/public_html', '') + '/actions/paystack_verify_payment.php';
+    } else {
+        // Fallback: try to construct from current location
+        const currentPath = window.location.pathname;
+        const basePath = currentPath.substring(0, currentPath.indexOf('/view/') || currentPath.indexOf('/public_html/'));
+        orderUrl = basePath + '/actions/paystack_verify_payment.php';
+    }
+    
+    console.log('Order creation URL:', orderUrl);
     
     fetch(orderUrl, {
         method: 'POST',
@@ -666,22 +676,53 @@ function createOrderAfterPayment(reference, amount) {
         })
     })
     .then(response => {
-        // Even if response is not ok, if payment went through, we should still show success
-        return response.json().catch(() => {
-            // If JSON parsing fails, still proceed with success
-            return { status: 'success', order_created: true };
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        // Check if response is ok
+        if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
+            // Still try to parse JSON to get error message
+        }
+        
+        return response.json().catch(err => {
+            console.error('JSON parse error:', err);
+            // Return error structure if JSON parsing fails
+            return { 
+                status: 'error', 
+                message: 'Failed to parse server response',
+                order_created: false 
+            };
         });
     })
     .then(data => {
         console.log('Order creation response:', data);
         
-        // If payment went through on Paystack, show success regardless of order creation result
-        // Order creation might fail but payment was successful
-        if (data.status === 'success' || data.verified || data.order_id) {
-            console.log('✓ Order processed');
+        // Check if order was successfully created
+        if (data.status === 'success' && data.order_id) {
+            console.log('✓ Order created successfully:', data.order_id);
             
             if (typeof Toast !== 'undefined') {
-                Toast.success('Payment successful!');
+                Toast.success('Payment successful! Order created.');
+            }
+            
+            // Redirect to success page with order details
+            setTimeout(() => {
+                const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
+                                 '/view/payment/payment_success.php?reference=' + 
+                                 encodeURIComponent(reference) + 
+                                 '&invoice=' + encodeURIComponent(data.invoice_no || reference) +
+                                 '&order_id=' + encodeURIComponent(data.order_id);
+                console.log('Redirecting to:', successUrl);
+                window.location.href = successUrl;
+            }, 1000);
+            
+        } else if (data.status === 'success' && !data.order_id) {
+            // Order creation may have partially succeeded
+            console.warn('Order creation response indicates success but no order_id:', data);
+            
+            if (typeof Toast !== 'undefined') {
+                Toast.warning('Payment successful! Please check your order status. Reference: ' + reference);
             }
             
             // Redirect to success page
@@ -689,47 +730,52 @@ function createOrderAfterPayment(reference, amount) {
                 const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
                                  '/view/payment/payment_success.php?reference=' + 
                                  encodeURIComponent(reference) + 
-                                 '&invoice=' + encodeURIComponent(data.invoice_no || reference) +
-                                 (data.order_id ? '&order_id=' + encodeURIComponent(data.order_id) : '');
+                                 '&invoice=' + encodeURIComponent(data.invoice_no || reference);
                 window.location.href = successUrl;
-            }, 1000);
+            }, 2000);
             
         } else {
-            // Order creation had issues but payment was successful
-            console.warn('Order creation had issues but payment was successful:', data.message);
+            // Order creation failed
+            console.error('Order creation failed:', data.message || 'Unknown error');
             
+            // Log error details for debugging
+            console.error('Error details:', data);
+            
+            // Show error but still redirect since payment was successful
             if (typeof Toast !== 'undefined') {
-                Toast.warning('Payment successful! Order may need manual processing. Reference: ' + reference);
+                Toast.error('Payment successful but order creation failed. Please contact support with reference: ' + reference);
             }
             
-            // Still redirect to success since payment went through
+            // Still redirect to success page since payment went through
             setTimeout(() => {
                 const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
                                  '/view/payment/payment_success.php?reference=' + 
                                  encodeURIComponent(reference) + 
-                                 '&invoice=' + encodeURIComponent(reference);
+                                 '&invoice=' + encodeURIComponent(reference) +
+                                 '&error=order_creation_failed';
                 window.location.href = successUrl;
-            }, 2000);
+            }, 3000);
         }
     })
     .catch(error => {
-        console.error('Order creation error:', error);
+        console.error('Order creation network error:', error);
         
-        // Payment was successful on Paystack, so show success anyway
-        console.log('Payment was successful on Paystack, showing success despite order creation error');
+        // Network error - payment was successful on Paystack
+        console.error('Full error:', error);
         
         if (typeof Toast !== 'undefined') {
-            Toast.success('Payment successful! Your order is being processed.');
+            Toast.error('Payment successful but could not create order. Please contact support with reference: ' + reference);
         }
         
-        // Redirect to success page
+        // Redirect to success page with error flag
         setTimeout(() => {
             const successUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + 
                              '/view/payment/payment_success.php?reference=' + 
                              encodeURIComponent(reference) + 
-                             '&invoice=' + encodeURIComponent(reference);
+                             '&invoice=' + encodeURIComponent(reference) +
+                             '&error=network_error';
             window.location.href = successUrl;
-        }, 1500);
+        }, 2000);
     });
 }
 
