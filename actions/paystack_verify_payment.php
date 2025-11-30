@@ -115,8 +115,12 @@ $payment_id = null;
 $items_added = 0;
 $conn = null;
 $order = null;
+$db = null;
 
 try {
+    // Initialize database class for additional checks
+    $db = new db_class();
+    
     // Get cart items
     error_log("Fetching cart items...");
     $cart_items = get_cart_items_ctr($customer_id);
@@ -152,10 +156,44 @@ try {
     $conn = $order->getConnection();
     
     if (!$conn) {
-        throw new Exception("Database connection failed");
+        error_log("ERROR: Database connection is null");
+        throw new Exception("Database connection failed. Please check your database configuration.");
     }
     
     error_log("✓ Database connected");
+    
+    // Verify database connection is working
+    try {
+        $test_query = $conn->query("SELECT 1");
+        if (!$test_query) {
+            throw new Exception("Database connection test failed");
+        }
+        error_log("✓ Database connection verified");
+    } catch (Exception $db_test_error) {
+        error_log("ERROR: Database connection test failed: " . $db_test_error->getMessage());
+        throw new Exception("Database connection is not working properly: " . $db_test_error->getMessage());
+    }
+    
+    // Check if required tables exist
+    error_log("Checking required tables...");
+    $tables_to_check = ['orders', 'order_items', 'payment', 'customer', 'products'];
+    $missing_tables = [];
+    
+    foreach ($tables_to_check as $table) {
+        $table_check = $db->fetchRow("SHOW TABLES LIKE '$table'");
+        if (!$table_check) {
+            $missing_tables[] = $table;
+            error_log("⚠ Table '$table' does not exist");
+        } else {
+            error_log("✓ Table '$table' exists");
+        }
+    }
+    
+    if (!empty($missing_tables)) {
+        $missing_list = implode(', ', $missing_tables);
+        error_log("ERROR: Missing required tables: $missing_list");
+        throw new Exception("Required database tables are missing: $missing_list. Please run the database migration scripts.");
+    }
     
     // Start transaction
     if (!$conn->inTransaction()) {
@@ -165,10 +203,34 @@ try {
     
     // 1. Create order using order_class
     error_log("Creating order...");
+    error_log("Parameters: customer_id=$customer_id, total_amount=$total_amount, shipping_address=$shipping_address");
+    
     $order_id = $order->create_order($customer_id, $total_amount, $shipping_address, 'paystack');
     
     if (!$order_id || $order_id <= 0) {
-        throw new Exception("Failed to create order. Order ID: " . var_export($order_id, true));
+        // Get more detailed error information
+        $error_details = "Failed to create order. ";
+        $error_details .= "Order ID returned: " . var_export($order_id, true) . ". ";
+        $error_details .= "Check error logs for detailed database errors.";
+        
+        error_log("ERROR: Order creation failed");
+        error_log("Customer ID: $customer_id");
+        error_log("Total Amount: $total_amount");
+        error_log("Shipping Address: $shipping_address");
+        
+        // Check if customer exists
+        $customer_check = $db->fetchRow("SELECT customer_id FROM customer WHERE customer_id = ?", [$customer_id]);
+        if (!$customer_check) {
+            $error_details .= " Customer ID $customer_id does not exist in database.";
+        }
+        
+        // Check if orders table exists
+        $table_check = $db->fetchRow("SHOW TABLES LIKE 'orders'");
+        if (!$table_check) {
+            $error_details .= " Orders table does not exist.";
+        }
+        
+        throw new Exception($error_details);
     }
     
     error_log("✓ Order created: $order_id");
@@ -186,17 +248,31 @@ try {
             continue;
         }
         
+        // Verify product exists before adding to order
+        $product_check = $db->fetchRow("SELECT product_id, product_title FROM products WHERE product_id = ?", [$product_id]);
+        if (!$product_check) {
+            error_log("⚠ Product ID $product_id does not exist in database - skipping");
+            continue;
+        }
+        
+        error_log("Adding order item: product_id=$product_id (".($product_check['product_title'] ?? 'N/A')."), quantity=$quantity, price=$price");
         $item_added = $order->add_order_item($order_id, $product_id, $quantity, $price);
         
         if ($item_added) {
             $items_added++;
+            error_log("✓ Successfully added order item");
         } else {
-            error_log("Failed to add order item: product_id=$product_id, quantity=$quantity, price=$price");
+            error_log("ERROR: Failed to add order item: product_id=$product_id, quantity=$quantity, price=$price");
+            error_log("This may indicate a problem with the order_items table or foreign key constraints");
         }
     }
     
     if ($items_added === 0) {
-        throw new Exception("Failed to add any order items");
+        $error_msg = "Failed to add any order items to order #$order_id. ";
+        $error_msg .= "Possible causes: Products in cart no longer exist, order_items table issues, or foreign key constraint violations. ";
+        $error_msg .= "Check error logs for detailed information.";
+        error_log("ERROR: No order items were added. Cart had " . count($cart_items) . " items.");
+        throw new Exception($error_msg);
     }
     
     error_log("✓ Order items added: $items_added");
@@ -217,7 +293,20 @@ try {
     );
     
     if (!$payment_id || $payment_id <= 0) {
-        throw new Exception("Failed to record payment. Payment ID: " . var_export($payment_id, true));
+        $error_msg = "Failed to record payment for order #$order_id. ";
+        $error_msg .= "Payment ID returned: " . var_export($payment_id, true) . ". ";
+        $error_msg .= "Possible causes: payment table doesn't exist, missing columns, or constraint violation. ";
+        $error_msg .= "Run /actions/diagnose_order_creation.php for detailed diagnostics.";
+        error_log("ERROR: Payment recording failed");
+        error_log("Order ID: $order_id, Method: paystack, Reference: $reference, Amount: $total_amount");
+        
+        // Check if payment table exists
+        $payment_table_check = $db->fetchRow("SHOW TABLES LIKE 'payment'");
+        if (!$payment_table_check) {
+            $error_msg .= " Payment table does not exist!";
+        }
+        
+        throw new Exception($error_msg);
     }
     
     error_log("✓ Payment recorded: $payment_id");
@@ -306,22 +395,14 @@ try {
         'status' => 'error',
         'verified' => false,
         'message' => $e->getMessage(),
-        'order_id' => $order_id ? $order_id : null
+        'order_id' => $order_id ? $order_id : null,
+        'debug_info' => APP_ENV === 'development' ? [
+            'error_type' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ] : null
     ]);
     ob_end_flush();
     exit;
-}
-    
-} catch (Exception $e) {
-    error_log("=== PAYMENT VERIFICATION ERROR ===");
-    error_log("Error: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
-    
-    ob_clean();
-    echo json_encode([
-        'status' => 'error',
-        'verified' => false,
-        'message' => $e->getMessage()
-    ]);
-    ob_end_flush();
 }
