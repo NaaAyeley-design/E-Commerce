@@ -58,7 +58,14 @@ $business_name = $producer['business_name'] ?? $producer['customer_name'] ?? 'My
 $category_class = new category_class();
 $brand_class = new brand_class();
 
+// First try to get categories created by this producer
 $categories = $category_class->get_categories_by_user($producer_id, 1000, 0);
+
+// If producer has no categories, get all available categories (so they can still create products)
+if (empty($categories)) {
+    $categories = $category_class->get_all_categories(1000, 0);
+}
+
 $all_brands = $brand_class->get_brands_by_user($producer_id, 1000, 0);
 
 // Group brands by category for easier selection
@@ -512,12 +519,19 @@ include __DIR__ . '/../templates/header.php';
                                 </label>
                                 <select id="category" name="category" class="form-select" required>
                                     <option value="">Select Category</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?php echo $cat['cat_id']; ?>"><?php echo escape_html($cat['cat_name']); ?></option>
-                                    <?php endforeach; ?>
+                                    <?php if (!empty($categories)): ?>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo $cat['cat_id']; ?>"><?php echo escape_html($cat['cat_name']); ?></option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </select>
                                 <?php if (empty($categories)): ?>
-                                    <span class="form-help" style="color: #EF4444;">No categories found. Please create a category first.</span>
+                                    <span class="form-help" style="color: #EF4444;">
+                                        <i class="fas fa-exclamation-triangle"></i> No categories available in the system. 
+                                        Please contact an administrator to create categories first.
+                                    </span>
+                                <?php else: ?>
+                                    <span class="form-help"><?php echo count($categories); ?> categor<?php echo count($categories) == 1 ? 'y' : 'ies'; ?> available</span>
                                 <?php endif; ?>
                             </div>
                             

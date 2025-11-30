@@ -119,10 +119,14 @@ if (!empty($search_query)) {
 $where_clause = implode(' AND ', $where_conditions);
 
 // Get total count
-$count_sql = "SELECT COUNT(*) FROM products WHERE $where_clause";
-$total_products = $db->fetchColumn($count_sql, $params);
+$count_sql = "SELECT COUNT(*) as total FROM products WHERE $where_clause";
+$count_result = $db->fetchRow($count_sql, $params);
+$total_products = $count_result['total'] ?? 0;
 
-// Get products
+// Get products - check if created_at exists for ordering
+$check_created_at = $db->fetchRow("SHOW COLUMNS FROM products LIKE 'created_at'");
+$order_by = $check_created_at ? "p.created_at DESC" : "p.product_id DESC";
+
 $sql = "SELECT p.*, 
         c.cat_name, 
         b.brand_name,
@@ -131,23 +135,47 @@ $sql = "SELECT p.*,
         LEFT JOIN categories c ON p.product_cat = c.cat_id
         LEFT JOIN brands b ON p.product_brand = b.brand_id
         WHERE $where_clause
-        ORDER BY p.created_at DESC
+        ORDER BY $order_by
         LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
 
 $products = $db->fetchAll($sql, $params);
+if (!$products) {
+    $products = [];
+}
 
-// Get stats - use same where clause logic
+// Get stats - use same where clause logic (without LIMIT/OFFSET params)
 $stats_where = implode(' AND ', $where_conditions);
-$stats_sql = "SELECT 
-    COUNT(*) as total,
-    SUM(CASE WHEN product_status = 'active' THEN 1 ELSE 0 END) as active,
-    SUM(CASE WHEN product_status = 'draft' THEN 1 ELSE 0 END) as draft,
-    SUM(CASE WHEN product_status = 'inactive' THEN 1 ELSE 0 END) as inactive,
-    SUM(CASE WHEN track_inventory = 1 AND stock_quantity <= low_stock_threshold THEN 1 ELSE 0 END) as low_stock
-    FROM products WHERE $stats_where";
-$stats = $db->fetchRow($stats_sql, $params);
+$stats_params = array_slice($params, 0, -2); // Remove LIMIT and OFFSET params
+
+// Try to get stats with all columns, fallback to basic count if columns don't exist
+try {
+    $stats_sql = "SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN product_status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN product_status = 'draft' THEN 1 ELSE 0 END) as draft,
+        SUM(CASE WHEN product_status = 'inactive' THEN 1 ELSE 0 END) as inactive,
+        SUM(CASE WHEN track_inventory = 1 AND stock_quantity <= low_stock_threshold THEN 1 ELSE 0 END) as low_stock
+        FROM products WHERE $stats_where";
+    $stats = $db->fetchRow($stats_sql, $stats_params);
+} catch (Exception $e) {
+    // Fallback if columns don't exist
+    error_log("Stats query error: " . $e->getMessage());
+    $stats_sql = "SELECT COUNT(*) as total FROM products WHERE $stats_where";
+    $stats_result = $db->fetchRow($stats_sql, $stats_params);
+    $stats = [
+        'total' => $stats_result['total'] ?? 0,
+        'active' => 0,
+        'draft' => 0,
+        'inactive' => 0,
+        'low_stock' => 0
+    ];
+}
+
+if (!$stats) {
+    $stats = ['total' => 0, 'active' => 0, 'draft' => 0, 'inactive' => 0, 'low_stock' => 0];
+}
 
 // Get categories and brands for filters
 $category_class = new category_class();

@@ -150,38 +150,38 @@ include __DIR__ . '/../templates/header.php';
         </div>
 
         <nav class="sidebar-nav">
-            <button class="nav-item active" data-section="overview">
+            <a href="<?php echo url('view/producer/dashboard.php'); ?>" class="nav-item active">
                 <i class="fas fa-th"></i>
                 <span>Overview</span>
-            </button>
-            <button class="nav-item" data-section="products">
+            </a>
+            <a href="<?php echo url('view/producer/products.php'); ?>" class="nav-item">
                 <i class="fas fa-box"></i>
                 <span>Products</span>
-            </button>
-            <button class="nav-item" data-section="orders">
+            </a>
+            <a href="<?php echo url('view/producer/orders.php'); ?>" class="nav-item">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Orders</span>
-            </button>
-            <button class="nav-item" data-section="earnings">
+            </a>
+            <a href="<?php echo url('view/producer/earnings.php'); ?>" class="nav-item">
                 <i class="fas fa-dollar-sign"></i>
                 <span>Earnings</span>
-            </button>
-            <button class="nav-item" data-section="analytics">
+            </a>
+            <a href="<?php echo url('view/producer/analytics.php'); ?>" class="nav-item">
                 <i class="fas fa-chart-line"></i>
                 <span>Analytics</span>
-            </button>
-            <button class="nav-item" data-section="settings">
+            </a>
+            <a href="<?php echo url('view/producer/profile_settings.php'); ?>" class="nav-item">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
-            </button>
-            <button class="nav-item" data-section="academy">
+            </a>
+            <a href="<?php echo url('view/producer/academy.php'); ?>" class="nav-item">
                 <i class="fas fa-graduation-cap"></i>
                 <span>Academy</span>
-            </button>
-            <button class="nav-item" data-section="support">
+            </a>
+            <a href="<?php echo url('view/producer/support.php'); ?>" class="nav-item">
                 <i class="fas fa-headset"></i>
                 <span>Support</span>
-            </button>
+            </a>
         </nav>
 
         <div class="sidebar-user">
@@ -197,9 +197,6 @@ include __DIR__ . '/../templates/header.php';
 
     <!-- MAIN CONTENT -->
     <main class="dashboard-main">
-        
-        <!-- OVERVIEW SECTION -->
-        <section id="section-overview" class="dashboard-section active">
             
             <!-- Header -->
             <header class="section-header-minimal">
@@ -215,21 +212,41 @@ include __DIR__ . '/../templates/header.php';
 
             <!-- Stat Cards -->
             <div class="stats-row">
-                <div class="stat-column">
-                    <p class="stat-number"><?php echo $total_products; ?></p>
-                    <p class="stat-label">Total Products</p>
+                <div class="stat-card stat-card-gradient-1">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <p class="stat-number"><?php echo $total_products; ?></p>
+                        <p class="stat-label">Total Products</p>
+                    </div>
                 </div>
-                <div class="stat-column">
-                    <p class="stat-number"><?php echo $pending_orders; ?></p>
-                    <p class="stat-label">Pending Orders</p>
+                <div class="stat-card stat-card-gradient-2">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <p class="stat-number"><?php echo $pending_orders; ?></p>
+                        <p class="stat-label">Pending Orders</p>
+                    </div>
                 </div>
-                <div class="stat-column">
-                    <p class="stat-number">₵<?php echo number_format($total_earnings, 0); ?></p>
-                    <p class="stat-label">Total Earnings</p>
+                <div class="stat-card stat-card-gradient-3">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <p class="stat-number">₵<?php echo number_format($total_earnings, 0); ?></p>
+                        <p class="stat-label">Total Earnings</p>
+                    </div>
                 </div>
-                <div class="stat-column">
-                    <p class="stat-number"><?php echo $this_month_sales; ?></p>
-                    <p class="stat-label">This Month Sales</p>
+                <div class="stat-card stat-card-gradient-4">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <p class="stat-number"><?php echo $this_month_sales; ?></p>
+                        <p class="stat-label">This Month Sales</p>
+                    </div>
                 </div>
             </div>
 
@@ -298,106 +315,6 @@ include __DIR__ . '/../templates/header.php';
                 <?php endif; ?>
             </div>
 
-        </section>
-
-        <!-- PRODUCTS SECTION (Placeholder) -->
-        <section id="section-products" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">My Products</h1>
-                    <p class="section-subtitle">Manage your product listings</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-box"></i>
-                <p>Products management coming soon</p>
-                <a href="<?php echo url('view/producer/add_product.php'); ?>" class="btn-minimal">Add New Product</a>
-            </div>
-        </section>
-
-        <!-- ORDERS SECTION (Placeholder) -->
-        <section id="section-orders" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">My Orders</h1>
-                    <p class="section-subtitle">View and manage customer orders</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-shopping-cart"></i>
-                <p>Orders management coming soon</p>
-            </div>
-        </section>
-
-        <!-- EARNINGS SECTION (Placeholder) -->
-        <section id="section-earnings" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">Earnings</h1>
-                    <p class="section-subtitle">Track your revenue and payouts</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-dollar-sign"></i>
-                <p>Earnings dashboard coming soon</p>
-            </div>
-        </section>
-
-        <!-- ANALYTICS SECTION (Placeholder) -->
-        <section id="section-analytics" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">Analytics</h1>
-                    <p class="section-subtitle">View your business performance</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-chart-line"></i>
-                <p>Analytics dashboard coming soon</p>
-            </div>
-        </section>
-
-        <!-- SETTINGS SECTION (Placeholder) -->
-        <section id="section-settings" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">Settings</h1>
-                    <p class="section-subtitle">Manage your account and preferences</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-cog"></i>
-                <p>Settings page coming soon</p>
-            </div>
-        </section>
-
-        <!-- ACADEMY SECTION (Placeholder) -->
-        <section id="section-academy" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">KenteKart Academy</h1>
-                    <p class="section-subtitle">Learn and grow your business</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-graduation-cap"></i>
-                <p>Academy content coming soon</p>
-            </div>
-        </section>
-
-        <!-- SUPPORT SECTION (Placeholder) -->
-        <section id="section-support" class="dashboard-section">
-            <header class="section-header-minimal">
-                <div>
-                    <h1 class="section-title">Support</h1>
-                    <p class="section-subtitle">Get help when you need it</p>
-                </div>
-            </header>
-            <div class="empty-state-minimal">
-                <i class="fas fa-headset"></i>
-                <p>Support system coming soon</p>
-            </div>
-        </section>
 
     </main>
     
@@ -422,25 +339,6 @@ const colors = {
     warmBeige: '#F4EDE4',
     gold: '#FFD700'
 };
-
-// Navigation functionality
-document.querySelectorAll('.nav-item').forEach(button => {
-    button.addEventListener('click', function() {
-        // Remove active class from all buttons and sections
-        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.dashboard-section').forEach(section => section.classList.remove('active'));
-        
-        // Add active class to clicked button
-        this.classList.add('active');
-        
-        // Show corresponding section
-        const sectionId = 'section-' + this.dataset.section;
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.classList.add('active');
-        }
-    });
-});
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {

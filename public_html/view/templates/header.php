@@ -124,24 +124,42 @@
                     
                     <?php if (is_logged_in()): ?>
                         <?php if (!is_admin()): ?>
-                            <li class="top-navbar-item">
-                                <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link">
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                            <li class="top-navbar-item">
-                                <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="top-navbar-link top-navbar-link-cart" aria-label="Shopping Cart">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </a>
-                            </li>
-                            <li class="top-navbar-item">
-                                <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link wishlist-link" aria-label="Wishlist">
-                                    <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                    </svg>
-                                    <span class="wishlist-count" id="wishlist-count"></span>
-                                </a>
-                            </li>
+                            <?php 
+                            // Check if user is a customer (role 2) - producers/designers (role 3) should not see cart/wishlist
+                            $is_customer = isset($_SESSION['user_role']) && $_SESSION['user_role'] == 2;
+                            $is_producer = isset($_SESSION['user_role']) && $_SESSION['user_role'] == 3;
+                            ?>
+                            
+                            <?php if ($is_producer): ?>
+                                <!-- Producer/Designer Navigation -->
+                                <li class="top-navbar-item">
+                                    <a href="<?php echo url('view/producer/dashboard.php'); ?>" class="top-navbar-link">
+                                        <span>Dashboard</span>
+                                    </a>
+                                </li>
+                            <?php else: ?>
+                                <!-- Customer Navigation -->
+                                <li class="top-navbar-item">
+                                    <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link">
+                                        <span>Dashboard</span>
+                                    </a>
+                                </li>
+                                <?php if ($is_customer): ?>
+                                    <li class="top-navbar-item">
+                                        <a href="<?php echo url('view/cart/view_cart.php'); ?>" class="top-navbar-link top-navbar-link-cart" aria-label="Shopping Cart">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </a>
+                                    </li>
+                                    <li class="top-navbar-item">
+                                        <a href="<?php echo url('view/user/dashboard.php'); ?>" class="top-navbar-link wishlist-link" aria-label="Wishlist">
+                                            <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                            </svg>
+                                            <span class="wishlist-count" id="wishlist-count"></span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         <?php else: ?>
                             <!-- Admin Navigation Links -->
                             <li class="top-navbar-item">
