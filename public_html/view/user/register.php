@@ -152,11 +152,15 @@ include __DIR__ . '/../templates/header.php';
     align-items: center;
     padding: 60px 80px;
     overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .register-form-container {
     width: 100%;
     max-width: 550px;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* Form Header */
@@ -213,6 +217,8 @@ include __DIR__ . '/../templates/header.php';
 /* Form Styles */
 .register-form {
     width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .form-group {
@@ -265,6 +271,9 @@ include __DIR__ . '/../templates/header.php';
     background: #FFFFFF;
     border-radius: 8px;
     border: 2px solid #E8DDD0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .role-selection > label {
@@ -278,6 +287,8 @@ include __DIR__ . '/../templates/header.php';
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .role-option {
@@ -290,6 +301,9 @@ include __DIR__ . '/../templates/header.php';
     transition: all 0.3s ease;
     background: #FFFFFF;
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .role-option:hover {
@@ -376,6 +390,8 @@ include __DIR__ . '/../templates/header.php';
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group.full-width {
@@ -446,6 +462,7 @@ include __DIR__ . '/../templates/header.php';
 /* Submit Button */
 .submit-button {
     width: 100%;
+    max-width: 100%;
     padding: 16px 32px;
     background: linear-gradient(135deg, #D2691E 0%, #B8621E 100%);
     color: #FFFFFF;
@@ -463,6 +480,7 @@ include __DIR__ . '/../templates/header.php';
     justify-content: center;
     gap: 10px;
     box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
+    box-sizing: border-box;
 }
 
 .submit-button:hover {
@@ -479,6 +497,34 @@ include __DIR__ . '/../templates/header.php';
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+/* Back Button */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #D2691E;
+    text-decoration: none;
+    font-family: 'Spectral', serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.back-button:hover {
+    color: #B8621E;
+    background: rgba(210, 105, 30, 0.1);
+    border-color: rgba(210, 105, 30, 0.2);
+    transform: translateX(-3px);
+}
+
+.back-button i {
+    font-size: 0.9rem;
 }
 
 /* Auth Links */
@@ -564,16 +610,33 @@ include __DIR__ . '/../templates/header.php';
         padding: 30px 20px;
     }
     
+    .register-form-container {
+        max-width: 100%;
+        padding: 0;
+    }
+    
     .form-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .location-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .role-options {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .role-option {
+        padding: 15px;
+    }
+    
+    .submit-button {
+        padding: 14px 24px;
+        font-size: 0.95rem;
     }
     
     .design-logo {
@@ -659,6 +722,12 @@ include __DIR__ . '/../templates/header.php';
     <!-- Right Side - Form Panel -->
     <div class="register-form-panel">
         <div class="register-form-container">
+            <!-- Back Button -->
+            <a href="<?php echo url('index.php'); ?>" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Home</span>
+            </a>
+            
             <!-- Form Header -->
             <div class="register-form-header">
         <h2>Begin Your Cultural Journey</h2>

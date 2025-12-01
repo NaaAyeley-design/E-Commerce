@@ -153,3 +153,6 @@ If issues persist after applying fixes:
 3. Verify database structure matches schema
 4. Test with a simple order (1 item, minimal data)
 
+
+
+
