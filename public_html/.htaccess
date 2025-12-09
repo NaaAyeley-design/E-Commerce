@@ -1,0 +1,27 @@
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Prevent directory listing
+Options -Indexes
+
+# Allow access to assets and uploads
+RewriteCond %{REQUEST_URI} ^/ecommerce-authent/public_html/assets/ [OR]
+RewriteCond %{REQUEST_URI} ^/ecommerce-authent/public_html/uploads/ [OR]
+RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+RewriteCond %{REQUEST_URI} ^/uploads/
+RewriteRule ^ - [L]
+
+# Allow direct file access (CSS, JS, images, etc.)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Allow direct directory access if index file exists
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_FILENAME}/index.php -f
+RewriteRule ^(.*)$ $1/index.php [L]
+
+# Route all other requests through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+

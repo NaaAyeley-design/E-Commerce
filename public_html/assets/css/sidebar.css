@@ -1,0 +1,146 @@
+/**
+ * Sidebar Styles
+ * African Ochre & Rust warm gradient theme with glassmorphic elements
+ */
+
+/* ================================
+   SIDEBAR CONTAINER
+   ================================ */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(204, 139, 60, 0.3);
+    box-shadow: 0 0 30px rgba(183, 65, 14, 0.2);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #FF9A56, #B7410E);
+    opacity: 0.6;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 25px 20px;
+    border-bottom: 1px solid rgba(204, 139, 60, 0.3);
+    background: linear-gradient(135deg, rgba(204, 139, 60, 0.15), rgba(183, 65, 14, 0.15));
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #CC8B3C, #B7410E);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+    display: block;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    padding: 20px 0;
+}
+
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-item {
+    margin-bottom: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #6B4423;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link i {
+    color: #CC8B3C;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-link:hover {
+    background: rgba(204, 139, 60, 0.2);
+    border-left-color: #CC8B3C;
+    color: #FFF8E7;
+    transform: translateX(5px);
+}
+
+.sidebar-link.active {
+    background: rgba(204, 139, 60, 0.2);
+    border-left-color: #CC8B3C;
+    color: #CC8B3C;
+    box-shadow: 0 0 20px rgba(204, 139, 60, 0.3);
+}
+
+.sidebar-link.active i {
+    color: #CC8B3C;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    border-top: 1px solid rgba(255, 154, 86, 0.3);
+    background: rgba(255, 154, 86, 0.1);
+}
+
+/* Mobile Sidebar */
+@media (max-width: 968px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* Scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 154, 86, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #FF9A56, #B7410E);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FF9A56, #B7410E);
+}
+

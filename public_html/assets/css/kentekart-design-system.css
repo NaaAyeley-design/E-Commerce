@@ -1,0 +1,305 @@
+/**
+ * KenteKart Design System
+ * Refined Minimal Design - Warm Terracotta & Beige Aesthetic
+ */
+
+/* ================================
+   TYPOGRAPHY IMPORTS
+   ================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Spectral:wght@300;400&display=swap');
+
+/* ================================
+   DESIGN TOKENS
+   ================================ */
+
+:root {
+    /* Color Palette */
+    --white: #FFFFFF;
+    --warm-beige: #F4EDE4;
+    --terracotta: #C67D5C;
+    --deep-brown: #8B6F47;
+    --dark-brown: #5C4A3A;
+    --text-dark: #3A2F26;
+    --text-light: #8B7F74;
+    
+    /* Typography */
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'Spectral', serif;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    --spacing-3xl: 4rem;
+    --spacing-4xl: 5rem;
+    
+    /* Container */
+    --container-max-width: 1200px;
+    --section-padding-vertical: 80px;
+    --section-padding-horizontal: 60px;
+    --section-gap: 120px;
+    
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 50%;
+    
+    /* Borders */
+    --border-thin: 1px solid rgba(198, 125, 92, 0.15);
+    --border-medium: 1px solid rgba(198, 125, 92, 0.2);
+    --border-divider: 1px solid var(--terracotta);
+    
+    /* Shadows */
+    --shadow-card: 0 20px 60px rgba(139, 111, 71, 0.08);
+    --shadow-card-hover: 0 20px 60px rgba(139, 111, 71, 0.12);
+    --shadow-subtle: 0 10px 40px rgba(139, 111, 71, 0.06);
+    
+    /* Transitions */
+    --transition-fast: 0.3s ease;
+    --transition-base: 0.4s ease;
+    --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Z-index layers */
+    --z-base: 1;
+    --z-elevated: 10;
+    --z-overlay: 100;
+    --z-modal: 1000;
+}
+
+/* ================================
+   BASE COMPONENTS
+   ================================ */
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 60px;
+    border: 1px solid var(--terracotta);
+    background: transparent;
+    color: var(--terracotta);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--terracotta);
+    transition: left var(--transition-base);
+    z-index: -1;
+}
+
+.btn:hover {
+    color: var(--white);
+}
+
+.btn:hover::before {
+    left: 0;
+}
+
+.btn-primary {
+    background: var(--terracotta);
+    color: var(--white);
+    border-color: var(--terracotta);
+}
+
+.btn-primary::before {
+    background: var(--deep-brown);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--terracotta);
+    border-color: var(--terracotta);
+}
+
+/* Cards */
+.card {
+    background: var(--white);
+    padding: 50px 60px;
+    border: var(--border-thin);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    transition: all var(--transition-slow);
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-card);
+    border-color: rgba(198, 125, 92, 0.25);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-card-hover);
+}
+
+/* Icons */
+.icon,
+.feature-icon,
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--warm-beige);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-slow);
+}
+
+.icon svg,
+.feature-icon svg,
+.stat-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--deep-brown);
+    transition: fill var(--transition-slow);
+}
+
+.card:hover .icon,
+.card:hover .feature-icon {
+    background: var(--terracotta);
+}
+
+.card:hover .icon svg,
+.card:hover .feature-icon svg {
+    fill: var(--white);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-full);
+    background: var(--terracotta);
+}
+
+.stat-icon svg {
+    fill: var(--white);
+}
+
+.stat-card:hover .stat-icon {
+    background: var(--deep-brown);
+    transform: scale(1.1);
+}
+
+/* Input Fields */
+.input,
+.form-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: var(--border-medium);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text-dark);
+    background: var(--white);
+    transition: all var(--transition-base);
+}
+
+.input::placeholder,
+.form-input::placeholder {
+    color: var(--text-light);
+}
+
+.input:focus,
+.form-input:focus {
+    outline: none;
+    border-color: var(--terracotta);
+    box-shadow: 0 0 0 3px rgba(198, 125, 92, 0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleX {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* Utility Classes */
+.animate-fade-in {
+    animation: fadeIn 1s ease backwards;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 1s ease backwards;
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 1s ease backwards;
+}
+
+/* Responsive Utilities */
+@media (max-width: 1024px) {
+    :root {
+        --section-padding-vertical: 60px;
+        --section-padding-horizontal: 40px;
+        --section-gap: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --section-padding-vertical: 60px;
+        --section-padding-horizontal: 30px;
+        --section-gap: 80px;
+    }
+    
+    .btn {
+        padding: 16px 40px;
+        font-size: 0.8125rem;
+    }
+    
+    .card {
+        padding: 40px 30px;
+    }
+}

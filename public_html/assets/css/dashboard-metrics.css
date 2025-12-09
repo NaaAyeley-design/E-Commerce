@@ -1,0 +1,867 @@
+/**
+ * KenteKart Dashboard - Sidebar Navigation Styles
+ * Minimalist design with warm terracotta & beige aesthetic
+ */
+
+/* Import KenteKart fonts if not already loaded */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Spectral:wght@300;400;600&display=swap');
+
+/* ============================================
+   VARIABLES
+   ============================================ */
+:root {
+    --color-terracotta: #C67D5C;
+    --color-deep-brown: #8B6F47;
+    --color-dark-brown: #3A2F26;
+    --color-light-brown: #8B7F74;
+    --color-warm-beige: #F4EDE4;
+    --color-white: #FFFFFF;
+    
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'Spectral', serif;
+    
+    --border-radius: 8px;
+    --transition: 0.3s ease;
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+.kentekart-dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-white);
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.dashboard-sidebar {
+    width: 288px;
+    background: var(--color-warm-beige);
+    border-right: 1px solid rgba(198, 125, 92, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(198, 125, 92, 0.15);
+}
+
+.sidebar-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.25rem 0;
+}
+
+.sidebar-header p {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    margin: 0;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: none;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    transition: all var(--transition);
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+}
+
+.nav-item i {
+    width: 1.25rem;
+    font-size: 1.125rem;
+}
+
+.nav-item:hover {
+    background: var(--color-white);
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.08);
+}
+
+.nav-item.active {
+    background: var(--color-terracotta);
+    color: var(--color-white);
+    box-shadow: 0 4px 12px rgba(198, 125, 92, 0.3);
+}
+
+/* Sidebar User */
+.sidebar-user {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(198, 125, 92, 0.15);
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-terracotta);
+    color: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.user-name {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.25rem 0;
+}
+
+.user-since {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--color-light-brown);
+    margin: 0;
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.dashboard-main {
+    flex: 1;
+    margin-left: 288px;
+    padding: 3rem;
+    width: calc(100% - 288px);
+    min-width: 0;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+    display: none;
+}
+
+.dashboard-section.active {
+    display: block;
+}
+
+/* Section Header */
+.section-header-minimal {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(198, 125, 92, 0.15);
+    margin-bottom: 3rem;
+}
+
+.section-subtitle {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    margin: 0 0 0.5rem 0;
+}
+
+.section-title {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.header-meta {
+    text-align: right;
+}
+
+.meta-label {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--color-light-brown);
+    margin: 0 0 0.25rem 0;
+}
+
+.meta-value {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0;
+}
+
+/* ============================================
+   STATS ROW
+   ============================================ */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stats-row.centered {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.stat-column {
+    text-align: center;
+}
+
+.stat-number {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.75rem 0;
+    line-height: 1;
+}
+
+.stat-number.large {
+    font-size: 3.5rem;
+}
+
+.stat-label {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+}
+
+/* ============================================
+   STAT CARDS WITH GRADIENTS
+   ============================================ */
+.stat-card {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 12px rgba(198, 125, 92, 0.1);
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity var(--transition);
+    z-index: 0;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(198, 125, 92, 0.2);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    transition: all var(--transition);
+}
+
+.stat-card-content {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card .stat-number {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin: 0 0 0.5rem 0;
+    line-height: 1;
+    transition: all var(--transition);
+}
+
+.stat-card .stat-label {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+    transition: all var(--transition);
+}
+
+/* Gradient Card 1 - Products (Terracotta to Deep Brown) */
+.stat-card-gradient-1 {
+    background: linear-gradient(135deg, #D2691E 0%, #B8621E 100%);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-1 .stat-card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-1 .stat-number,
+.stat-card-gradient-1 .stat-label {
+    color: var(--color-white);
+}
+
+.stat-card-gradient-1:hover {
+    box-shadow: 0 8px 24px rgba(210, 105, 30, 0.4);
+}
+
+/* Gradient Card 2 - Pending Orders (Orange to Gold) */
+.stat-card-gradient-2 {
+    background: linear-gradient(135deg, #F59E0B 0%, #FFD700 100%);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-2 .stat-card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-2 .stat-number,
+.stat-card-gradient-2 .stat-label {
+    color: var(--color-white);
+}
+
+.stat-card-gradient-2:hover {
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+
+/* Gradient Card 3 - Earnings (Deep Brown to Terracotta) */
+.stat-card-gradient-3 {
+    background: linear-gradient(135deg, #8B6F47 0%, #C67D5C 100%);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-3 .stat-card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-3 .stat-number,
+.stat-card-gradient-3 .stat-label {
+    color: var(--color-white);
+}
+
+.stat-card-gradient-3:hover {
+    box-shadow: 0 8px 24px rgba(139, 111, 71, 0.4);
+}
+
+/* Gradient Card 4 - This Month Sales (Gold to Terracotta) */
+.stat-card-gradient-4 {
+    background: linear-gradient(135deg, #FFD700 0%, #D2691E 100%);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-4 .stat-card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+}
+
+.stat-card-gradient-4 .stat-number,
+.stat-card-gradient-4 .stat-label {
+    color: var(--color-white);
+}
+
+.stat-card-gradient-4:hover {
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);
+}
+
+/* Responsive Design for Stat Cards */
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+    }
+    
+    .stat-card-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   INSIGHT BANNER
+   ============================================ */
+.insight-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: var(--color-warm-beige);
+    border: 1px solid rgba(198, 125, 92, 0.2);
+    margin-bottom: 3rem;
+}
+
+.insight-banner i {
+    font-size: 2rem;
+    color: var(--color-deep-brown);
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.insight-main {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.75rem 0;
+}
+
+.insight-sub {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    margin: 0;
+}
+
+/* ============================================
+   CHARTS
+   ============================================ */
+.charts-grid-minimal {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+}
+
+.chart-box,
+.chart-box-full {
+    margin-bottom: 3rem;
+}
+
+.chart-box-header {
+    margin-bottom: 1.5rem;
+}
+
+.chart-box-header h3 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.5rem 0;
+}
+
+.chart-box-header p {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    margin: 0;
+}
+
+.chart-wrapper {
+    border: 1px solid rgba(198, 125, 92, 0.2);
+    padding: 1.5rem;
+    height: 320px;
+}
+
+.chart-wrapper-large {
+    border: 1px solid rgba(198, 125, 92, 0.2);
+    padding: 2rem;
+    height: 400px;
+}
+
+/* ============================================
+   MINI STATS GRID
+   ============================================ */
+.mini-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.mini-stat-card {
+    border: 1px solid rgba(198, 125, 92, 0.2);
+    padding: 1.5rem;
+}
+
+.mini-stat-card i {
+    font-size: 1.5rem;
+    color: var(--color-deep-brown);
+    margin-bottom: 1rem;
+}
+
+.mini-stat-label {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.5rem 0;
+}
+
+.mini-stat-value {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0;
+    line-height: 1;
+}
+
+/* ============================================
+   ORDERS LIST
+   ============================================ */
+.orders-list-section {
+    margin-bottom: 3rem;
+}
+
+.subsection-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 1.5rem 0;
+}
+
+.orders-list-minimal {
+    border: 1px solid rgba(198, 125, 92, 0.2);
+}
+
+.order-item-minimal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    transition: background var(--transition);
+}
+
+.order-item-minimal:hover {
+    background: var(--color-warm-beige);
+}
+
+.order-item-minimal.has-border {
+    border-bottom: 1px solid rgba(198, 125, 92, 0.15);
+}
+
+.order-item-content {
+    flex: 1;
+}
+
+.order-item-title {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.25rem 0;
+}
+
+.order-item-meta {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--color-light-brown);
+    margin: 0;
+}
+
+.order-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.order-item-amount {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0;
+}
+
+/* ============================================
+   INSIGHTS GRID
+   ============================================ */
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.insight-card {
+    background: var(--color-warm-beige);
+    border: 1px solid rgba(198, 125, 92, 0.2);
+    padding: 2rem;
+}
+
+.insight-card i {
+    font-size: 2.5rem;
+    color: var(--color-deep-brown);
+    margin-bottom: 1rem;
+}
+
+.insight-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 0.75rem 0;
+}
+
+.insight-card p {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--color-light-brown);
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+}
+
+.insight-card-footer {
+    padding-top: 1rem;
+    border-top: 1px solid rgba(198, 125, 92, 0.15);
+}
+
+.footer-label {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--color-light-brown);
+    margin: 0 0 0.25rem 0;
+}
+
+.footer-value {
+    font-family: var(--font-heading);
+    font-size: 1.875rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-minimal {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--color-terracotta);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-minimal:hover {
+    background: var(--color-deep-brown);
+}
+
+.btn-outline-minimal {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background: transparent;
+    color: var(--color-terracotta);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: 1px solid var(--color-terracotta);
+    transition: all var(--transition);
+    cursor: pointer;
+}
+
+.btn-outline-minimal:hover {
+    background: var(--color-terracotta);
+    color: var(--color-white);
+}
+
+/* ============================================
+   EMPTY STATES
+   ============================================ */
+.empty-state-minimal {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state-minimal i {
+    font-size: 4rem;
+    color: var(--color-light-brown);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-minimal p {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    font-weight: 300;
+    color: var(--color-dark-brown);
+    margin: 0 0 1rem 0;
+}
+
+.empty-state-minimal .text-muted {
+    font-size: 1rem;
+    color: var(--color-light-brown);
+    margin-bottom: 2rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1200px) {
+    .dashboard-main {
+        padding: 2rem;
+    }
+    
+    .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .charts-grid-minimal {
+        grid-template-columns: 1fr;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .kentekart-dashboard {
+        flex-direction: column;
+    }
+    
+    .dashboard-sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        width: 280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dashboard-sidebar.mobile-open {
+        left: 0;
+    }
+    
+    .dashboard-main {
+        margin-left: 0;
+        padding: 1.5rem;
+        width: 100%;
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stats-row.centered {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stat-card-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .section-header-minimal {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-meta {
+        text-align: left;
+    }
+    
+    .mini-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .chart-wrapper {
+        height: 250px;
+        padding: 1rem;
+    }
+    
+    .chart-wrapper-large {
+        height: 300px;
+        padding: 1rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
