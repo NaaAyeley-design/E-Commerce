@@ -85,3 +85,4 @@ The colors are defined as CSS custom properties in `african-savanna-theme.css`:
 - Use solid **Terracotta** for active states and emphasis
 
 
+
