@@ -37,6 +37,7 @@ if (APP_ENV === 'development') {
 
 // Path Configuration
 // Since everything is now inside public_html, ROOT_PATH is public_html itself
+// __DIR__ is public_html/settings, so dirname(__DIR__) is public_html
 define('ROOT_PATH', dirname(__DIR__)); // public_html
 define('PUBLIC_PATH', ROOT_PATH); // Same as ROOT_PATH since everything is in public_html
 define('CLASS_PATH', ROOT_PATH . '/class');

@@ -7,7 +7,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/../settings/core.php';
+require_once __DIR__ . '/settings/core.php';
 
 $page_title = 'Home - Authentic Ghanaian Fashion';
 $page_description = 'Discover authentic Ghanaian fashion from talented artisans. Support women-owned businesses and preserve African cultural heritage.';
