@@ -1,0 +1,64 @@
+/* Producer Earnings Page Styles */
+
+.earnings-content {
+    padding: 40px;
+}
+
+.earnings-content h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #8b4513;
+    margin-bottom: 30px;
+}
+
+.earnings-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.earnings-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.earnings-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.earnings-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #8b4513;
+}
+
+.earnings-card.monthly .earnings-amount {
+    color: #ff8c00;
+}
+
+.earnings-card.pending .earnings-amount {
+    color: #ffa500;
+}
+
+.earnings-info {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+.earnings-info p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+}
+

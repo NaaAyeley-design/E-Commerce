@@ -1,0 +1,347 @@
+/* Brands Page Styles - Ensuring consistent font weights and colors */
+
+/* Override any light font weights - ensure all text is bold and dark */
+.brands-table-container,
+.brands-table,
+.brands-table th,
+.brands-table td {
+    font-weight: 600 !important;
+    color: #1a1d29 !important;
+}
+
+/* Table Headers - Bold and Dark */
+.brands-table thead th {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px;
+    border-bottom: 2px solid #e8eaed;
+    background: #f8f9fa;
+}
+
+/* Table Body - Ensure all text is readable and bold */
+.brands-table tbody td {
+    font-weight: 600 !important;
+    color: #1a1d29 !important;
+    padding: 16px;
+    border-bottom: 1px solid #e8eaed;
+    font-size: 14px;
+}
+
+/* Brand Name - Extra bold for emphasis */
+.brand-name {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+    font-size: 16px;
+}
+
+/* Brand Description - Slightly lighter but still readable */
+.brand-description {
+    font-weight: 500 !important;
+    color: #333 !important;
+    font-size: 14px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Brand ID - Medium weight */
+.brand-id {
+    font-weight: 600 !important;
+    color: #666 !important;
+}
+
+/* Brand Products Count - Bold */
+.brand-products {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+}
+
+/* Action Buttons */
+.brand-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-btn {
+    background: #667eea;
+    color: white !important;
+}
+
+.edit-btn:hover {
+    background: #5568d3;
+}
+
+.delete-btn {
+    background: #f5576c;
+    color: white !important;
+}
+
+.delete-btn:hover {
+    background: #e04558;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600 !important;
+    text-transform: capitalize;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724 !important;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24 !important;
+}
+
+/* Add Brand Button */
+.add-brand-btn {
+    padding: 10px 20px;
+    background: #43e97b;
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600 !important;
+    transition: all 0.3s ease;
+}
+
+.add-brand-btn:hover {
+    background: #38d16a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 233, 123, 0.3);
+}
+
+/* Search Box */
+.search-box {
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    padding: 8px 16px;
+    border: 1px solid #e8eaed;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500 !important;
+    color: #1a1d29 !important;
+    width: 250px;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.search-box input::placeholder {
+    color: #999;
+    font-weight: 400;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+    font-size: 24px;
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+    margin-bottom: 20px;
+}
+
+.close {
+    color: #666;
+    float: right;
+    font-size: 28px;
+    font-weight: 700 !important;
+    cursor: pointer;
+    line-height: 20px;
+}
+
+.close:hover {
+    color: #1a1d29;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600 !important;
+    color: #1a1d29 !important;
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500 !important;
+    color: #1a1d29 !important;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.btn-cancel,
+.btn-submit {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: #f5f5f5;
+    color: #666 !important;
+}
+
+.btn-cancel:hover {
+    background: #e8eaed;
+}
+
+.btn-submit {
+    background: #667eea;
+    color: white !important;
+}
+
+.btn-submit:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Table Container */
+.brands-table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.brands-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+/* Ensure all text in stat cards matches dashboard */
+.stat-content h3 {
+    font-weight: 500 !important;
+    color: #666 !important;
+}
+
+.stat-value {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+}
+
+.stat-change {
+    font-weight: 400 !important;
+    color: #666 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .brands-table {
+        font-size: 12px;
+    }
+    
+    .brands-table th,
+    .brands-table td {
+        padding: 12px 8px;
+    }
+    
+    .brand-description {
+        max-width: 150px;
+    }
+    
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    .search-box input {
+        width: 100%;
+    }
+}
+
+/* Force override any inherited light styles */
+.brands-table *,
+.brand-name,
+.brand-description,
+.brand-id,
+.brand-products {
+    font-weight: inherit !important;
+}
+
+/* Ensure page header matches dashboard */
+.dashboard-header h1 {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+}
+
+/* Card header consistency */
+.card-header h2 {
+    font-weight: 700 !important;
+    color: #1a1d29 !important;
+}
+

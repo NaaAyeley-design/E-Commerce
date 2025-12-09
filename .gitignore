@@ -1,0 +1,25 @@
+# Ignore error logs
+*.log
+order_errors.log
+
+# Ignore uploads directory (if it contains user-uploaded files)
+uploads/
+!uploads/.gitkeep
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore temporary files
+*.tmp
+*.bak
+*.cache
+
