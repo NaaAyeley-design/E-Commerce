@@ -205,13 +205,7 @@ include __DIR__ . '/../templates/header.php';
                                                             <td class="product-image">
                                                                 <?php if (!empty($item['product_image'])): ?>
                                                                     <?php 
-                                                                    $image_path = $item['product_image'];
-                                                                    // Handle image path
-                                                                    if (strpos($image_path, 'uploads/') === 0) {
-                                                                        $image_url = str_replace('/public_html', '', BASE_URL) . '/' . $image_path;
-                                                                    } else {
-                                                                        $image_url = BASE_URL . '/' . ltrim($image_path, '/');
-                                                                    }
+                                                                    $image_url = get_image_url($item['product_image']);
                                                                     ?>
                                                                     <img src="<?php echo escape_html($image_url); ?>" 
                                                                          alt="<?php echo escape_html($item['product_title'] ?? ''); ?>"

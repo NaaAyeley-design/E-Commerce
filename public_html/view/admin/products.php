@@ -287,7 +287,7 @@ include __DIR__ . '/../templates/header.php';
                                                     
                                                     <?php if (!empty($product['product_image'])): ?>
                                                         <div class="product-image">
-                                                            <img src="<?php echo escape_html($product['product_image']); ?>" alt="<?php echo escape_html($product['product_title'] ?? ''); ?>" onerror="this.style.display='none'">
+                                                            <img src="<?php echo escape_html(get_image_url($product['product_image'])); ?>" alt="<?php echo escape_html($product['product_title'] ?? ''); ?>" onerror="this.style.display='none'">
                                                         </div>
                                                     <?php endif; ?>
                                                     

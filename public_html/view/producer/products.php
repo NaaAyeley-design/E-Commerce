@@ -737,15 +737,7 @@ include __DIR__ . '/../templates/header.php';
                         <tbody>
                             <?php foreach ($products as $product): ?>
                                 <?php
-                                $image_url = ASSETS_URL . '/images/placeholder-product.svg';
-                                if (!empty($product['product_image'])) {
-                                    $img_path = ltrim($product['product_image'], '/');
-                                    if (strpos($img_path, 'http') === 0) {
-                                        $image_url = $img_path;
-                                    } else {
-                                        $image_url = BASE_URL . '/' . $img_path;
-                                    }
-                                }
+                                $image_url = get_image_url($product['product_image'] ?? '');
                                 
                                 $stock_class = 'in-stock';
                                 $stock_text = $product['stock_quantity'] ?? 0;

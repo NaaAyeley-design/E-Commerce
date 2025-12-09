@@ -86,26 +86,7 @@ include __DIR__ . '/../templates/header.php';
         <div class="product-images-column">
             <div class="product-main-image-container">
                 <?php 
-                $image_url = ASSETS_URL . '/images/placeholder-product.svg';
-                if (!empty($product['product_image'])): 
-                    $image_path = ltrim($product['product_image'], '/');
-                    if (strpos($image_path, 'http') === 0) {
-                        $image_url = $image_path;
-                    } else {
-                        if (strpos($image_path, 'uploads/') === 0) {
-                            $base_url = str_replace('/public_html', '', BASE_URL);
-                            $full_path = ROOT_PATH . '/' . $image_path;
-                            if (file_exists($full_path)) {
-                                $image_url = $base_url . '/' . $image_path;
-                            }
-                        } else {
-                            $full_path = ROOT_PATH . '/' . $image_path;
-                            if (file_exists($full_path)) {
-                                $image_url = BASE_URL . '/' . $image_path;
-                            }
-                        }
-                    }
-                endif;
+                $image_url = get_image_url($product['product_image'] ?? '');
                 ?>
                 <!-- Product Badge (optional - can be dynamic based on product data) -->
                 <div class="product-badge">NEW</div>
@@ -244,25 +225,7 @@ include __DIR__ . '/../templates/header.php';
             <?php foreach ($similar_products as $similar): ?>
                 <?php 
                 $similar_image_url = ASSETS_URL . '/images/placeholder-product.svg';
-                if (!empty($similar['product_image'])): 
-                    $similar_image_path = ltrim($similar['product_image'], '/');
-                    if (strpos($similar_image_path, 'http') === 0) {
-                        $similar_image_url = $similar_image_path;
-                    } else {
-                        if (strpos($similar_image_path, 'uploads/') === 0) {
-                            $base_url = str_replace('/public_html', '', BASE_URL);
-                            $full_path = ROOT_PATH . '/' . $similar_image_path;
-                            if (file_exists($full_path)) {
-                                $similar_image_url = $base_url . '/' . $similar_image_path;
-                            }
-                        } else {
-                            $full_path = ROOT_PATH . '/' . $similar_image_path;
-                            if (file_exists($full_path)) {
-                                $similar_image_url = BASE_URL . '/' . $similar_image_path;
-                            }
-                        }
-                    }
-                endif;
+                $similar_image_url = get_image_url($similar['product_image'] ?? '');
                 ?>
                 <a href="<?php echo url('view/product/single_product.php?id=' . $similar['product_id']); ?>" class="similar-product-card">
                     <div class="similar-product-image">

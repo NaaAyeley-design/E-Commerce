@@ -416,4 +416,45 @@ function get_js_version($js_file) {
     return time(); // Fallback to current time if file doesn't exist
 }
 
+/**
+ * Get image URL from database path
+ * Handles both relative paths (uploads/...) and absolute URLs
+ */
+function get_image_url($image_path, $placeholder = null) {
+    if (empty($image_path)) {
+        return $placeholder ?: (defined('ASSETS_URL') ? ASSETS_URL . '/images/placeholder-product.svg' : '');
+    }
+    
+    // If already a full URL, return as-is
+    if (strpos($image_path, 'http://') === 0 || strpos($image_path, 'https://') === 0) {
+        return $image_path;
+    }
+    
+    // Clean the path
+    $image_path = ltrim($image_path, '/');
+    
+    // Check if it's an uploads path
+    if (strpos($image_path, 'uploads/') === 0) {
+        // Check if file exists in public_html/uploads
+        $full_path = defined('ROOT_PATH') ? ROOT_PATH . '/' . $image_path : __DIR__ . '/../' . $image_path;
+        
+        if (file_exists($full_path)) {
+            // Use BASE_URL directly since uploads is now in public_html
+            return defined('BASE_URL') ? BASE_URL . '/' . $image_path : '/' . $image_path;
+        } else {
+            // File doesn't exist, return placeholder
+            return $placeholder ?: (defined('ASSETS_URL') ? ASSETS_URL . '/images/placeholder-product.svg' : '');
+        }
+    }
+    
+    // For other paths, check if file exists
+    $full_path = defined('ROOT_PATH') ? ROOT_PATH . '/' . $image_path : __DIR__ . '/../' . $image_path;
+    if (file_exists($full_path)) {
+        return defined('BASE_URL') ? BASE_URL . '/' . $image_path : '/' . $image_path;
+    }
+    
+    // Return placeholder if file doesn't exist
+    return $placeholder ?: (defined('ASSETS_URL') ? ASSETS_URL . '/images/placeholder-product.svg' : '');
+}
+
 ?>

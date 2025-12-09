@@ -756,15 +756,7 @@ include __DIR__ . '/../templates/header.php';
                                     <?php foreach ($order['items'] as $item): ?>
                                         <div class="order-item">
                                             <?php
-                                            $image_url = ASSETS_URL . '/images/placeholder-product.svg';
-                                            if (!empty($item['product_image'])) {
-                                                $img_path = ltrim($item['product_image'], '/');
-                                                if (strpos($img_path, 'http') === 0) {
-                                                    $image_url = $img_path;
-                                                } else {
-                                                    $image_url = BASE_URL . '/' . $img_path;
-                                                }
-                                            }
+                                            $image_url = get_image_url($item['product_image'] ?? '');
                                             ?>
                                             <img src="<?php echo $image_url; ?>" alt="<?php echo escape_html($item['product_title']); ?>" class="order-item-image">
                                             <div class="order-item-details">

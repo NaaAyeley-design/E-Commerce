@@ -441,7 +441,7 @@ include __DIR__ . '/../templates/header.php';
                                         ?>
                                         <div style="display: flex; gap: -10px;">
                                             <?php foreach (array_slice($order['items'], 0, 3) as $item): ?>
-                                            <img src="<?php echo !empty($item['product_image']) ? url($item['product_image']) : url('assets/images/placeholder-product.svg'); ?>" 
+                                            <img src="<?php echo get_image_url($item['product_image'] ?? ''); ?>" 
                                                  alt="<?php echo escape_html($item['product_title'] ?? 'Product'); ?>"
                                                  style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 2px solid var(--white); margin-left: -8px; background: var(--warm-beige);"
                                                  onerror="this.src='<?php echo url('assets/images/placeholder-product.svg'); ?>'">
@@ -612,9 +612,7 @@ include __DIR__ . '/../templates/header.php';
             <?php else: ?>
             <div class="artisans-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem;">
                 <?php foreach ($all_artisans as $artisan): 
-                    $profile_image = !empty($artisan['profile_image']) 
-                        ? url('uploads/' . $artisan['profile_image']) 
-                        : url('assets/images/placeholder-artisan.svg');
+                    $profile_image = get_image_url($artisan['profile_image'] ?? '', url('assets/images/placeholder-artisan.svg'));
                     $business_name = !empty($artisan['business_name']) ? $artisan['business_name'] : $artisan['artisan_name'];
                 ?>
                 <div class="artisan-card" style="background: var(--color-white); border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(198, 125, 92, 0.1); transition: all 0.3s ease; border: 1px solid rgba(198, 125, 92, 0.1);">
@@ -1357,7 +1355,7 @@ function generateOrderDetailsHTML(order, items) {
     if (items && items.length > 0) {
         itemsHTML = items.map(item => `
             <div style="display: flex; gap: 15px; padding: 15px; border-bottom: 1px solid var(--warm-beige);">
-                <img src="${item.product_image || '<?php echo url('assets/images/placeholder-product.svg'); ?>'}" 
+                <img src="${item.product_image ? '<?php echo BASE_URL; ?>/' + item.product_image : '<?php echo ASSETS_URL; ?>/images/placeholder-product.svg'}" 
                      alt="${item.product_title || 'Product'}"
                      style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; background: var(--warm-beige);"
                      onerror="this.src='<?php echo url('assets/images/placeholder-product.svg'); ?>'">
