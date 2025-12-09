@@ -140,18 +140,34 @@ $totalPages = ceil($totalProducts / $limit);
                                                 // Otherwise, try to construct the path
                                                 else {
                                                     // Try common upload directories
-                                                    $uploadDirs = ['uploads/', 'images/', 'img/', 'products/', 'assets/images/'];
+                                                    $uploadDirs = ['uploads/', 'uploads/products/', 'images/', 'img/', 'products/', 'assets/images/'];
                                                     $finalImageUrl = null;
                                                     
+                                                    // First, check if the path already includes an upload directory
                                                     foreach ($uploadDirs as $dir) {
-                                                        $testPath = '/' . ltrim($dir . ltrim($imageUrl, '/'), '/');
-                                                        if (file_exists(ltrim($testPath, '/')) || file_exists('..' . $testPath)) {
-                                                            $finalImageUrl = $testPath;
+                                                        if (strpos($imageUrl, $dir) === 0) {
+                                                            // Path already includes directory, just add leading slash
+                                                            $finalImageUrl = '/' . ltrim($imageUrl, '/');
                                                             break;
                                                         }
                                                     }
                                                     
-                                                    // If no file found, use the original path with leading slash
+                                                    // If not found, try prepending upload directories
+                                                    if (!$finalImageUrl) {
+                                                        foreach ($uploadDirs as $dir) {
+                                                            $testPath = '/' . ltrim($dir . ltrim($imageUrl, '/'), '/');
+                                                            // Check if file exists (relative to current directory or parent)
+                                                            if (file_exists(ltrim($testPath, '/')) || 
+                                                                file_exists('..' . $testPath) || 
+                                                                file_exists('../..' . $testPath)) {
+                                                                $finalImageUrl = $testPath;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    // If still no file found, use the original path with leading slash
+                                                    // This allows the browser to try loading it
                                                     if (!$finalImageUrl) {
                                                         $finalImageUrl = '/' . ltrim($imageUrl, '/');
                                                     }

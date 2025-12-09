@@ -219,7 +219,7 @@ include __DIR__ . '/../templates/header.php';
                                         <span id="name-<?php echo $cat['cat_id']; ?>">
                                             <?php echo escape_html($cat['cat_name']); ?>
                                         </span>
-                                        <form id="edit-form-<?php echo $cat['cat_id']; ?>" method="post" class="form-inline">
+                                        <form id="edit-form-<?php echo $cat['cat_id']; ?>" method="post" class="form-inline" style="display: none;">
                                             <input type="hidden" name="action" value="update">
                                             <input type="hidden" name="cat_id" value="<?php echo $cat['cat_id']; ?>">
                                             <input type="text" name="cat_name" value="<?php echo escape_html($cat['cat_name']); ?>" required class="form-input">
@@ -260,14 +260,29 @@ function toggleEdit(categoryId) {
     const nameSpan = document.getElementById('name-' + categoryId);
     const editForm = document.getElementById('edit-form-' + categoryId);
     
-    if (editForm.style.display === 'none') {
+    if (!nameSpan || !editForm) {
+        console.error('Could not find elements for category ID: ' + categoryId);
+        return;
+    }
+    
+    // Toggle visibility
+    if (editForm.style.display === 'none' || editForm.style.display === '') {
         // Show edit form
         nameSpan.style.display = 'none';
-        editForm.style.display = 'block';
-        editForm.querySelector('input[name="cat_name"]').focus();
+        editForm.style.display = 'inline-flex';
+        editForm.style.alignItems = 'center';
+        editForm.style.gap = '8px';
+        // Focus on input after a short delay to ensure it's visible
+        setTimeout(function() {
+            const input = editForm.querySelector('input[name="cat_name"]');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 10);
     } else {
         // Hide edit form
-        nameSpan.style.display = 'block';
+        nameSpan.style.display = 'inline';
         editForm.style.display = 'none';
     }
 }
