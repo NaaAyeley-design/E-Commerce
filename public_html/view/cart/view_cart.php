@@ -5,11 +5,11 @@
  * Display all items in the user's shopping cart
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../settings/core.php';
 
 // Only require cart controller if needed
 if (!function_exists('get_cart_items_ctr')) {
-    require_once __DIR__ . '/../../../controller/cart_controller.php';
+    require_once __DIR__ . '/../../controller/cart_controller.php';
 }
 
 // Set page variables

@@ -6,7 +6,7 @@
  */
 
 // Include core settings
-require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../settings/core.php';
 
 // Set page variables
 $page_title = 'Forgot Password';

@@ -5,7 +5,7 @@
  * Displays order summary and initiates Paystack payment
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../settings/core.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
@@ -14,7 +14,7 @@ if (!is_logged_in()) {
 }
 
 // Include cart controller
-require_once __DIR__ . '/../../../controller/cart_controller.php';
+require_once __DIR__ . '/../../controller/cart_controller.php';
 
 // Get customer ID
 $customer_id = get_user_id();
@@ -35,7 +35,7 @@ if (empty($cart_items) || !is_array($cart_items) || count($cart_items) === 0) {
 }
 
 // Get customer data for email
-require_once __DIR__ . '/../../../class/user_class.php';
+require_once __DIR__ . '/../../class/user_class.php';
 $user = new user_class();
 $customer_data = $user->get_customer_by_id($customer_id);
 $customer_email = $customer_data['customer_email'] ?? $_SESSION['customer_email'] ?? '';
@@ -188,7 +188,7 @@ include __DIR__ . '/../templates/header.php';
 <!-- Paystack Configuration -->
 <?php
 // Get Paystack public key from config
-require_once __DIR__ . '/../../../settings/paystack_config.php';
+require_once __DIR__ . '/../../settings/paystack_config.php';
 $paystack_public_key = defined('PAYSTACK_PUBLIC_KEY') ? PAYSTACK_PUBLIC_KEY : '';
 ?>
 <script>

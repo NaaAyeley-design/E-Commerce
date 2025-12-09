@@ -12,9 +12,9 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 
 // Include core settings
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/order_controller.php';
-require_once __DIR__ . '/../../../class/artisan_class.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/order_controller.php';
+require_once __DIR__ . '/../../class/artisan_class.php';
 
 // Set page variables
 $page_title = 'My Dashboard - KenteKart';
@@ -55,8 +55,8 @@ if (isset($_SESSION['user_role'])) {
 }
 
 // Get user orders with enhanced data
-require_once __DIR__ . '/../../../class/order_class.php';
-require_once __DIR__ . '/../../../class/db_class.php';
+require_once __DIR__ . '/../../class/order_class.php';
+require_once __DIR__ . '/../../class/db_class.php';
 $order_class = new order_class();
 $db = new db_class();
 $customer_id = $_SESSION['user_id'];

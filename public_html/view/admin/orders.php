@@ -5,9 +5,9 @@
  * Displays all orders with customer information
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/order_controller.php';
-require_once __DIR__ . '/../../../class/order_class.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/order_controller.php';
+require_once __DIR__ . '/../../class/order_class.php';
 
 // Set page variables
 $page_title = 'Order Management';

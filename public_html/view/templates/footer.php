@@ -1,4 +1,4 @@
-﻿    </main>
+    </main>
     
     <!-- Footer (only on homepage) -->
     <?php if ((!isset($standalone_page) || !$standalone_page) && (isset($body_class) && $body_class === 'home-page')): ?>

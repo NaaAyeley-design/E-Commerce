@@ -36,12 +36,13 @@ if (APP_ENV === 'development') {
 }
 
 // Path Configuration
-define('ROOT_PATH', dirname(__DIR__));
-define('PUBLIC_PATH', ROOT_PATH . '/public_html');
+// Since everything is now inside public_html, ROOT_PATH is public_html itself
+define('ROOT_PATH', dirname(__DIR__)); // public_html
+define('PUBLIC_PATH', ROOT_PATH); // Same as ROOT_PATH since everything is in public_html
 define('CLASS_PATH', ROOT_PATH . '/class');
 define('CONTROLLER_PATH', ROOT_PATH . '/controller');
-define('VIEW_PATH', PUBLIC_PATH . '/view');
-define('ASSETS_PATH', PUBLIC_PATH . '/assets');
+define('VIEW_PATH', ROOT_PATH . '/view');
+define('ASSETS_PATH', ROOT_PATH . '/assets');
 define('FUNCTIONS_PATH', ROOT_PATH . '/functions');
 
 // URL Configuration

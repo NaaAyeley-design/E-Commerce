@@ -11,10 +11,10 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
 try {
-    require_once __DIR__ . '/../../../settings/core.php';
-    require_once __DIR__ . '/../../../controller/product_controller.php';
-    require_once __DIR__ . '/../../../controller/category_controller.php';
-    require_once __DIR__ . '/../../../controller/brand_controller.php';
+    require_once __DIR__ . '/../../settings/core.php';
+    require_once __DIR__ . '/../../controller/product_controller.php';
+    require_once __DIR__ . '/../../controller/category_controller.php';
+    require_once __DIR__ . '/../../controller/brand_controller.php';
 } catch (Exception $e) {
     error_log("Error loading files in all_product.php: " . $e->getMessage());
     die("Error loading required files. Please check the error logs.");

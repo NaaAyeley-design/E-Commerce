@@ -5,8 +5,8 @@
  * Display full details for a selected product.
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/product_controller.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/product_controller.php';
 
 // Set page variables
 $page_title = 'Product Details';
@@ -34,7 +34,7 @@ if (!$product) {
 $similar_products = [];
 if (!empty($product['product_cat'])) {
     try {
-        require_once __DIR__ . '/../../../controller/product_controller.php';
+        require_once __DIR__ . '/../../controller/product_controller.php';
         $all_similar = filter_products_by_category_ctr($product['product_cat'], 4, 0);
         // Filter out current product
         $similar_products = array_filter($all_similar, function($p) use ($product_id) {

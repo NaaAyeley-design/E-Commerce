@@ -5,11 +5,11 @@
  * Lists all products for the logged-in producer with filtering and actions
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../class/product_class.php';
-require_once __DIR__ . '/../../../class/category_class.php';
-require_once __DIR__ . '/../../../class/brand_class.php';
-require_once __DIR__ . '/../../../class/user_class.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../class/product_class.php';
+require_once __DIR__ . '/../../class/category_class.php';
+require_once __DIR__ . '/../../class/brand_class.php';
+require_once __DIR__ . '/../../class/user_class.php';
 
 // Set page variables
 $page_title = 'My Products - Producer Dashboard';

@@ -3,9 +3,9 @@
  * Brand Management Page
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/brand_controller.php';
-require_once __DIR__ . '/../../../controller/category_controller.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/brand_controller.php';
+require_once __DIR__ . '/../../controller/category_controller.php';
 
 // Set page variables
 $page_title = 'Brand Management';

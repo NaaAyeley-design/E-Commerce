@@ -4,7 +4,7 @@
  * This page is called after Paystack payment process
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
+require_once __DIR__ . '/../../settings/core.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {

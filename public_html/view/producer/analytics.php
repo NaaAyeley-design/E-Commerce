@@ -5,11 +5,11 @@
  * Displays business analytics, sales trends, and performance metrics
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../class/order_class.php';
-require_once __DIR__ . '/../../../class/product_class.php';
-require_once __DIR__ . '/../../../class/user_class.php';
-require_once __DIR__ . '/../../../class/db_class.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../class/order_class.php';
+require_once __DIR__ . '/../../class/product_class.php';
+require_once __DIR__ . '/../../class/user_class.php';
+require_once __DIR__ . '/../../class/db_class.php';
 
 // Set page variables
 $page_title = 'Analytics - Producer Dashboard';

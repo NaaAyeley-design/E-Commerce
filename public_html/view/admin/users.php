@@ -3,8 +3,8 @@
  * User Management Page
  */
 
-require_once __DIR__ . '/../../../settings/core.php';
-require_once __DIR__ . '/../../../controller/user_controller.php';
+require_once __DIR__ . '/../../settings/core.php';
+require_once __DIR__ . '/../../controller/user_controller.php';
 
 // Set page variables
 $page_title = 'User Management';
