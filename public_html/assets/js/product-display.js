@@ -272,13 +272,8 @@ function displayProducts(products) {
             } else {
                 // Remove leading slash if present
                 const cleanPath = product.product_image.startsWith('/') ? product.product_image.substring(1) : product.product_image;
-                // If uploads path, remove /public_html from BASE_URL
-                if (cleanPath.startsWith('uploads/')) {
-                    const baseUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL.replace('/public_html', '') : '');
-                    imageUrl = baseUrl + '/' + cleanPath;
-                } else {
-                    imageUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL + '/' + cleanPath : '/' + cleanPath);
-                }
+                // Use BASE_URL directly since uploads is now in public_html
+                imageUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL + '/' + cleanPath : '/' + cleanPath);
             }
         } else {
             imageUrl = (typeof ASSETS_URL !== 'undefined' ? ASSETS_URL + '/images/placeholder-product.svg' : '/images/placeholder-product.svg');

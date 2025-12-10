@@ -107,11 +107,14 @@
     <!-- JavaScript Files -->
     <script src="<?php echo ASSETS_URL; ?>/js/toast.js?v=<?php echo get_js_version('toast.js'); ?>"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/script.js?v=<?php echo get_js_version('script.js'); ?>"></script>
-    <!-- Pass ASSETS_URL to JavaScript for cursor images -->
+    <!-- Pass ASSETS_URL and BASE_URL to JavaScript -->
     <script>
-        // Make ASSETS_URL available to JavaScript
+        // Make ASSETS_URL and BASE_URL available to JavaScript globally
         if (typeof ASSETS_URL === 'undefined') {
             var ASSETS_URL = '<?php echo ASSETS_URL; ?>';
+        }
+        if (typeof BASE_URL === 'undefined') {
+            var BASE_URL = '<?php echo BASE_URL; ?>';
         }
     </script>
     <!-- Adinkra Cursor - Blue Glowing Gradient Theme -->
